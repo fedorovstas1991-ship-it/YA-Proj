@@ -54,6 +54,16 @@
   cursor: not-allowed;
 }
 
+.product-rail__btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.product-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
 .product-sidebar {
   display: flex;
   flex-direction: column;
@@ -201,6 +211,12 @@
   padding: 12px;
 }
 
+.product-dev-drawer__body button:focus-visible,
+.product-dev-drawer__body a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
 .product-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -234,6 +250,12 @@
   font-size: 16px;
   font-weight: 700;
   margin-bottom: 12px;
+}
+
+.product-modal input:focus-visible,
+.product-modal button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
 }
 
 /* Dark Mode Support */
