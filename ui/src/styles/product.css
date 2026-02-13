@@ -47,6 +47,7 @@
   border-color: var(--accent);
   color: var(--accent);
   background: rgba(255, 92, 92, 0.1);
+  transform: scale(1.05);
 }
 
 .product-rail__btn:disabled {
@@ -72,7 +73,9 @@
   border-right: 1px solid var(--border);
   background: var(--bg);
   overflow: hidden;
-  transition: transform 0.3s var(--ease-out), opacity 0.3s var(--ease-out);
+  transition:
+    transform 0.3s var(--ease-out),
+    opacity 0.3s var(--ease-out);
 }
 
 .product-sidebar--hidden {
@@ -128,12 +131,14 @@
   color: inherit;
   transition:
     border-color var(--duration-fast) var(--ease-out),
-    background var(--duration-fast) var(--ease-out);
+    background var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
 }
 
 .product-item:hover {
   border-color: var(--border-strong);
   background: var(--bg-hover);
+  transform: translateX(4px);
 }
 
 .product-item.active {
@@ -169,19 +174,27 @@
   overflow: hidden;
 }
 
-.product-dev-drawer {
-  position: fixed;
-  right: 16px;
-  top: 16px;
-  width: 280px;
-  background: var(--panel-strong);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: var(--shadow-lg);
-  z-index: 80;
+/* ======== Animation Keyframes ======== */
+
+@keyframes product-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-@keyframes product-slide-in {
+@keyframes product-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes product-slide-in-up {
   from {
     opacity: 0;
     transform: translateY(12px);
@@ -192,8 +205,44 @@
   }
 }
 
+@keyframes product-slide-out-down {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+/* ======== Dev Drawer with Smooth Transitions ======== */
+
 .product-dev-drawer {
-  animation: product-slide-in 0.2s ease-out;
+  position: fixed;
+  right: 16px;
+  top: 16px;
+  width: 280px;
+  background: var(--panel-strong);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  z-index: 80;
+  opacity: 0;
+  transform: translateY(-12px);
+  transition:
+    opacity 0.2s ease-out,
+    transform 0.2s ease-out,
+    visibility 0.2s ease-out;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.product-dev-drawer.open {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+  pointer-events: auto;
 }
 
 .product-dev-drawer__header {
@@ -217,6 +266,8 @@
   outline-offset: -1px;
 }
 
+/* ======== Modal with Smooth Transitions ======== */
+
 .product-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -224,26 +275,37 @@
   display: grid;
   place-items: center;
   z-index: 90;
-  animation: product-fade-in 0.2s ease-out;
+  opacity: 0;
+  transition:
+    opacity 0.2s ease-out,
+    visibility 0.2s ease-out;
+  visibility: hidden;
+  pointer-events: none;
 }
 
-@keyframes product-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+.product-modal-backdrop.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
 .product-modal {
-  animation: product-slide-in 0.2s ease-out;
+  opacity: 0;
+  transform: translateY(12px) scale(0.95);
+  transition:
+    opacity 0.2s ease-out,
+    transform 0.2s ease-out;
   width: min(420px, 92vw);
   background: var(--panel-strong);
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 16px;
   box-shadow: var(--shadow-lg);
+}
+
+.product-modal-backdrop.open .product-modal {
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
 
 .product-modal__title {
@@ -259,57 +321,64 @@
 }
 
 /* Dark Mode Support */
-:root[data-theme='dark'] .product-shell {
+:root[data-theme="dark"] .product-shell {
   background:
     radial-gradient(900px 500px at 20% -10%, rgba(255, 92, 92, 0.08), transparent 60%),
     radial-gradient(700px 400px at 90% 0%, rgba(20, 184, 166, 0.08), transparent 55%), var(--bg);
 }
 
-:root[data-theme='dark'] .product-rail {
+:root[data-theme="dark"] .product-rail {
   border-right-color: var(--border);
+  background: var(--bg-accent);
 }
 
-:root[data-theme='dark'] .product-rail__btn {
+:root[data-theme="dark"] .product-rail__btn {
   border-color: var(--border);
   background: var(--panel);
   color: var(--text);
 }
 
-:root[data-theme='dark'] .product-rail__btn:hover,
-:root[data-theme='dark'] .product-rail__btn[data-active="true"] {
+:root[data-theme="dark"] .product-rail__btn:hover,
+:root[data-theme="dark"] .product-rail__btn[data-active="true"] {
   border-color: var(--accent);
   color: var(--accent);
   background: rgba(255, 92, 92, 0.08);
 }
 
-:root[data-theme='dark'] .product-sidebar {
+:root[data-theme="dark"] .product-sidebar {
   background: var(--bg);
   border-right-color: var(--border);
 }
 
-:root[data-theme='dark'] .product-item {
+:root[data-theme="dark"] .product-item {
   background: var(--panel-strong);
   color: var(--text);
 }
 
-:root[data-theme='dark'] .product-item:hover {
+:root[data-theme="dark"] .product-item:hover {
   background: var(--bg-hover);
   border-color: var(--border-strong);
 }
 
-:root[data-theme='dark'] .product-item.active {
+:root[data-theme="dark"] .product-item.active {
   background: rgba(255, 92, 92, 0.08);
   border-color: var(--accent);
 }
 
-:root[data-theme='dark'] .product-dev-drawer {
+:root[data-theme="dark"] .product-dev-drawer {
   background: var(--panel-strong);
   border-color: var(--border);
+  color: var(--text);
 }
 
-:root[data-theme='dark'] .product-modal {
+:root[data-theme="dark"] .product-modal {
   background: var(--panel-strong);
   border-color: var(--border);
+  color: var(--text);
+}
+
+:root[data-theme="dark"] .product-modal-backdrop {
+  background: rgba(0, 0, 0, 0.65);
 }
 
 /* Mobile Responsiveness */
@@ -329,12 +398,18 @@
     transform: translateX(-100%);
     opacity: 0;
     pointer-events: none;
+    transition:
+      transform 0.3s var(--ease-out),
+      opacity 0.3s var(--ease-out),
+      visibility 0.3s var(--ease-out);
+    visibility: hidden;
   }
 
   .product-sidebar.visible {
     transform: translateX(0);
     opacity: 1;
     pointer-events: auto;
+    visibility: visible;
   }
 
   .product-main {
@@ -371,6 +446,22 @@
   .product-modal {
     width: min(90vw, 360px);
   }
+
+  .product-item {
+    padding: 8px 10px;
+  }
+
+  .product-item__title {
+    font-size: 12px;
+  }
+
+  .product-item__sub {
+    font-size: 10px;
+  }
+
+  .product-sidebar__header {
+    font-size: 14px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -380,6 +471,7 @@
 
   .product-rail {
     padding: 8px 4px;
+    gap: 6px;
   }
 
   .product-rail__btn {
@@ -396,6 +488,17 @@
     width: min(240px, 85vw);
     right: 4px;
     top: 4px;
+    padding: 12px;
+  }
+
+  .product-dev-drawer__header {
+    font-size: 14px;
+    padding: 8px 10px;
+  }
+
+  .product-dev-drawer__body {
+    gap: 6px;
+    padding: 8px;
   }
 
   .product-modal {
@@ -405,10 +508,62 @@
 
   .product-modal__title {
     font-size: 15px;
+    margin-bottom: 10px;
   }
 
-  .product-dev-drawer__header {
+  .product-item {
+    padding: 6px 8px;
+  }
+
+  .product-item__title {
+    font-size: 11px;
+  }
+
+  .product-item__sub {
+    font-size: 9px;
+  }
+
+  /* Better touch targets on mobile */
+  .product-rail__btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .product-item {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+  }
+
+  .btn {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+}
+
+@media (max-width: 320px) {
+  .product-rail {
+    padding: 6px 3px;
+  }
+
+  .product-rail__btn {
+    width: 28px;
+    height: 28px;
     font-size: 14px;
+  }
+
+  .product-main {
+    padding: 6px;
+  }
+
+  .product-dev-drawer {
+    width: min(200px, 80vw);
+    right: 2px;
+    top: 2px;
+  }
+
+  .product-modal {
+    width: 98vw;
   }
 }
 
@@ -420,6 +575,7 @@
   padding: 20px 24px;
   overflow-y: auto;
   height: 100%;
+  animation: product-fade-in 0.3s ease-out;
 }
 
 .product-project-group {
@@ -429,6 +585,11 @@
   border-radius: 12px;
   border: 1px solid var(--border);
   overflow: hidden;
+  transition: box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.product-project-group:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .product-project-header {
@@ -443,12 +604,18 @@
   color: var(--text-strong);
   transition:
     background var(--duration-fast) var(--ease-out),
-    color var(--duration-fast) var(--ease-out);
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
 }
 
 .product-project-header:hover {
   background: var(--bg-hover);
   color: var(--accent);
+}
+
+.product-project-header:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .product-project-header--ungrouped {
@@ -466,11 +633,14 @@
   text-align: center;
   font-size: 12px;
   color: var(--muted);
-  transition: color var(--duration-fast) var(--ease-out);
+  transition:
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
 }
 
 .product-project-header:hover .product-project-icon {
   color: var(--accent);
+  transform: rotate(90deg);
 }
 
 .product-project-name {
@@ -487,6 +657,13 @@
   background: var(--bg);
   padding: 6px 0;
   border-top: 1px solid var(--border);
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s var(--ease-out);
+}
+
+.product-project-group.expanded .product-project-chats {
+  max-height: 500px;
 }
 
 .product-item--nested {
@@ -496,11 +673,13 @@
   background: var(--bg);
   padding-left: 16px;
   margin: 0;
+  animation: product-fade-in 0.2s ease-out;
 }
 
 .product-item--nested:hover {
   border-left-color: var(--accent);
   background: var(--bg-hover);
+  transform: translateX(4px);
 }
 
 .product-item--nested.active {
@@ -510,4 +689,21 @@
 
 .product-item--nested + .product-item--nested {
   border-top: 1px solid var(--border);
+}
+
+/* Prefers reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .product-rail__btn,
+  .product-item,
+  .product-dev-drawer,
+  .product-modal,
+  .product-modal-backdrop,
+  .product-sidebar,
+  .product-projects-panel,
+  .product-project-header,
+  .product-project-icon,
+  .product-project-chats {
+    animation: none !important;
+    transition: none !important;
+  }
 }

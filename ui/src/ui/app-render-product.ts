@@ -1,11 +1,11 @@
 import { html, nothing } from "lit";
 import type { AppViewState } from "./app-view-state.ts";
+import type { ProjectEntry } from "./storage.projects.ts";
 import { refreshChatAvatar } from "./app-chat.ts";
 import { loadChatHistory, type ChatState } from "./controllers/chat.ts";
 import { icons } from "./icons.ts";
 import { normalizeBasePath, pathForTab } from "./navigation.ts";
 import { renderChat } from "./views/chat.ts";
-import type { ProjectEntry } from "./storage.projects.ts";
 
 function buildHref(tab: string, basePath: string): string {
   const base = normalizeBasePath(basePath ?? "");
@@ -18,10 +18,10 @@ function renderDevDrawer(state: AppViewState) {
     return nothing;
   }
   return html`
-    <div class="product-dev-drawer ${state.productDevDrawerOpen ? 'open' : ''}">
+    <div class="product-dev-drawer ${state.productDevDrawerOpen ? "open" : ""}" role="dialog" aria-labelledby="dev-drawer-title" aria-modal="true">
       <div class="product-dev-drawer__header">
-        <div>Для разработчиков</div>
-        <button class="btn btn--sm" aria-label="Close developer drawer" @click=${() => (state.productDevDrawerOpen = false)}>
+        <div id="dev-drawer-title">Для разработчиков</div>
+        <button class="btn btn--sm" aria-label="Закрыть панель разработчика" title="Закрыть" @click=${() => (state.productDevDrawerOpen = false)}>
           ${icons.x}
         </button>
       </div>
@@ -52,8 +52,8 @@ function renderCreateProjectModal(state: AppViewState) {
     return nothing;
   }
   return html`
-    <div class="product-modal-backdrop ${state.productCreateProjectOpen ? 'open' : ''}" @click=${() => (state.productCreateProjectOpen = false)}>
-      <div class="product-modal" role="dialog" aria-labelledby="create-project-title" @click=${(e: Event) => e.stopPropagation()}>
+    <div class="product-modal-backdrop ${state.productCreateProjectOpen ? "open" : ""}" role="presentation" @click=${() => (state.productCreateProjectOpen = false)}>
+      <div class="product-modal" role="dialog" aria-labelledby="create-project-title" aria-modal="true" @click=${(e: Event) => e.stopPropagation()}>
         <div class="product-modal__title" id="create-project-title">Новый проект</div>
         <label class="field">
           <span>Название</span>
@@ -61,6 +61,7 @@ function renderCreateProjectModal(state: AppViewState) {
             .value=${state.productCreateProjectName}
             @input=${(e: Event) => (state.productCreateProjectName = (e.target as HTMLInputElement).value)}
             placeholder="Например: Маркетинг"
+            aria-label="Название проекта"
           />
         </label>
         <label class="field">
@@ -69,11 +70,12 @@ function renderCreateProjectModal(state: AppViewState) {
             .value=${state.productCreateProjectDesc}
             @input=${(e: Event) => (state.productCreateProjectDesc = (e.target as HTMLInputElement).value)}
             placeholder="Что делать в этом проекте"
+            aria-label="Описание проекта"
           />
         </label>
         <div class="row" style="margin-top:12px; justify-content:flex-end;">
-          <button class="btn" aria-label="Cancel project creation" @click=${() => (state.productCreateProjectOpen = false)}>Отмена</button>
-          <button class="btn primary" aria-label="Create new project" @click=${() => void state.productCreateProject()}>Создать</button>
+          <button class="btn" aria-label="Отменить создание" @click=${() => (state.productCreateProjectOpen = false)}>Отмена</button>
+          <button class="btn primary" aria-label="Создать новый проект" @click=${() => void state.productCreateProject()}>Создать</button>
         </div>
       </div>
     </div>
@@ -91,8 +93,9 @@ function renderProjectsPanel(state: AppViewState) {
 
   return html`
     <div class="product-projects-panel">
-      ${projects.length > 0
-        ? html`
+      ${
+        projects.length > 0
+          ? html`
             ${projects.map(
               (project) => html`
                 <div class="product-project-group">
@@ -103,8 +106,9 @@ function renderProjectsPanel(state: AppViewState) {
                     <span class="product-project-icon">${state.productCollapsedProjects.has(project.id) ? "▶" : "▼"}</span>
                     <span class="product-project-name">📁 ${project.name}</span>
                   </button>
-                  ${!state.productCollapsedProjects.has(project.id)
-                    ? html`
+                  ${
+                    !state.productCollapsedProjects.has(project.id)
+                      ? html`
                         <div class="product-project-chats">
                           ${(project.sessionKeys ?? [])
                             .map((key) => sessions.find((s) => s.key === key))
@@ -115,7 +119,9 @@ function renderProjectsPanel(state: AppViewState) {
                                   class="product-item product-item--nested ${s?.key === state.sessionKey ? "active" : ""}"
                                   ?disabled=${!chatReady}
                                   @click=${() => {
-                                    if (s?.key) void state.productOpenSession(s.key);
+                                    if (s?.key) {
+                                      void state.productOpenSession(s.key);
+                                    }
                                   }}
                                 >
                                   <div class="product-item__title">└ ${s?.displayName ?? s?.label ?? s?.key}</div>
@@ -125,15 +131,18 @@ function renderProjectsPanel(state: AppViewState) {
                             )}
                         </div>
                       `
-                    : nothing}
+                      : nothing
+                  }
                 </div>
               `,
             )}
           `
-        : nothing}
+          : nothing
+      }
 
-      ${ungroupedSessions.length > 0
-        ? html`
+      ${
+        ungroupedSessions.length > 0
+          ? html`
             <div class="product-project-group">
               <div class="product-project-header product-project-header--ungrouped">
                 <span class="product-project-name">Без проекта</span>
@@ -156,7 +165,8 @@ function renderProjectsPanel(state: AppViewState) {
               </div>
             </div>
           `
-        : nothing}
+          : nothing
+      }
     </div>
   `;
 }
@@ -278,14 +288,19 @@ export function renderProductApp(state: AppViewState) {
               state.onboardingWizardStatus === "running" && state.onboardingWizardStep
                 ? html`
                     <div style="margin-top: 12px;">
-                      ${state.onboardingWizardStep.title
-                        ? html`<div class="card-sub" style="margin-bottom:6px;">${state.onboardingWizardStep.title}</div>`
-                        : nothing}
-                      ${state.onboardingWizardStep.message
-                        ? html`<div style="margin-bottom:8px; font-size:0.9em;">${state.onboardingWizardStep.message}</div>`
-                        : nothing}
-                      ${state.onboardingWizardStep.type === "text"
-                        ? html`
+                      ${
+                        state.onboardingWizardStep.title
+                          ? html`<div class="card-sub" style="margin-bottom:6px;">${state.onboardingWizardStep.title}</div>`
+                          : nothing
+                      }
+                      ${
+                        state.onboardingWizardStep.message
+                          ? html`<div style="margin-bottom:8px; font-size:0.9em;">${state.onboardingWizardStep.message}</div>`
+                          : nothing
+                      }
+                      ${
+                        state.onboardingWizardStep.type === "text"
+                          ? html`
                             <label class="field">
                               <input
                                 type=${state.onboardingWizardStep.sensitive ? "password" : "text"}
@@ -297,7 +312,9 @@ export function renderProductApp(state: AppViewState) {
                                 placeholder=${state.onboardingWizardStep.placeholder ?? "Введите значение"}
                                 ?disabled=${state.onboardingWizardBusy}
                                 @keydown=${(e: KeyboardEvent) => {
-                                  if (e.key === "Enter") void state.advanceOnboardingWizard();
+                                  if (e.key === "Enter") {
+                                    void state.advanceOnboardingWizard();
+                                  }
                                 }}
                               />
                             </label>
@@ -311,9 +328,9 @@ export function renderProductApp(state: AppViewState) {
                               </button>
                             </div>
                           `
-                        : state.onboardingWizardStep.type === "note" ||
-                            state.onboardingWizardStep.type === "action"
-                          ? html`
+                          : state.onboardingWizardStep.type === "note" ||
+                              state.onboardingWizardStep.type === "action"
+                            ? html`
                               <div class="row" style="margin-top:8px;">
                                 <button
                                   class="btn primary"
@@ -324,7 +341,8 @@ export function renderProductApp(state: AppViewState) {
                                 </button>
                               </div>
                             `
-                          : nothing}
+                            : nothing
+                      }
                     </div>
                   `
                 : nothing
@@ -396,15 +414,15 @@ export function renderProductApp(state: AppViewState) {
 
   return html`
     <div class="product-shell">
-      <aside class="product-rail" role="navigation" aria-label="Main navigation">
-        <button class="product-rail__btn" title="Новый чат" aria-label="New chat" ?disabled=${!chatReady} @click=${() => void state.productNewChat()}>
+      <aside class="product-rail" role="navigation" aria-label="Главная навигация">
+        <button class="product-rail__btn" title="Новый чат" aria-label="Новый чат" ?disabled=${!chatReady} @click=${() => void state.productNewChat()}>
           +
         </button>
         <button
           class="product-rail__btn"
           data-active=${state.productPanel === "projects"}
           title="Проекты"
-          aria-label="Projects panel"
+          aria-label="Панель проектов"
           aria-pressed=${state.productPanel === "projects"}
           @click=${() => (state.productPanel = "projects")}
         >
@@ -414,14 +432,14 @@ export function renderProductApp(state: AppViewState) {
           class="product-rail__btn"
           data-active=${state.productPanel === "telegram"}
           title="Telegram"
-          aria-label="Telegram panel"
+          aria-label="Панель Telegram"
           aria-pressed=${state.productPanel === "telegram"}
           @click=${() => (state.productPanel = "telegram")}
         >
           ${icons.link}
         </button>
         <div style="flex:1"></div>
-        <button class="product-rail__btn" title="Для разработчиков" aria-label="Developer tools" @click=${() => (state.productDevDrawerOpen = true)}>
+        <button class="product-rail__btn" title="Для разработчиков" aria-label="Инструменты разработчика" @click=${() => (state.productDevDrawerOpen = true)}>
           &lt;/&gt;
         </button>
       </aside>
@@ -439,6 +457,8 @@ export function renderProductApp(state: AppViewState) {
             (p) => html`
               <button
                 class="product-item ${p.id === agentId ? "active" : ""}"
+                aria-label="${p.identity?.name ?? p.name ?? p.id} проект"
+                aria-current=${p.id === agentId ? "page" : "false"}
                 @click=${() => void state.productSelectAgent(p.id)}
               >
                 <div class="product-item__title">${p.identity?.name ?? p.name ?? p.id}</div>
@@ -458,6 +478,8 @@ export function renderProductApp(state: AppViewState) {
               <button
                 class="product-item ${s.key === state.sessionKey ? "active" : ""}"
                 ?disabled=${!chatReady}
+                aria-label="Чат: ${s.displayName ?? s.label ?? s.key}"
+                aria-current=${s.key === state.sessionKey ? "page" : "false"}
                 @click=${() => {
                   void state.productOpenSession(s.key);
                 }}
