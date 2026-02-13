@@ -59,6 +59,11 @@ export type AppViewState = {
   productTelegramBusy: boolean;
   productTelegramError: string | null;
   productTelegramSuccess: string | null;
+  productProjects: Array<{ id: string; name: string; expanded?: boolean; sessionKeys?: string[] }>;
+  productProjectsLoading: boolean;
+  productProjectsError: string | null;
+  productEditingProjectId: string | null;
+  productCollapsedProjects: Set<string>;
   basePath: string;
   connected: boolean;
   theme: ThemeMode;
@@ -289,6 +294,9 @@ export type AppViewState = {
   productResetChat: () => Promise<void>;
   productCreateProject: () => Promise<void>;
   productConnectTelegram: () => Promise<void>;
+  productLoadProjects: () => void;
+  productSaveProjects: () => void;
+  productToggleProjectCollapsed: (projectId: string) => void;
   productReloadConfig: () => Promise<void>;
   productResetAll: () => Promise<void>;
   productOpenSession: (sessionKey: string) => Promise<void>;

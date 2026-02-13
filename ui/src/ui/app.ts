@@ -186,6 +186,11 @@ export class OpenClawApp extends LitElement {
   @state() productTelegramBusy = false;
   @state() productTelegramError: string | null = null;
   @state() productTelegramSuccess: string | null = null;
+  @state() productProjects: Array<{ id: string; name: string; expanded?: boolean; sessionKeys?: string[] }> = [];
+  @state() productProjectsLoading = false;
+  @state() productProjectsError: string | null = null;
+  @state() productEditingProjectId: string | null = null;
+  @state() productCollapsedProjects = new Set<string>();
   @state() connected = false;
   @state() theme: ThemeMode = this.settings.theme ?? "system";
   @state() themeResolved: ResolvedTheme = "dark";
@@ -468,6 +473,10 @@ export class OpenClawApp extends LitElement {
         }
         if (!this.configSnapshot && !this.configLoading) {
           void this.productReloadConfig();
+        }
+        // Load projects from localStorage
+        if (this.productProjects.length === 0 && this.productCollapsedProjects.size === 0) {
+          this.productLoadProjects();
         }
         void this.productEnsureChatLoaded();
       }
@@ -798,6 +807,30 @@ export class OpenClawApp extends LitElement {
     this.productCreateProjectName = "";
     this.productCreateProjectDesc = "";
     await this.productSelectAgent(agentId);
+  }
+
+  productLoadProjects() {
+    import("./storage.projects.ts").then(({ loadProjects, loadCollapsedProjects }) => {
+      this.productProjects = loadProjects();
+      this.productCollapsedProjects = loadCollapsedProjects();
+    });
+  }
+
+  productSaveProjects() {
+    import("./storage.projects.ts").then(({ saveProjects, saveCollapsedProjects }) => {
+      saveProjects(this.productProjects);
+      saveCollapsedProjects(this.productCollapsedProjects);
+    });
+  }
+
+  productToggleProjectCollapsed(projectId: string) {
+    this.productCollapsedProjects = new Set(this.productCollapsedProjects);
+    if (this.productCollapsedProjects.has(projectId)) {
+      this.productCollapsedProjects.delete(projectId);
+    } else {
+      this.productCollapsedProjects.add(projectId);
+    }
+    this.productSaveProjects();
   }
 
   async productConnectTelegram() {

@@ -5,6 +5,7 @@ import { loadChatHistory, type ChatState } from "./controllers/chat.ts";
 import { icons } from "./icons.ts";
 import { normalizeBasePath, pathForTab } from "./navigation.ts";
 import { renderChat } from "./views/chat.ts";
+import type { ProjectEntry } from "./storage.projects.ts";
 
 function buildHref(tab: string, basePath: string): string {
   const base = normalizeBasePath(basePath ?? "");
@@ -20,7 +21,7 @@ function renderDevDrawer(state: AppViewState) {
     <div class="product-dev-drawer ${state.productDevDrawerOpen ? 'open' : ''}">
       <div class="product-dev-drawer__header">
         <div>Для разработчиков</div>
-        <button class="btn btn--sm" @click=${() => (state.productDevDrawerOpen = false)}>
+        <button class="btn btn--sm" aria-label="Close developer drawer" @click=${() => (state.productDevDrawerOpen = false)}>
           ${icons.x}
         </button>
       </div>
@@ -52,8 +53,8 @@ function renderCreateProjectModal(state: AppViewState) {
   }
   return html`
     <div class="product-modal-backdrop ${state.productCreateProjectOpen ? 'open' : ''}" @click=${() => (state.productCreateProjectOpen = false)}>
-      <div class="product-modal" @click=${(e: Event) => e.stopPropagation()}>
-        <div class="product-modal__title">Новый проект</div>
+      <div class="product-modal" role="dialog" aria-labelledby="create-project-title" @click=${(e: Event) => e.stopPropagation()}>
+        <div class="product-modal__title" id="create-project-title">Новый проект</div>
         <label class="field">
           <span>Название</span>
           <input
@@ -71,10 +72,91 @@ function renderCreateProjectModal(state: AppViewState) {
           />
         </label>
         <div class="row" style="margin-top:12px; justify-content:flex-end;">
-          <button class="btn" @click=${() => (state.productCreateProjectOpen = false)}>Отмена</button>
-          <button class="btn primary" @click=${() => void state.productCreateProject()}>Создать</button>
+          <button class="btn" aria-label="Cancel project creation" @click=${() => (state.productCreateProjectOpen = false)}>Отмена</button>
+          <button class="btn primary" aria-label="Create new project" @click=${() => void state.productCreateProject()}>Создать</button>
         </div>
       </div>
+    </div>
+  `;
+}
+
+function renderProjectsPanel(state: AppViewState) {
+  const sessions = state.productSessionsResult?.sessions ?? [];
+  const projects = state.productProjects ?? [];
+  const chatReady = state.connected && state.simpleOnboardingDone;
+
+  // Get sessions not in any project
+  const projectSessionKeys = new Set(projects.flatMap((p) => p.sessionKeys ?? []));
+  const ungroupedSessions = sessions.filter((s) => !projectSessionKeys.has(s.key));
+
+  return html`
+    <div class="product-projects-panel">
+      ${projects.length > 0
+        ? html`
+            ${projects.map(
+              (project) => html`
+                <div class="product-project-group">
+                  <button
+                    class="product-project-header"
+                    @click=${() => state.productToggleProjectCollapsed(project.id)}
+                  >
+                    <span class="product-project-icon">${state.productCollapsedProjects.has(project.id) ? "▶" : "▼"}</span>
+                    <span class="product-project-name">📁 ${project.name}</span>
+                  </button>
+                  ${!state.productCollapsedProjects.has(project.id)
+                    ? html`
+                        <div class="product-project-chats">
+                          ${(project.sessionKeys ?? [])
+                            .map((key) => sessions.find((s) => s.key === key))
+                            .filter(Boolean)
+                            .map(
+                              (s) => html`
+                                <button
+                                  class="product-item product-item--nested ${s?.key === state.sessionKey ? "active" : ""}"
+                                  ?disabled=${!chatReady}
+                                  @click=${() => {
+                                    if (s?.key) void state.productOpenSession(s.key);
+                                  }}
+                                >
+                                  <div class="product-item__title">└ ${s?.displayName ?? s?.label ?? s?.key}</div>
+                                  <div class="product-item__sub">${s?.lastMessage?.text ?? ""}</div>
+                                </button>
+                              `,
+                            )}
+                        </div>
+                      `
+                    : nothing}
+                </div>
+              `,
+            )}
+          `
+        : nothing}
+
+      ${ungroupedSessions.length > 0
+        ? html`
+            <div class="product-project-group">
+              <div class="product-project-header product-project-header--ungrouped">
+                <span class="product-project-name">Без проекта</span>
+              </div>
+              <div class="product-project-chats">
+                ${ungroupedSessions.map(
+                  (s) => html`
+                    <button
+                      class="product-item product-item--nested ${s.key === state.sessionKey ? "active" : ""}"
+                      ?disabled=${!chatReady}
+                      @click=${() => {
+                        void state.productOpenSession(s.key);
+                      }}
+                    >
+                      <div class="product-item__title">└ ${s.displayName ?? s.label ?? s.key}</div>
+                      <div class="product-item__sub">${s.lastMessage?.text ?? ""}</div>
+                    </button>
+                  `,
+                )}
+              </div>
+            </div>
+          `
+        : nothing}
     </div>
   `;
 }
@@ -249,9 +331,11 @@ export function renderProductApp(state: AppViewState) {
             }
           </section>
         `
-      : state.productPanel === "telegram"
-        ? renderTelegramPanel(state)
-        : html`
+      : state.productPanel === "projects"
+        ? renderProjectsPanel(state)
+        : state.productPanel === "telegram"
+          ? renderTelegramPanel(state)
+          : html`
             ${renderChat({
               sessionKey: state.sessionKey,
               onSessionKeyChange: () => undefined,
@@ -312,14 +396,16 @@ export function renderProductApp(state: AppViewState) {
 
   return html`
     <div class="product-shell">
-      <aside class="product-rail">
-        <button class="product-rail__btn" title="Новый чат" ?disabled=${!chatReady} @click=${() => void state.productNewChat()}>
+      <aside class="product-rail" role="navigation" aria-label="Main navigation">
+        <button class="product-rail__btn" title="Новый чат" aria-label="New chat" ?disabled=${!chatReady} @click=${() => void state.productNewChat()}>
           +
         </button>
         <button
           class="product-rail__btn"
           data-active=${state.productPanel === "projects"}
           title="Проекты"
+          aria-label="Projects panel"
+          aria-pressed=${state.productPanel === "projects"}
           @click=${() => (state.productPanel = "projects")}
         >
           ${icons.folder}
@@ -328,23 +414,25 @@ export function renderProductApp(state: AppViewState) {
           class="product-rail__btn"
           data-active=${state.productPanel === "telegram"}
           title="Telegram"
+          aria-label="Telegram panel"
+          aria-pressed=${state.productPanel === "telegram"}
           @click=${() => (state.productPanel = "telegram")}
         >
           ${icons.link}
         </button>
         <div style="flex:1"></div>
-        <button class="product-rail__btn" title="Для разработчиков" @click=${() => (state.productDevDrawerOpen = true)}>
+        <button class="product-rail__btn" title="Для разработчиков" aria-label="Developer tools" @click=${() => (state.productDevDrawerOpen = true)}>
           &lt;/&gt;
         </button>
       </aside>
 
-      <aside class="product-sidebar">
+      <aside class="product-sidebar" role="complementary" aria-label="Sidebar with projects and chats">
         <div class="product-sidebar__header">
           <div class="product-title">OpenClaw</div>
           <div class="product-sub">Проекты</div>
         </div>
         <div class="product-sidebar__section">
-          <button class="btn" @click=${() => (state.productCreateProjectOpen = true)}>Создать проект</button>
+          <button class="btn" aria-label="Create new project" @click=${() => (state.productCreateProjectOpen = true)}>Создать проект</button>
         </div>
         <div class="product-sidebar__list">
           ${projectList.map(
@@ -362,7 +450,7 @@ export function renderProductApp(state: AppViewState) {
 
         <div class="product-sidebar__header" style="margin-top:12px;">
           <div class="product-sub">Чаты</div>
-          <button class="btn btn--sm" ?disabled=${!chatReady} @click=${() => void state.productNewChat()}>+</button>
+          <button class="btn btn--sm" aria-label="New chat" ?disabled=${!chatReady} @click=${() => void state.productNewChat()}>+</button>
         </div>
         <div class="product-sidebar__list">
           ${sessions.map(
