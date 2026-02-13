@@ -50,14 +50,6 @@ export async function loadChatHistory(state: ChatState) {
   }
 }
 
-function dataUrlToBase64(dataUrl: string): { content: string; mimeType: string } | null {
-  const match = /^data:([^;]+);base64,(.+)$/.exec(dataUrl);
-  if (!match) {
-    return null;
-  }
-  return { mimeType: match[1], content: match[2] };
-}
-
 export async function sendChatMessage(
   state: ChatState,
   message: string,
@@ -74,7 +66,7 @@ export async function sendChatMessage(
 
   const now = Date.now();
 
-  // Build user message content blocks
+  // Build user message content blocks (UI display only).
   const contentBlocks: Array<{ type: string; text?: string; source?: unknown }> = [];
   if (msg) {
     contentBlocks.push({ type: "text", text: msg });
@@ -82,6 +74,9 @@ export async function sendChatMessage(
   // Add image previews to the message for display
   if (hasAttachments) {
     for (const att of attachments) {
+      if (att.kind !== "image" || !att.dataUrl) {
+        continue;
+      }
       contentBlocks.push({
         type: "image",
         source: { type: "base64", media_type: att.mimeType, data: att.dataUrl },
@@ -105,21 +100,14 @@ export async function sendChatMessage(
   state.chatStream = "";
   state.chatStreamStartedAt = now;
 
-  // Convert attachments to API format
+  // Convert attachments to API format (gateway expects base64 without data URL prefix).
   const apiAttachments = hasAttachments
-    ? attachments
-        .map((att) => {
-          const parsed = dataUrlToBase64(att.dataUrl);
-          if (!parsed) {
-            return null;
-          }
-          return {
-            type: "image",
-            mimeType: parsed.mimeType,
-            content: parsed.content,
-          };
-        })
-        .filter((a): a is NonNullable<typeof a> => a !== null)
+    ? attachments.map((att) => ({
+        type: att.kind,
+        mimeType: att.mimeType,
+        fileName: att.fileName,
+        content: att.base64,
+      }))
     : undefined;
 
   try {

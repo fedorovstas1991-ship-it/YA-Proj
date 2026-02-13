@@ -30,6 +30,7 @@ export function createGatewayReloadHandlers(params: {
   setState: (state: GatewayHotReloadState) => void;
   startChannel: (name: ChannelKind) => Promise<void>;
   stopChannel: (name: ChannelKind) => Promise<void>;
+  isWizardRunning?: () => boolean;
   logHooks: {
     info: (msg: string) => void;
     warn: (msg: string) => void;
@@ -40,6 +41,18 @@ export function createGatewayReloadHandlers(params: {
   logCron: { error: (msg: string) => void };
   logReload: { info: (msg: string) => void; warn: (msg: string) => void };
 }) {
+  let deferredRestartReasons: string | null = null;
+
+  const emitGatewayRestart = () => {
+    if (process.listenerCount("SIGUSR1") === 0) {
+      params.logReload.warn("no SIGUSR1 listener found; restart skipped");
+      return false;
+    }
+    authorizeGatewaySigusr1Restart();
+    process.emit("SIGUSR1");
+    return true;
+  };
+
   const applyHotReload = async (
     plan: GatewayReloadPlan,
     nextConfig: ReturnType<typeof loadConfig>,
@@ -149,13 +162,28 @@ export function createGatewayReloadHandlers(params: {
       ? plan.restartReasons.join(", ")
       : plan.changedPaths.join(", ");
     params.logReload.warn(`config change requires gateway restart (${reasons})`);
-    if (process.listenerCount("SIGUSR1") === 0) {
-      params.logReload.warn("no SIGUSR1 listener found; restart skipped");
+
+    if (params.isWizardRunning?.()) {
+      deferredRestartReasons = reasons;
+      params.logReload.info("deferring gateway restart until onboarding wizard completes");
       return;
     }
-    authorizeGatewaySigusr1Restart();
-    process.emit("SIGUSR1");
+
+    void emitGatewayRestart();
   };
 
-  return { applyHotReload, requestGatewayRestart };
+  const flushDeferredRestart = () => {
+    if (!deferredRestartReasons) {
+      return false;
+    }
+    if (params.isWizardRunning?.()) {
+      return false;
+    }
+    const reasons = deferredRestartReasons;
+    deferredRestartReasons = null;
+    params.logReload.warn(`applying deferred gateway restart (${reasons})`);
+    return emitGatewayRestart();
+  };
+
+  return { applyHotReload, requestGatewayRestart, flushDeferredRestart };
 }

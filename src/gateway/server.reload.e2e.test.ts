@@ -297,6 +297,67 @@ describe("gateway hot reload", () => {
 
     await server.close();
   });
+
+  it("defers restart while wizard is running and flushes after completion", async () => {
+    const { server, ws } = await startServerWithClient(undefined, {
+      wizardRunner: async (_opts, _runtime, prompter) => {
+        await prompter.text({ id: "workspace", message: "Workspace" });
+      },
+    });
+    await connectOk(ws);
+
+    const start = await rpcReq<{
+      sessionId?: string;
+      step?: { id?: string };
+      status?: string;
+    }>(ws, "wizard.start", { mode: "local" });
+    expect(start.ok).toBe(true);
+    expect(start.payload?.status).toBe("running");
+    const sessionId = start.payload?.sessionId;
+    expect(typeof sessionId).toBe("string");
+    const stepId = start.payload?.step?.id;
+    expect(typeof stepId).toBe("string");
+
+    const onRestart = hoisted.getOnRestart();
+    expect(onRestart).toBeTypeOf("function");
+
+    const signalSpy = vi.fn();
+    const sigusr1 = () => signalSpy();
+    process.on("SIGUSR1", sigusr1);
+
+    try {
+      onRestart?.(
+        {
+          changedPaths: ["gateway.port"],
+          restartGateway: true,
+          restartReasons: ["gateway.port"],
+          hotReasons: [],
+          reloadHooks: false,
+          restartGmailWatcher: false,
+          restartBrowserControl: false,
+          restartCron: false,
+          restartHeartbeat: false,
+          restartChannels: new Set(),
+          noopPaths: [],
+        },
+        {},
+      );
+
+      expect(signalSpy).toHaveBeenCalledTimes(0);
+
+      const next = await rpcReq<{ done?: boolean }>(ws, "wizard.next", {
+        sessionId,
+        answer: { stepId, value: "ok" },
+      });
+      expect(next.ok).toBe(true);
+      expect(next.payload?.done).toBe(true);
+      expect(signalSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      process.off("SIGUSR1", sigusr1);
+      ws.close();
+      await server.close();
+    }
+  });
 });
 
 describe("gateway agents", () => {

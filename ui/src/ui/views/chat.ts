@@ -64,6 +64,15 @@ export type ChatProps = {
   onAbort?: () => void;
   onQueueRemove: (id: string) => void;
   onNewSession: () => void;
+  allowNewSession?: boolean;
+  onResetSession?: () => void;
+  newSessionLabel?: string;
+  resetLabel?: string;
+  stopLabel?: string;
+  sendLabel?: string;
+  attachmentsLabel?: string;
+  messageLabel?: string;
+  composePlaceholder?: string;
   onOpenSidebar?: (content: string) => void;
   onCloseSidebar?: () => void;
   onSplitRatioChange?: (ratio: number) => void;
@@ -86,7 +95,7 @@ function renderCompactionIndicator(status: CompactionIndicatorStatus | null | un
   if (status.active) {
     return html`
       <div class="compaction-indicator compaction-indicator--active" role="status" aria-live="polite">
-        ${icons.loader} Compacting context...
+        ${icons.loader} Сжимаю контекст...
       </div>
     `;
   }
@@ -97,7 +106,7 @@ function renderCompactionIndicator(status: CompactionIndicatorStatus | null | un
     if (elapsed < COMPACTION_TOAST_DURATION_MS) {
       return html`
         <div class="compaction-indicator compaction-indicator--complete" role="status" aria-live="polite">
-          ${icons.check} Context compacted
+          ${icons.check} Контекст сжат
         </div>
       `;
     }
@@ -110,44 +119,101 @@ function generateAttachmentId(): string {
   return `att-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+
+function base64FromDataUrl(dataUrl: string): string | null {
+  const match = /^data:[^;]+;base64,(.+)$/.exec(dataUrl);
+  return match?.[1] ? match[1] : null;
+}
+
+function toBase64(buffer: ArrayBuffer): string {
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+  return btoa(binary);
+}
+
+function addAttachmentFromFile(file: File, props: ChatProps) {
+  if (!props.onAttachmentsChange) {
+    return;
+  }
+  if (file.size > MAX_ATTACHMENT_BYTES) {
+    window.alert(
+      `Файл слишком большой: ${file.name} (${file.size} байт). Лимит: ${MAX_ATTACHMENT_BYTES}.`,
+    );
+    return;
+  }
+  const isImage = Boolean(file.type) && file.type.startsWith("image/");
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    const current = props.attachments ?? [];
+    if (isImage) {
+      const dataUrl = reader.result as string;
+      const base64 = base64FromDataUrl(dataUrl);
+      if (!base64) {
+        return;
+      }
+      const next: ChatAttachment = {
+        id: generateAttachmentId(),
+        kind: "image",
+        fileName: file.name || "image",
+        dataUrl,
+        base64,
+        mimeType: file.type || "image/png",
+        sizeBytes: file.size,
+      };
+      props.onAttachmentsChange?.([...current, next]);
+      return;
+    }
+
+    const buffer = reader.result as ArrayBuffer;
+    const next: ChatAttachment = {
+      id: generateAttachmentId(),
+      kind: "file",
+      fileName: file.name || "file",
+      base64: toBase64(buffer),
+      mimeType: file.type || "application/octet-stream",
+      sizeBytes: file.size,
+    };
+    props.onAttachmentsChange?.([...current, next]);
+  });
+  if (isImage) {
+    reader.readAsDataURL(file);
+  } else {
+    reader.readAsArrayBuffer(file);
+  }
+}
+
 function handlePaste(e: ClipboardEvent, props: ChatProps) {
   const items = e.clipboardData?.items;
   if (!items || !props.onAttachmentsChange) {
     return;
   }
 
-  const imageItems: DataTransferItem[] = [];
+  const fileItems: DataTransferItem[] = [];
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    if (item.type.startsWith("image/")) {
-      imageItems.push(item);
+    if (item.kind === "file") {
+      fileItems.push(item);
     }
   }
 
-  if (imageItems.length === 0) {
+  if (fileItems.length === 0) {
     return;
   }
 
   e.preventDefault();
 
-  for (const item of imageItems) {
+  for (const item of fileItems) {
     const file = item.getAsFile();
     if (!file) {
       continue;
     }
-
-    const reader = new FileReader();
-    reader.addEventListener("load", () => {
-      const dataUrl = reader.result as string;
-      const newAttachment: ChatAttachment = {
-        id: generateAttachmentId(),
-        dataUrl,
-        mimeType: file.type,
-      };
-      const current = props.attachments ?? [];
-      props.onAttachmentsChange?.([...current, newAttachment]);
-    });
-    reader.readAsDataURL(file);
+    addAttachmentFromFile(file, props);
   }
 }
 
@@ -162,15 +228,26 @@ function renderAttachmentPreview(props: ChatProps) {
       ${attachments.map(
         (att) => html`
           <div class="chat-attachment">
-            <img
-              src=${att.dataUrl}
-              alt="Attachment preview"
-              class="chat-attachment__img"
-            />
+            ${
+              att.kind === "image" && att.dataUrl
+                ? html`
+                    <img
+                      src=${att.dataUrl}
+                      alt="Предпросмотр вложения"
+                      class="chat-attachment__img"
+                    />
+                  `
+                : html`
+                    <div class="chat-attachment__file">
+                      <div class="chat-attachment__file-name">${att.fileName}</div>
+                      <div class="chat-attachment__file-meta">${att.mimeType}</div>
+                    </div>
+                  `
+            }
             <button
               class="chat-attachment__remove"
               type="button"
-              aria-label="Remove attachment"
+              aria-label="Удалить вложение"
               @click=${() => {
                 const next = (props.attachments ?? []).filter((a) => a.id !== att.id);
                 props.onAttachmentsChange?.(next);
@@ -198,14 +275,41 @@ export function renderChat(props: ChatProps) {
   };
 
   const hasAttachments = (props.attachments?.length ?? 0) > 0;
-  const composePlaceholder = props.connected
-    ? hasAttachments
-      ? "Add a message or paste more images..."
-      : "Message (↩ to send, Shift+↩ for line breaks, paste images)"
-    : "Connect to the gateway to start chatting…";
+  const composePlaceholder =
+    props.composePlaceholder ??
+    (props.connected
+      ? hasAttachments
+        ? "Добавь сообщение или приложи еще файлы..."
+        : "Сообщение (Enter — отправить, Shift+Enter — перенос, вставка/драг&дроп файлов)"
+      : "Подключись к gateway, чтобы начать чат...");
 
   const splitRatio = props.splitRatio ?? 0.6;
   const sidebarOpen = Boolean(props.sidebarOpen && props.onCloseSidebar);
+  let filePickerEl: HTMLInputElement | null = null;
+
+  const addFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) {
+      return;
+    }
+    for (const file of Array.from(files)) {
+      addAttachmentFromFile(file, props);
+    }
+  };
+  const handleDrop = (event: DragEvent) => {
+    event.preventDefault();
+    if (!event.dataTransfer) {
+      return;
+    }
+    addFiles(event.dataTransfer.files);
+  };
+  const handleDragOver = (event: DragEvent) => {
+    if (!event.dataTransfer) {
+      return;
+    }
+    if (Array.from(event.dataTransfer.types).includes("Files")) {
+      event.preventDefault();
+    }
+  };
   const thread = html`
     <div
       class="chat-thread"
@@ -216,7 +320,7 @@ export function renderChat(props: ChatProps) {
       ${
         props.loading
           ? html`
-              <div class="muted">Loading chat…</div>
+              <div class="muted">Загружаю чат…</div>
             `
           : nothing
       }
@@ -263,7 +367,7 @@ export function renderChat(props: ChatProps) {
   `;
 
   return html`
-    <section class="card chat">
+    <section class="card chat" @drop=${handleDrop} @dragover=${handleDragOver}>
       ${props.disabledReason ? html`<div class="callout">${props.disabledReason}</div>` : nothing}
 
       ${props.error ? html`<div class="callout danger">${props.error}</div>` : nothing}
@@ -275,8 +379,8 @@ export function renderChat(props: ChatProps) {
               class="chat-focus-exit"
               type="button"
               @click=${props.onToggleFocusMode}
-              aria-label="Exit focus mode"
-              title="Exit focus mode"
+              aria-label="Выйти из фокус-режима"
+              title="Выйти из фокус-режима"
             >
               ${icons.x}
             </button>
@@ -323,7 +427,7 @@ export function renderChat(props: ChatProps) {
         props.queue.length
           ? html`
             <div class="chat-queue" role="status" aria-live="polite">
-              <div class="chat-queue__title">Queued (${props.queue.length})</div>
+              <div class="chat-queue__title">Очередь (${props.queue.length})</div>
               <div class="chat-queue__list">
                 ${props.queue.map(
                   (item) => html`
@@ -331,13 +435,13 @@ export function renderChat(props: ChatProps) {
                       <div class="chat-queue__text">
                         ${
                           item.text ||
-                          (item.attachments?.length ? `Image (${item.attachments.length})` : "")
+                          (item.attachments?.length ? `Вложение (${item.attachments.length})` : "")
                         }
                       </div>
                       <button
                         class="btn chat-queue__remove"
                         type="button"
-                        aria-label="Remove queued message"
+                        aria-label="Удалить сообщение из очереди"
                         @click=${() => props.onQueueRemove(item.id)}
                       >
                         ${icons.x}
@@ -361,7 +465,7 @@ export function renderChat(props: ChatProps) {
               type="button"
               @click=${props.onScrollToBottom}
             >
-              New messages ${icons.arrowDown}
+              Новые сообщения ${icons.arrowDown}
             </button>
           `
           : nothing
@@ -371,7 +475,7 @@ export function renderChat(props: ChatProps) {
         ${renderAttachmentPreview(props)}
         <div class="chat-compose__row">
           <label class="field chat-compose__field">
-            <span>Message</span>
+            <span>${props.messageLabel ?? "Сообщение"}</span>
             <textarea
               ${ref((el) => el && adjustTextareaHeight(el as HTMLTextAreaElement))}
               .value=${props.draft}
@@ -404,19 +508,70 @@ export function renderChat(props: ChatProps) {
             ></textarea>
           </label>
           <div class="chat-compose__actions">
+            <input
+              type="file"
+              multiple
+              style="display:none"
+              ${ref((el) => (filePickerEl = el as HTMLInputElement))}
+              @change=${(e: Event) => {
+                const input = e.target as HTMLInputElement;
+                addFiles(input.files);
+                input.value = "";
+              }}
+            />
             <button
               class="btn"
-              ?disabled=${!props.connected || (!canAbort && props.sending)}
-              @click=${canAbort ? props.onAbort : props.onNewSession}
+              ?disabled=${!props.connected}
+              title=${props.attachmentsLabel ?? "Вложения"}
+              @click=${() => filePickerEl?.click()}
             >
-              ${canAbort ? "Stop" : "New session"}
+              ${props.attachmentsLabel ?? "Вложения"}
             </button>
+            ${
+              canAbort
+                ? html`
+                  <button
+                    class="btn"
+                    ?disabled=${!props.connected}
+                    @click=${props.onAbort}
+                  >
+                    ${props.stopLabel ?? "Стоп"}
+                  </button>
+                `
+                : null
+            }
+            ${
+              (props.allowNewSession ?? true)
+                ? html`
+                  <button
+                    class="btn"
+                    ?disabled=${!props.connected || props.sending}
+                    @click=${props.onNewSession}
+                  >
+                    ${props.newSessionLabel ?? "Новый чат"}
+                  </button>
+                `
+                : null
+            }
+            ${
+              props.onResetSession
+                ? html`
+                  <button
+                    class="btn"
+                    ?disabled=${!props.connected || props.sending}
+                    @click=${props.onResetSession}
+                  >
+                    ${props.resetLabel ?? "Сбросить чат"}
+                  </button>
+                `
+                : null
+            }
             <button
               class="btn primary"
               ?disabled=${!props.connected}
               @click=${props.onSend}
             >
-              ${isBusy ? "Queue" : "Send"}<kbd class="btn-kbd">↵</kbd>
+              ${isBusy ? "В очередь" : (props.sendLabel ?? "Отправить")}<kbd class="btn-kbd">↵</kbd>
             </button>
           </div>
         </div>

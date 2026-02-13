@@ -7,7 +7,9 @@ import type {
 import type { OpenClawConfig } from "../config/config.js";
 import type { RuntimeEnv } from "../runtime.js";
 import type { QuickstartGatewayDefaults, WizardFlow } from "./onboarding.types.js";
+import { resolveOpenClawAgentDir } from "../agents/agent-paths.js";
 import { ensureAuthProfileStore } from "../agents/auth-profiles.js";
+import { ensureOpenClawModelsJson } from "../agents/models-config.js";
 import { listChannelPlugins } from "../channels/plugins/index.js";
 import { formatCliCommand } from "../cli/command-format.js";
 import { promptAuthChoiceGrouped } from "../commands/auth-choice-prompt.js";
@@ -17,6 +19,8 @@ import {
   warnIfModelConfigLooksOff,
 } from "../commands/auth-choice.js";
 import { applyPrimaryModel, promptDefaultModel } from "../commands/model-picker.js";
+import { setAnthropicApiKey } from "../commands/onboard-auth.credentials.js";
+import { applyAuthProfileConfig } from "../commands/onboard-auth.js";
 import { setupChannels } from "../commands/onboard-channels.js";
 import { promptCustomApiConfig } from "../commands/onboard-custom.js";
 import {
@@ -87,11 +91,101 @@ async function requireRiskAcknowledgement(params: {
   }
 }
 
+// Anthropic SDK appends `/v1/messages` itself, so baseUrl must be the API root.
+const ELIZA_ANTHROPIC_BASE_URL = "https://api.eliza.yandex.net/anthropic";
+const ELIZA_DEFAULT_MODEL_REF = "anthropic/claude-sonnet-4-5";
+const ELIZA_DEFAULT_MODEL_ID = "claude-sonnet-4-5";
+
+function applyElizaAnthropicProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const providers = { ...cfg.models?.providers };
+  providers.anthropic = {
+    baseUrl: ELIZA_ANTHROPIC_BASE_URL,
+    api: "anthropic-messages",
+    // Define at least one model so generated models.json can override built-ins cleanly.
+    models: [
+      {
+        id: ELIZA_DEFAULT_MODEL_ID,
+        name: "Sonnet 4.5 (Eliza)",
+        api: "anthropic-messages",
+        reasoning: true,
+        input: ["text", "image"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 200000,
+        maxTokens: 8192,
+      },
+    ],
+  };
+
+  const existingModel = cfg.agents?.defaults?.model;
+  const nextWithModel = {
+    ...cfg,
+    agents: {
+      ...cfg.agents,
+      defaults: {
+        ...cfg.agents?.defaults,
+        model: {
+          ...(existingModel && "fallbacks" in (existingModel as Record<string, unknown>)
+            ? { fallbacks: (existingModel as { fallbacks?: string[] }).fallbacks }
+            : undefined),
+          primary: ELIZA_DEFAULT_MODEL_REF,
+        },
+      },
+    },
+    models: {
+      mode: cfg.models?.mode ?? "merge",
+      providers,
+    },
+  } satisfies OpenClawConfig;
+
+  return nextWithModel;
+}
+
+async function runElizaOnboardingWizard(params: {
+  opts: OnboardOptions & { flow?: string };
+  runtime: RuntimeEnv;
+  prompter: WizardPrompter;
+}) {
+  // UI-friendly wizard: single step, no risk prompt, no extra notes.
+  const apiKey = await params.prompter.text({
+    message: "Введите Eliza API key",
+    placeholder: "eliza_...",
+    sensitive: true,
+    validate: (value) => (String(value ?? "").trim() ? undefined : "Нужен API key"),
+  });
+
+  const agentDir = resolveOpenClawAgentDir();
+  await setAnthropicApiKey(String(apiKey).trim(), agentDir);
+
+  // Patch config to use Anthropic provider routed via Eliza endpoint + default Sonnet 4.5.
+  const snapshot = await readConfigFileSnapshot();
+  const baseConfig: OpenClawConfig = snapshot.valid ? snapshot.config : {};
+  let nextConfig = applyElizaAnthropicProviderConfig(baseConfig);
+  nextConfig = applyAuthProfileConfig(nextConfig, {
+    profileId: "anthropic:default",
+    provider: "anthropic",
+    mode: "api_key",
+    preferProfileFirst: true,
+  });
+
+  await writeConfigFile(nextConfig);
+  await ensureOpenClawModelsJson(nextConfig, agentDir);
+}
+
 export async function runOnboardingWizard(
   opts: OnboardOptions,
   runtime: RuntimeEnv = defaultRuntime,
   prompter: WizardPrompter,
 ) {
+  const requestedFlow = (opts as OnboardOptions & { flow?: string }).flow?.trim();
+  if (requestedFlow === "eliza") {
+    await runElizaOnboardingWizard({
+      opts: opts as OnboardOptions & { flow?: string },
+      runtime,
+      prompter,
+    });
+    return;
+  }
+
   printWizardHeader(runtime);
   await prompter.intro("OpenClaw onboarding");
   await requireRiskAcknowledgement({ opts, prompter });

@@ -23,12 +23,30 @@ If the Gateway is running on the same computer, open:
 
 If the page fails to load, start the Gateway first: `openclaw gateway`.
 
+### Simple mode (non-technical users)
+
+If you want a stripped-down UI (chat-first, recent chats list, no admin panels), open:
+
+- [http://127.0.0.1:18789/?simple=1](http://127.0.0.1:18789/?simple=1)
+
+This mode is intended for everyday users. You can switch back to the full dashboard from inside the UI.
+
 Auth is supplied during the WebSocket handshake via:
 
 - `connect.params.auth.token`
 - `connect.params.auth.password`
   The dashboard settings panel lets you store a token; passwords are not persisted.
   The onboarding wizard generates a gateway token by default, so paste it here on first connect.
+
+### One-click local launch (for colleagues)
+
+If you want "one click" startup for non-technical users:
+
+- CLI: `openclaw easy`
+  - ensures Control UI assets are built
+  - installs/starts local Gateway service if needed
+  - opens Simple mode URL (`?simple=1`) and injects token if available
+- macOS repo launcher: double-click `openclaw-simple.command`
 
 ## Device pairing (first connection)
 

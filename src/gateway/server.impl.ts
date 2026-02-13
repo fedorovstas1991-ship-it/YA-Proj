@@ -302,7 +302,13 @@ export async function startGatewayServer(
   }
 
   const wizardRunner = opts.wizardRunner ?? runOnboardingWizard;
-  const { wizardSessions, findRunningWizard, purgeWizardSession } = createWizardSessionTracker();
+  const wizardSessionTracker = createWizardSessionTracker();
+  const { wizardSessions, findRunningWizard } = wizardSessionTracker;
+  let flushDeferredRestart: (() => boolean) | null = null;
+  const purgeWizardSession = (id: string) => {
+    wizardSessionTracker.purgeWizardSession(id);
+    flushDeferredRestart?.();
+  };
 
   const deps = createDefaultDeps();
   let canvasHostServer: CanvasHostServer | null = null;
@@ -558,7 +564,7 @@ export async function startGatewayServer(
     logBrowser,
   }));
 
-  const { applyHotReload, requestGatewayRestart } = createGatewayReloadHandlers({
+  const reloadHandlers = createGatewayReloadHandlers({
     deps,
     broadcast,
     getState: () => ({
@@ -577,12 +583,15 @@ export async function startGatewayServer(
     },
     startChannel,
     stopChannel,
+    isWizardRunning: () => Boolean(findRunningWizard()),
     logHooks,
     logBrowser,
     logChannels,
     logCron,
     logReload,
   });
+  const { applyHotReload, requestGatewayRestart } = reloadHandlers;
+  flushDeferredRestart = reloadHandlers.flushDeferredRestart;
 
   const configReloader = startGatewayConfigReloader({
     initialConfig: cfgAtStart,

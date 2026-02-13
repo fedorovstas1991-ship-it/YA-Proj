@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import { dashboardCommand } from "../../commands/dashboard.js";
 import { doctorCommand } from "../../commands/doctor.js";
+import { easyCommand } from "../../commands/easy.js";
 import { resetCommand } from "../../commands/reset.js";
 import { uninstallCommand } from "../../commands/uninstall.js";
 import { defaultRuntime } from "../../runtime.js";
@@ -35,6 +36,20 @@ export function registerMaintenanceCommands(program: Command) {
           nonInteractive: Boolean(opts.nonInteractive),
           generateGatewayToken: Boolean(opts.generateGatewayToken),
           deep: Boolean(opts.deep),
+        });
+      });
+    });
+
+  program
+    .command("easy")
+    .description("Start local Gateway and open the simple Control UI")
+    .option("--no-open", "Print URL but do not launch a browser", false)
+    .option("--full-ui", "Open full dashboard instead of simple mode", false)
+    .action(async (opts) => {
+      await runCommandWithRuntime(defaultRuntime, async () => {
+        await easyCommand(defaultRuntime, {
+          noOpen: Boolean(opts.noOpen),
+          fullUi: Boolean(opts.fullUi),
         });
       });
     });

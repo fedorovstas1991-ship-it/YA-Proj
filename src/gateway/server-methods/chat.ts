@@ -1,4 +1,5 @@
 import { CURRENT_SESSION_VERSION, SessionManager } from "@mariozechner/pi-coding-agent";
+import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import type { MsgContext } from "../../auto-reply/templating.js";
@@ -25,6 +26,7 @@ import {
   errorShape,
   formatValidationErrors,
   validateChatAbortParams,
+  validateChatGreetParams,
   validateChatHistoryParams,
   validateChatInjectParams,
   validateChatSendParams,
@@ -637,6 +639,194 @@ export const chatHandlers: GatewayRequestHandlers = {
         runId: clientRunId,
         error: formatForLog(err),
       });
+    }
+  },
+  "chat.greet": async ({ params, respond, context, client }) => {
+    if (!validateChatGreetParams(params)) {
+      respond(
+        false,
+        undefined,
+        errorShape(
+          ErrorCodes.INVALID_REQUEST,
+          `invalid chat.greet params: ${formatValidationErrors(validateChatGreetParams.errors)}`,
+        ),
+      );
+      return;
+    }
+
+    const p = params as {
+      sessionKey: string;
+      reason?: "new_chat" | "reset" | "first_open";
+      timeoutMs?: number;
+      idempotencyKey?: string;
+    };
+
+    const rawSessionKey = String(p.sessionKey ?? "").trim();
+    if (!rawSessionKey) {
+      respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, "sessionKey required"));
+      return;
+    }
+
+    const { cfg, entry, canonicalKey: sessionKey } = loadSessionEntry(rawSessionKey);
+    const timeoutMs = resolveAgentTimeoutMs({
+      cfg,
+      overrideMs: p.timeoutMs,
+    });
+    const now = Date.now();
+    const runId = (p.idempotencyKey?.trim() || `greet-${randomUUID()}`).slice(0, 128);
+
+    const cached = context.dedupe.get(`greet:${runId}`);
+    if (cached) {
+      respond(cached.ok, cached.payload, cached.error, { cached: true, runId });
+      return;
+    }
+
+    const activeExisting = context.chatAbortControllers.get(runId);
+    if (activeExisting) {
+      respond(true, { runId, status: "in_flight" as const }, undefined, {
+        cached: true,
+        runId,
+      });
+      return;
+    }
+
+    try {
+      const abortController = new AbortController();
+      context.chatAbortControllers.set(runId, {
+        controller: abortController,
+        sessionId: entry?.sessionId ?? runId,
+        sessionKey: rawSessionKey,
+        startedAtMs: now,
+        expiresAtMs: resolveChatRunExpiresAtMs({ now, timeoutMs }),
+      });
+
+      respond(true, { runId, status: "started" as const }, undefined, { runId });
+
+      // Trigger the same greeting logic as a bare /new, but without persisting a "/new" user message.
+      // We route the command through BodyForCommands while keeping Body/RawBody empty.
+      const commandBody = "/new";
+      const clientInfo = client?.connect?.client;
+      const ctx: MsgContext = {
+        Body: "",
+        BodyForAgent: "",
+        BodyForCommands: commandBody,
+        RawBody: "",
+        CommandBody: commandBody,
+        SessionKey: sessionKey,
+        Provider: INTERNAL_MESSAGE_CHANNEL,
+        Surface: INTERNAL_MESSAGE_CHANNEL,
+        OriginatingChannel: INTERNAL_MESSAGE_CHANNEL,
+        ChatType: "direct",
+        CommandAuthorized: true,
+        MessageSid: runId,
+        SenderId: clientInfo?.id,
+        SenderName: clientInfo?.displayName,
+        SenderUsername: clientInfo?.displayName,
+        GatewayClientScopes: client?.connect?.scopes,
+      };
+
+      const agentId = resolveSessionAgentId({ sessionKey, config: cfg });
+      const { onModelSelected, ...prefixOptions } = createReplyPrefixOptions({
+        cfg,
+        agentId,
+        channel: INTERNAL_MESSAGE_CHANNEL,
+      });
+
+      const finalReplyParts: string[] = [];
+      const dispatcher = createReplyDispatcher({
+        ...prefixOptions,
+        onError: (err) => {
+          context.logGateway.warn(`webchat greet dispatch failed: ${formatForLog(err)}`);
+        },
+        deliver: async (payload, info) => {
+          if (info.kind !== "final") {
+            return;
+          }
+          const text = payload.text?.trim() ?? "";
+          if (!text) {
+            return;
+          }
+          finalReplyParts.push(text);
+        },
+      });
+
+      let agentRunStarted = false;
+      void dispatchInboundMessage({
+        ctx,
+        cfg,
+        dispatcher,
+        replyOptions: {
+          runId,
+          abortSignal: abortController.signal,
+          disableBlockStreaming: true,
+          onAgentRunStart: (startedRunId) => {
+            agentRunStarted = true;
+            const connId = typeof client?.connId === "string" ? client.connId : undefined;
+            const wantsToolEvents = hasGatewayClientCap(
+              client?.connect?.caps,
+              GATEWAY_CLIENT_CAPS.TOOL_EVENTS,
+            );
+            if (connId && wantsToolEvents) {
+              context.registerToolEventRecipient(startedRunId, connId);
+            }
+          },
+          onModelSelected,
+        },
+      })
+        .then(() => {
+          if (!agentRunStarted) {
+            const combinedReply = finalReplyParts
+              .map((part) => part.trim())
+              .filter(Boolean)
+              .join("\n\n")
+              .trim();
+            let message: Record<string, unknown> | undefined;
+            if (combinedReply) {
+              const { storePath: latestStorePath, entry: latestEntry } =
+                loadSessionEntry(sessionKey);
+              const sessionId = latestEntry?.sessionId ?? entry?.sessionId ?? runId;
+              const appended = appendAssistantTranscriptMessage({
+                message: combinedReply,
+                label: p.reason ? `greet:${p.reason}` : "greet",
+                sessionId,
+                storePath: latestStorePath,
+                sessionFile: latestEntry?.sessionFile,
+                createIfMissing: true,
+              });
+              message = appended.ok ? appended.message : undefined;
+            }
+            broadcastChatFinal({ context, runId, sessionKey: rawSessionKey, message });
+          }
+
+          context.dedupe.set(`greet:${runId}`, {
+            ts: Date.now(),
+            ok: true,
+            payload: { runId, status: "ok" as const },
+          });
+        })
+        .catch((err) => {
+          const error = errorShape(ErrorCodes.UNAVAILABLE, String(err));
+          context.dedupe.set(`greet:${runId}`, {
+            ts: Date.now(),
+            ok: false,
+            payload: { runId, status: "error" as const, summary: String(err) },
+            error,
+          });
+          broadcastChatError({
+            context,
+            runId,
+            sessionKey: rawSessionKey,
+            errorMessage: String(err),
+          });
+        })
+        .finally(() => {
+          context.chatAbortControllers.delete(runId);
+        });
+    } catch (err) {
+      const error = errorShape(ErrorCodes.UNAVAILABLE, String(err));
+      const payload = { runId, status: "error" as const, summary: String(err) };
+      context.dedupe.set(`greet:${runId}`, { ts: Date.now(), ok: false, payload, error });
+      respond(false, payload, error, { runId, error: formatForLog(err) });
     }
   },
   "chat.inject": async ({ params, respond, context }) => {

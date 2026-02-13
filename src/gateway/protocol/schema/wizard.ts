@@ -5,6 +5,8 @@ export const WizardStartParamsSchema = Type.Object(
   {
     mode: Type.Optional(Type.Union([Type.Literal("local"), Type.Literal("remote")])),
     workspace: Type.Optional(Type.String()),
+    // Optional hint for alternative wizard entrypoints (e.g. Control UI "simple" flows).
+    flow: Type.Optional(Type.String()),
   },
   { additionalProperties: false },
 );

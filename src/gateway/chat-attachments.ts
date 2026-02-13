@@ -1,4 +1,16 @@
+import {
+  DEFAULT_INPUT_FILE_MAX_BYTES,
+  DEFAULT_INPUT_FILE_MAX_CHARS,
+  DEFAULT_INPUT_FILE_MIMES,
+  DEFAULT_INPUT_MAX_REDIRECTS,
+  DEFAULT_INPUT_PDF_MAX_PAGES,
+  DEFAULT_INPUT_PDF_MAX_PIXELS,
+  DEFAULT_INPUT_PDF_MIN_TEXT_CHARS,
+  DEFAULT_INPUT_TIMEOUT_MS,
+  extractFileContentFromSource,
+} from "../media/input-files.js";
 import { detectMime } from "../media/mime.js";
+import { saveMediaBuffer } from "../media/store.js";
 
 export type ChatAttachment = {
   type?: string;
@@ -71,6 +83,8 @@ export async function parseMessageWithAttachments(
   }
 
   const images: ChatImageContent[] = [];
+  const fileSections: string[] = [];
+  const supportedFileMimes = new Set(DEFAULT_INPUT_FILE_MIMES);
 
   for (const [idx, att] of attachments.entries()) {
     if (!att) {
@@ -106,28 +120,80 @@ export async function parseMessageWithAttachments(
 
     const providedMime = normalizeMime(mime);
     const sniffedMime = normalizeMime(await sniffMimeFromBase64(b64));
-    if (sniffedMime && !isImageMime(sniffedMime)) {
-      log?.warn(`attachment ${label}: detected non-image (${sniffedMime}), dropping`);
+    const resolvedMime = sniffedMime ?? providedMime ?? normalizeMime(mime);
+
+    if (resolvedMime && isImageMime(resolvedMime)) {
+      if (sniffedMime && providedMime && sniffedMime !== providedMime) {
+        log?.warn(
+          `attachment ${label}: mime mismatch (${providedMime} -> ${sniffedMime}), using sniffed`,
+        );
+      }
+
+      images.push({
+        type: "image",
+        data: b64,
+        mimeType: resolvedMime,
+      });
       continue;
-    }
-    if (!sniffedMime && !isImageMime(providedMime)) {
-      log?.warn(`attachment ${label}: unable to detect image mime type, dropping`);
-      continue;
-    }
-    if (sniffedMime && providedMime && sniffedMime !== providedMime) {
-      log?.warn(
-        `attachment ${label}: mime mismatch (${providedMime} -> ${sniffedMime}), using sniffed`,
-      );
     }
 
-    images.push({
-      type: "image",
-      data: b64,
-      mimeType: sniffedMime ?? providedMime ?? mime,
-    });
+    if (resolvedMime && supportedFileMimes.has(resolvedMime)) {
+      const extracted = await extractFileContentFromSource({
+        source: {
+          type: "base64",
+          data: b64,
+          mediaType: resolvedMime,
+          filename: label,
+        },
+        limits: {
+          allowUrl: false,
+          allowedMimes: supportedFileMimes,
+          maxBytes: Math.min(maxBytes, DEFAULT_INPUT_FILE_MAX_BYTES),
+          maxChars: DEFAULT_INPUT_FILE_MAX_CHARS,
+          maxRedirects: DEFAULT_INPUT_MAX_REDIRECTS,
+          timeoutMs: DEFAULT_INPUT_TIMEOUT_MS,
+          pdf: {
+            maxPages: DEFAULT_INPUT_PDF_MAX_PAGES,
+            maxPixels: DEFAULT_INPUT_PDF_MAX_PIXELS,
+            minTextChars: DEFAULT_INPUT_PDF_MIN_TEXT_CHARS,
+          },
+        },
+      });
+
+      if (extracted.text && extracted.text.trim()) {
+        fileSections.push(`[Вложение: ${extracted.filename}]\n${extracted.text.trim()}`);
+      } else {
+        fileSections.push(`[Вложение: ${extracted.filename}]\n(текст не извлечён)`);
+      }
+      if (extracted.images?.length) {
+        for (const img of extracted.images) {
+          images.push({ type: "image", data: img.data, mimeType: img.mimeType });
+        }
+      }
+      continue;
+    }
+
+    try {
+      const buffer = Buffer.from(b64, "base64");
+      const saved = await saveMediaBuffer(
+        buffer,
+        resolvedMime ?? undefined,
+        "inbound",
+        Math.min(maxBytes, DEFAULT_INPUT_FILE_MAX_BYTES),
+        label,
+      );
+      fileSections.push(
+        `[Вложение: ${label}]\nФайл сохранён на gateway как "${saved.id}" (${saved.size} байт).`,
+      );
+    } catch (err) {
+      log?.warn(`attachment ${label}: save failed: ${String(err)}`);
+      fileSections.push(`[Вложение: ${label}]\n(не удалось сохранить файл)`);
+    }
   }
 
-  return { message, images };
+  const suffix = fileSections.length > 0 ? fileSections.join("\n\n") : "";
+  const nextMessage = suffix ? `${message}${message.trim() ? "\n\n" : ""}${suffix}` : message;
+  return { message: nextMessage, images };
 }
 
 /**

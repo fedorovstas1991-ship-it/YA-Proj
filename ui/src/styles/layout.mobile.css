@@ -4,6 +4,10 @@
 
 /* Tablet: Horizontal nav */
 @media (max-width: 1100px) {
+  .simple-shell {
+    grid-template-columns: 230px minmax(0, 1fr);
+  }
+
   .nav {
     display: flex;
     flex-direction: row;
@@ -46,6 +50,121 @@
 
 /* Mobile-specific styles */
 @media (max-width: 600px) {
+  .simple-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100vh;
+  }
+
+  @supports (height: 100dvh) {
+    .simple-shell {
+      height: 100dvh;
+    }
+  }
+
+  .simple-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 10px;
+    gap: 10px;
+    max-height: min(42dvh, 320px);
+  }
+
+  .simple-brand {
+    padding: 2px 4px;
+  }
+
+  .simple-brand__title {
+    font-size: 14px;
+  }
+
+  .simple-brand__sub {
+    font-size: 10px;
+  }
+
+  .simple-section-title {
+    padding: 0 4px;
+  }
+
+  .simple-session-list {
+    gap: 5px;
+  }
+
+  .simple-session {
+    padding: 8px;
+  }
+
+  .simple-session__title {
+    font-size: 13px;
+  }
+
+  .simple-session__meta {
+    font-size: 11px;
+  }
+
+  .simple-sidebar-footer {
+    flex-direction: row;
+    gap: 6px;
+  }
+
+  .simple-nav-link {
+    flex: 1;
+    min-width: 0;
+    padding-inline: 8px;
+  }
+
+  .simple-topbar {
+    min-height: unset;
+    padding: 8px;
+  }
+
+  .simple-topbar__left {
+    min-width: 0;
+  }
+
+  .simple-session-pill {
+    max-width: 44vw;
+  }
+
+  .simple-chat-wrap {
+    padding: 0 6px 6px;
+  }
+
+  .simple-main-content {
+    padding: 0 6px 6px;
+  }
+
+  .simple-chat-wrap .card.chat {
+    border-radius: var(--radius-lg);
+  }
+
+  .simple-setup-card {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .simple-actions {
+    gap: 8px;
+  }
+
+  .simple-actions .btn {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .simple-step-card {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .simple-step-title {
+    font-size: 13px;
+  }
+
+  .simple-step-message {
+    font-size: 12px;
+  }
+
   .shell {
     --shell-pad: 8px;
     --shell-gap: 8px;
@@ -303,6 +422,18 @@
 
 /* Small mobile */
 @media (max-width: 400px) {
+  .simple-sidebar {
+    max-height: min(48dvh, 300px);
+  }
+
+  .simple-sidebar-footer {
+    flex-direction: column;
+  }
+
+  .simple-session-pill {
+    max-width: 52vw;
+  }
+
   .shell {
     --shell-pad: 4px;
   }

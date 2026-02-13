@@ -61,6 +61,18 @@ export const ChatInjectParamsSchema = Type.Object(
   { additionalProperties: false },
 );
 
+export const ChatGreetParamsSchema = Type.Object(
+  {
+    sessionKey: NonEmptyString,
+    reason: Type.Optional(
+      Type.Union([Type.Literal("new_chat"), Type.Literal("reset"), Type.Literal("first_open")]),
+    ),
+    timeoutMs: Type.Optional(Type.Integer({ minimum: 0 })),
+    idempotencyKey: Type.Optional(NonEmptyString),
+  },
+  { additionalProperties: false },
+);
+
 export const ChatEventSchema = Type.Object(
   {
     runId: NonEmptyString,

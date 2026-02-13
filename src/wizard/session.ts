@@ -111,6 +111,7 @@ class WizardSessionPrompter implements WizardPrompter {
     message: string;
     initialValue?: string;
     placeholder?: string;
+    sensitive?: boolean;
     validate?: (value: string) => string | undefined;
   }): Promise<string> {
     const res = await this.prompt({
@@ -118,6 +119,7 @@ class WizardSessionPrompter implements WizardPrompter {
       message: params.message,
       initialValue: params.initialValue,
       placeholder: params.placeholder,
+      ...(params.sensitive ? { sensitive: true } : {}),
       executor: "client",
     });
     const value =

@@ -26,15 +26,38 @@ export const wizardHandlers: GatewayRequestHandlers = {
       );
       return;
     }
+    const flowRaw =
+      typeof (params as { flow?: unknown }).flow === "string"
+        ? (params as { flow: string }).flow
+        : "";
+    const requestedFlow:
+      | import("../../commands/onboard-types.js").OnboardOptions["flow"]
+      | undefined = flowRaw.trim() === "eliza" ? "eliza" : undefined;
+
+    // Control UI "simple" flows should always start fresh, even if a previous wizard
+    // is still running (otherwise the UI gets stuck resuming old multi-step wizards).
     const running = context.findRunningWizard();
-    if (running) {
-      respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, "wizard already running"));
-      return;
+    if (requestedFlow && running) {
+      context.purgeWizardSession(running);
+    }
+    const runningAfterPurge = requestedFlow ? context.findRunningWizard() : running;
+    if (runningAfterPurge) {
+      const existingSession = context.wizardSessions.get(runningAfterPurge);
+      if (existingSession) {
+        const result = await existingSession.next();
+        if (result.done) {
+          context.purgeWizardSession(runningAfterPurge);
+        }
+        respond(true, { sessionId: runningAfterPurge, ...result }, undefined);
+        return;
+      }
+      context.purgeWizardSession(runningAfterPurge);
     }
     const sessionId = randomUUID();
-    const opts = {
+    const opts: import("../../commands/onboard-types.js").OnboardOptions = {
       mode: params.mode,
       workspace: typeof params.workspace === "string" ? params.workspace : undefined,
+      ...(requestedFlow ? { flow: requestedFlow } : {}),
     };
     const session = new WizardSession((prompter) =>
       context.wizardRunner(opts, defaultRuntime, prompter),
@@ -106,7 +129,7 @@ export const wizardHandlers: GatewayRequestHandlers = {
       status: session.getStatus(),
       error: session.getError(),
     };
-    context.wizardSessions.delete(sessionId);
+    context.purgeWizardSession(sessionId);
     respond(true, status, undefined);
   },
   "wizard.status": ({ params, respond, context }) => {
@@ -132,7 +155,7 @@ export const wizardHandlers: GatewayRequestHandlers = {
       error: session.getError(),
     };
     if (status.status !== "running") {
-      context.wizardSessions.delete(sessionId);
+      context.purgeWizardSession(sessionId);
     }
     respond(true, status, undefined);
   },

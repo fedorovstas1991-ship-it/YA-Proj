@@ -95,6 +95,7 @@ import {
 import {
   ChatAbortParamsSchema,
   ChatEventSchema,
+  ChatGreetParamsSchema,
   ChatHistoryParamsSchema,
   ChatInjectParamsSchema,
   ChatSendParamsSchema,
@@ -249,6 +250,7 @@ export const ProtocolSchemas: Record<string, TSchema> = {
   ChatSendParams: ChatSendParamsSchema,
   ChatAbortParams: ChatAbortParamsSchema,
   ChatInjectParams: ChatInjectParamsSchema,
+  ChatGreetParams: ChatGreetParamsSchema,
   ChatEvent: ChatEventSchema,
   UpdateRunParams: UpdateRunParamsSchema,
   TickEvent: TickEventSchema,

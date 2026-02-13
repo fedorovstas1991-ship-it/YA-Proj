@@ -212,8 +212,25 @@ describe("gateway e2e", () => {
       }>("wizard.start", { mode: "local" });
       const sessionId = start.sessionId;
       expect(typeof sessionId).toBe("string");
+      expect(start.status).toBe("running");
+      expect(start.done).toBe(false);
 
-      let next = start;
+      const resumed = await client.request<{
+        sessionId?: string;
+        done: boolean;
+        status: "running" | "done" | "cancelled" | "error";
+        step?: {
+          id: string;
+          type: "note" | "select" | "text" | "confirm" | "multiselect" | "progress";
+        };
+        error?: string;
+      }>("wizard.start", { mode: "local" });
+      expect(resumed.sessionId).toBe(sessionId);
+      expect(resumed.status).toBe("running");
+      expect(resumed.done).toBe(false);
+      expect(resumed.step?.id).toBe(start.step?.id);
+
+      let next = resumed;
       let didSendToken = false;
       while (!next.done) {
         const step = next.step;

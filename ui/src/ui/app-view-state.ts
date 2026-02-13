@@ -30,6 +30,7 @@ import type {
   SessionsListResult,
   SkillStatusReport,
   StatusSummary,
+  WizardStep,
 } from "./types.ts";
 import type { ChatAttachment, ChatQueueItem, CronFormState } from "./ui-types.ts";
 import type { NostrProfileFormState } from "./views/channels.nostr-profile-form.ts";
@@ -40,6 +41,24 @@ export type AppViewState = {
   password: string;
   tab: Tab;
   onboarding: boolean;
+  simpleMode: boolean;
+  productMode: boolean;
+  simpleOnboardingDone: boolean;
+  simpleDevToolsOpen: boolean;
+  productPanel: "chat" | "projects" | "telegram";
+  productDevDrawerOpen: boolean;
+  productAgentId: string | null;
+  productCreateProjectOpen: boolean;
+  productCreateProjectName: string;
+  productCreateProjectDesc: string;
+  productSessionsLoading: boolean;
+  productSessionsError: string | null;
+  productSessionsResult: SessionsListResult | null;
+  productTelegramToken: string;
+  productTelegramAllowFrom: string;
+  productTelegramBusy: boolean;
+  productTelegramError: string | null;
+  productTelegramSuccess: string | null;
   basePath: string;
   connected: boolean;
   theme: ThemeMode;
@@ -65,6 +84,17 @@ export type AppViewState = {
   chatThinkingLevel: string | null;
   chatQueue: ChatQueueItem[];
   chatManualRefreshInFlight: boolean;
+  onboardingWizardSessionId: string | null;
+  onboardingWizardStatus: "idle" | "running" | "done" | "cancelled" | "error";
+  onboardingWizardStep: WizardStep | null;
+  onboardingWizardError: string | null;
+  onboardingWizardBusy: boolean;
+  onboardingWizardMode: "local" | "remote";
+  onboardingWizardFlow?: string;
+  onboardingWizardWorkspace: string;
+  onboardingWizardResetConfig: boolean;
+  onboardingWizardTextAnswer: string;
+  onboardingWizardMultiAnswers: number[];
   nodesLoading: boolean;
   nodes: Array<Record<string, unknown>>;
   chatNewMessagesBelow: boolean;
@@ -248,6 +278,20 @@ export type AppViewState = {
   handleConfigFormUpdate: (path: string, value: unknown) => void;
   handleConfigFormModeChange: (mode: "form" | "raw") => void;
   handleConfigRawChange: (raw: string) => void;
+  startOnboardingWizard: () => Promise<void>;
+  advanceOnboardingWizard: (answer?: unknown) => Promise<void>;
+  cancelOnboardingWizard: () => Promise<void>;
+  setOnboardingWizardDone: () => void;
+  setSimpleOnboardingDone: (next: boolean) => void;
+  productSelectAgent: (agentId: string) => Promise<void>;
+  productLoadSessions: () => Promise<void>;
+  productNewChat: () => Promise<void>;
+  productResetChat: () => Promise<void>;
+  productCreateProject: () => Promise<void>;
+  productConnectTelegram: () => Promise<void>;
+  productReloadConfig: () => Promise<void>;
+  productResetAll: () => Promise<void>;
+  productOpenSession: (sessionKey: string) => Promise<void>;
   handleInstallSkill: (key: string) => Promise<void>;
   handleUpdateSkill: (key: string) => Promise<void>;
   handleToggleSkillEnabled: (key: string, enabled: boolean) => Promise<void>;

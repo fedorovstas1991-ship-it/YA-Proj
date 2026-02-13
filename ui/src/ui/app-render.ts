@@ -62,6 +62,8 @@ const debouncedLoadUsage = (state: UsageState) => {
   }
   usageDateDebounceTimeout = window.setTimeout(() => void loadUsage(state), 400);
 };
+import { renderProductApp } from "./app-render-product.ts";
+import { renderSimpleApp } from "./app-render-simple.ts";
 import { renderAgents } from "./views/agents.ts";
 import { renderChannels } from "./views/channels.ts";
 import { renderChat } from "./views/chat.ts";
@@ -98,6 +100,12 @@ function resolveAssistantAvatarUrl(state: AppViewState): string | undefined {
 }
 
 export function renderApp(state: AppViewState) {
+  if (state.simpleMode) {
+    return renderSimpleApp(state);
+  }
+  if (state.productMode && state.tab === "chat") {
+    return renderProductApp(state);
+  }
   const presenceCount = state.presenceEntries.length;
   const sessionsCount = state.sessionsResult?.count ?? null;
   const cronNext = state.cronStatus?.nextWakeAtMs ?? null;
