@@ -17,7 +17,7 @@ function renderDevDrawer(state: AppViewState) {
     return nothing;
   }
   return html`
-    <div class="product-dev-drawer">
+    <div class="product-dev-drawer ${state.productDevDrawerOpen ? 'open' : ''}">
       <div class="product-dev-drawer__header">
         <div>Для разработчиков</div>
         <button class="btn btn--sm" @click=${() => (state.productDevDrawerOpen = false)}>
@@ -51,7 +51,7 @@ function renderCreateProjectModal(state: AppViewState) {
     return nothing;
   }
   return html`
-    <div class="product-modal-backdrop" @click=${() => (state.productCreateProjectOpen = false)}>
+    <div class="product-modal-backdrop ${state.productCreateProjectOpen ? 'open' : ''}" @click=${() => (state.productCreateProjectOpen = false)}>
       <div class="product-modal" @click=${(e: Event) => e.stopPropagation()}>
         <div class="product-modal__title">Новый проект</div>
         <label class="field">
@@ -170,26 +170,80 @@ export function renderProductApp(state: AppViewState) {
           <section class="card">
             <div class="card-title">Настройка</div>
             <div class="card-sub">Нужно только ввести Eliza API key (сохраняется локально на gateway).</div>
-            <div class="row">
-              <button
-                class="btn primary"
-                ?disabled=${state.onboardingWizardBusy}
-                @click=${() => {
-                  state.onboardingWizardFlow = "eliza";
-                  state.onboardingWizardMode = "local";
-                  state.onboardingWizardWorkspace = "";
-                  state.onboardingWizardResetConfig = false;
-                  void state.startOnboardingWizard();
-                }}
-              >
-                ${state.onboardingWizardBusy ? "Запуск..." : "Старт"}
-              </button>
-            </div>
+            ${
+              state.onboardingWizardStatus !== "running"
+                ? html`
+                    <div class="row">
+                      <button
+                        class="btn primary"
+                        ?disabled=${state.onboardingWizardBusy}
+                        @click=${() => {
+                          state.onboardingWizardFlow = "eliza";
+                          state.onboardingWizardMode = "local";
+                          state.onboardingWizardWorkspace = "";
+                          state.onboardingWizardResetConfig = false;
+                          void state.startOnboardingWizard();
+                        }}
+                      >
+                        ${state.onboardingWizardBusy ? "Запуск..." : "Старт"}
+                      </button>
+                    </div>
+                  `
+                : nothing
+            }
             ${state.onboardingWizardError ? html`<div class="callout danger" style="margin-top:12px;">${state.onboardingWizardError}</div>` : nothing}
             ${
               state.onboardingWizardStatus === "running" && state.onboardingWizardStep
                 ? html`
-                    <div class="callout" style="margin-top: 12px">Следуй шагу вверху окна (wizard)…</div>
+                    <div style="margin-top: 12px;">
+                      ${state.onboardingWizardStep.title
+                        ? html`<div class="card-sub" style="margin-bottom:6px;">${state.onboardingWizardStep.title}</div>`
+                        : nothing}
+                      ${state.onboardingWizardStep.message
+                        ? html`<div style="margin-bottom:8px; font-size:0.9em;">${state.onboardingWizardStep.message}</div>`
+                        : nothing}
+                      ${state.onboardingWizardStep.type === "text"
+                        ? html`
+                            <label class="field">
+                              <input
+                                type=${state.onboardingWizardStep.sensitive ? "password" : "text"}
+                                .value=${state.onboardingWizardTextAnswer}
+                                @input=${(e: Event) =>
+                                  (state.onboardingWizardTextAnswer = (
+                                    e.target as HTMLInputElement
+                                  ).value)}
+                                placeholder=${state.onboardingWizardStep.placeholder ?? "Введите значение"}
+                                ?disabled=${state.onboardingWizardBusy}
+                                @keydown=${(e: KeyboardEvent) => {
+                                  if (e.key === "Enter") void state.advanceOnboardingWizard();
+                                }}
+                              />
+                            </label>
+                            <div class="row" style="margin-top:8px;">
+                              <button
+                                class="btn primary"
+                                ?disabled=${state.onboardingWizardBusy || !state.onboardingWizardTextAnswer.trim()}
+                                @click=${() => void state.advanceOnboardingWizard()}
+                              >
+                                ${state.onboardingWizardBusy ? "Сохраняю…" : "Продолжить"}
+                              </button>
+                            </div>
+                          `
+                        : state.onboardingWizardStep.type === "note" ||
+                            state.onboardingWizardStep.type === "action"
+                          ? html`
+                              <div class="row" style="margin-top:8px;">
+                                <button
+                                  class="btn primary"
+                                  ?disabled=${state.onboardingWizardBusy}
+                                  @click=${() => void state.advanceOnboardingWizard(true)}
+                                >
+                                  ${state.onboardingWizardBusy ? "…" : "OK"}
+                                </button>
+                              </div>
+                            `
+                          : nothing}
+                    </div>
                   `
                 : nothing
             }
