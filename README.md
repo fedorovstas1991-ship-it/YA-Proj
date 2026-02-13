@@ -1,5 +1,7 @@
 # 🦞 OpenClaw — Personal AI Assistant
 
+> Note: This repository includes a prototype product UI called **YAgent**.\n+> Quick status + one-click UI onboarding launcher: `README.YAGENT.md`.\n+
+
 <p align="center">
     <picture>
         <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/openclaw/openclaw/main/docs/assets/openclaw-logo-text-dark.png">
