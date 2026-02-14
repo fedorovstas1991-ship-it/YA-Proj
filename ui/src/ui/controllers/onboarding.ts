@@ -83,6 +83,20 @@ function applyWizardResult(
   state.onboardingWizardError = result.error ?? null;
   hydrateStepAnswers(state, result.step);
 
+  // Update progress tracking
+  if (result.step) {
+    state.onboardingWizardCurrentStep = (state.onboardingWizardCurrentStep ?? 0) + 1;
+  }
+  if (
+    !state.onboardingWizardTotalSteps ||
+    state.onboardingWizardTotalSteps < (state.onboardingWizardCurrentStep ?? 1)
+  ) {
+    state.onboardingWizardTotalSteps = Math.max(
+      state.onboardingWizardTotalSteps ?? 1,
+      state.onboardingWizardCurrentStep ?? 1,
+    );
+  }
+
   if (sessionId !== undefined) {
     state.onboardingWizardSessionId = sessionId;
   }
@@ -114,6 +128,8 @@ export async function startOnboardingWizard(state: UiOnboardingState) {
   state.onboardingWizardBusy = true;
   state.onboardingWizardError = null;
   state.lastError = null;
+  state.onboardingWizardCurrentStep = 0;
+  state.onboardingWizardTotalSteps = 0;
   try {
     if (state.onboardingWizardResetConfig) {
       await clearConfigForOnboarding(state);

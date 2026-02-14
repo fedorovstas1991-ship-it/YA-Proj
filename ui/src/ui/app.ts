@@ -186,7 +186,12 @@ export class OpenClawApp extends LitElement {
   @state() productTelegramBusy = false;
   @state() productTelegramError: string | null = null;
   @state() productTelegramSuccess: string | null = null;
-  @state() productProjects: Array<{ id: string; name: string; expanded?: boolean; sessionKeys?: string[] }> = [];
+  @state() productProjects: Array<{
+    id: string;
+    name: string;
+    expanded?: boolean;
+    sessionKeys?: string[];
+  }> = [];
   @state() productProjectsLoading = false;
   @state() productProjectsError: string | null = null;
   @state() productEditingProjectId: string | null = null;
@@ -231,6 +236,8 @@ export class OpenClawApp extends LitElement {
   @state() onboardingWizardResetConfig = true;
   @state() onboardingWizardTextAnswer = "";
   @state() onboardingWizardMultiAnswers: number[] = [];
+  @state() onboardingWizardCurrentStep = 0;
+  @state() onboardingWizardTotalSteps = 0;
   // Sidebar state for tool output viewing
   @state() sidebarOpen = false;
   @state() sidebarContent: string | null = null;

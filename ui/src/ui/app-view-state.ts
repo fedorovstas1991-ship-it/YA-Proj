@@ -100,6 +100,8 @@ export type AppViewState = {
   onboardingWizardResetConfig: boolean;
   onboardingWizardTextAnswer: string;
   onboardingWizardMultiAnswers: number[];
+  onboardingWizardCurrentStep: number;
+  onboardingWizardTotalSteps: number;
   nodesLoading: boolean;
   nodes: Array<Record<string, unknown>>;
   chatNewMessagesBelow: boolean;

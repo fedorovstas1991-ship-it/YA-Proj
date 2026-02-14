@@ -286,73 +286,83 @@ export function renderProductApp(state: AppViewState) {
             ${
               state.onboardingWizardStatus === "running" && state.onboardingWizardStep
                 ? html`
-                    <div style="margin-top: 12px;">
-                      ${
-                        state.onboardingWizardStep.title
-                          ? html`<div class="card-sub" style="margin-bottom:6px;">${state.onboardingWizardStep.title}</div>`
-                          : nothing
-                      }
-                      ${
-                        state.onboardingWizardStep.message
-                          ? html`<div style="margin-bottom:8px; font-size:0.9em;">${state.onboardingWizardStep.message}</div>`
-                          : nothing
-                      }
-                      ${
-                        state.onboardingWizardStep.type === "text"
-                          ? html`
-                            <label class="field">
-                              <input
-                                type=${state.onboardingWizardStep.sensitive ? "password" : "text"}
-                                .value=${state.onboardingWizardTextAnswer}
-                                @input=${(e: Event) =>
-                                  (state.onboardingWizardTextAnswer = (
-                                    e.target as HTMLInputElement
-                                  ).value)}
-                                placeholder=${state.onboardingWizardStep.placeholder ?? "Введите значение"}
-                                ?disabled=${state.onboardingWizardBusy}
-                                @keydown=${(e: KeyboardEvent) => {
-                                  if (e.key === "Enter") {
-                                    void state.advanceOnboardingWizard();
+                    <div class="wizard-container" style="margin: -20px -24px -16px; padding: 20px 24px 16px;">
+                      <div class="wizard-card">
+                        <!-- Progress Bar -->
+                        <div class="wizard-progress">
+                          <span class="wizard-step-label">
+                            Step ${state.onboardingWizardCurrentStep ?? 1} of ${state.onboardingWizardTotalSteps ?? 1}
+                          </span>
+                          <div class="wizard-progress-bar">
+                            ${Array.from({ length: state.onboardingWizardTotalSteps ?? 1 }).map(
+                              (_, i) => html`
+                                <div
+                                  class="wizard-segment"
+                                  data-state=${
+                                    i < (state.onboardingWizardCurrentStep ?? 0)
+                                      ? "completed"
+                                      : i === (state.onboardingWizardCurrentStep ?? 0)
+                                        ? "current"
+                                        : "upcoming"
                                   }
-                                }}
-                              />
-                            </label>
-                            <div class="row" style="margin-top:8px;">
-                              <button
-                                class="btn primary"
-                                ?disabled=${state.onboardingWizardBusy || !state.onboardingWizardTextAnswer.trim()}
-                                @click=${() => void state.advanceOnboardingWizard()}
-                              >
-                                ${state.onboardingWizardBusy ? "Сохраняю…" : "Продолжить"}
-                              </button>
-                            </div>
-                          `
-                          : state.onboardingWizardStep.type === "confirm"
-                            ? html`
-                              <div class="row" style="margin-top:8px; gap:8px;">
-                                <button
-                                  class="btn primary"
-                                  ?disabled=${state.onboardingWizardBusy}
-                                  @click=${() => void state.advanceOnboardingWizard(true)}
-                                  aria-label="Confirm: Yes"
-                                >
-                                  ${state.onboardingWizardBusy ? "…" : "Yes"}
-                                </button>
-                                <button
-                                  class="btn"
-                                  ?disabled=${state.onboardingWizardBusy}
-                                  @click=${() => void state.advanceOnboardingWizard(false)}
-                                  aria-label="Confirm: No"
-                                >
-                                  No
-                                </button>
-                              </div>
-                            `
-                            : state.onboardingWizardStep.type === "password"
+                                ></div>
+                              `,
+                            )}
+                          </div>
+                        </div>
+
+                        <!-- Step Content -->
+                        <div class="wizard-step-content">
+                          ${
+                            state.onboardingWizardStep.title
+                              ? html`<h2 class="wizard-title">${state.onboardingWizardStep.title}</h2>`
+                              : nothing
+                          }
+                          ${
+                            state.onboardingWizardStep.message
+                              ? html`<p class="wizard-description">${state.onboardingWizardStep.message}</p>`
+                              : nothing
+                          }
+
+                          <!-- Text Input -->
+                          ${
+                            state.onboardingWizardStep.type === "text"
                               ? html`
-                              <label class="field">
+                                <input
+                                  type="text"
+                                  class="wizard-input"
+                                  .value=${state.onboardingWizardTextAnswer}
+                                  @input=${(e: Event) =>
+                                    (state.onboardingWizardTextAnswer = (
+                                      e.target as HTMLInputElement
+                                    ).value)}
+                                  placeholder=${state.onboardingWizardStep.placeholder ?? "Введите значение"}
+                                  ?disabled=${state.onboardingWizardBusy}
+                                  @keydown=${(e: KeyboardEvent) => {
+                                    if (e.key === "Enter") {
+                                      void state.advanceOnboardingWizard();
+                                    }
+                                  }}
+                                  aria-label="Text input"
+                                />
+                                <button
+                                  class="wizard-button primary"
+                                  ?disabled=${state.onboardingWizardBusy || !state.onboardingWizardTextAnswer.trim()}
+                                  @click=${() => void state.advanceOnboardingWizard()}
+                                >
+                                  ${state.onboardingWizardBusy ? "⏳ Сохраняю…" : "Продолжить"}
+                                </button>
+                              `
+                              : nothing
+                          }
+
+                          <!-- Password Input -->
+                          ${
+                            state.onboardingWizardStep.type === "password"
+                              ? html`
                                 <input
                                   type="password"
+                                  class="wizard-input"
                                   .value=${state.onboardingWizardTextAnswer}
                                   @input=${(e: Event) =>
                                     (state.onboardingWizardTextAnswer = (
@@ -365,131 +375,175 @@ export function renderProductApp(state: AppViewState) {
                                       void state.advanceOnboardingWizard();
                                     }
                                   }}
+                                  aria-label="Password input"
                                 />
-                              </label>
-                              <div class="row" style="margin-top:8px;">
                                 <button
-                                  class="btn primary"
+                                  class="wizard-button primary"
                                   ?disabled=${state.onboardingWizardBusy || !state.onboardingWizardTextAnswer.trim()}
                                   @click=${() => void state.advanceOnboardingWizard()}
-                                  aria-label="Continue"
                                 >
-                                  ${state.onboardingWizardBusy ? "Сохраняю…" : "Продолжить"}
+                                  ${state.onboardingWizardBusy ? "⏳ Сохраняю…" : "Продолжить"}
                                 </button>
-                              </div>
-                            `
-                              : state.onboardingWizardStep.type === "select"
-                                ? html`
-                              <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
-                                ${
-                                  (state.onboardingWizardStep.options ?? []).length > 0
-                                    ? (state.onboardingWizardStep.options ?? []).map(
-                                        (opt) => html`
-                                        <button
-                                          class="btn"
-                                          ?disabled=${state.onboardingWizardBusy}
-                                          @click=${() => void state.advanceOnboardingWizard(opt.value)}
-                                          title=${opt.hint ?? ""}
-                                          aria-label="Select: ${opt.label}"
-                                        >
-                                          ${opt.label}
-                                        </button>
-                                      `,
-                                      )
-                                    : html`
-                                        <div style="opacity: 0.6; font-style: italic">No options available</div>
-                                      `
-                                }
-                              </div>
-                            `
-                                : state.onboardingWizardStep.type === "multiselect"
-                                  ? html`
-                              <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
-                                ${
-                                  (state.onboardingWizardStep.options ?? []).length > 0
-                                    ? (state.onboardingWizardStep.options ?? []).map(
-                                        (opt, idx) => html`
-                                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                                          <input
-                                            type="checkbox"
-                                            ?checked=${state.onboardingWizardMultiAnswers.includes(idx)}
-                                            ?disabled=${state.onboardingWizardBusy}
-                                            aria-label="Select: ${opt.label}"
-                                            @change=${(e: Event) => {
-                                              const checked = (e.target as HTMLInputElement)
-                                                .checked;
-                                              if (checked) {
-                                                state.onboardingWizardMultiAnswers = [
-                                                  ...state.onboardingWizardMultiAnswers.filter(
-                                                    (i) => i !== idx,
-                                                  ),
-                                                  idx,
-                                                ].toSorted((a, b) => a - b);
-                                              } else {
-                                                state.onboardingWizardMultiAnswers =
-                                                  state.onboardingWizardMultiAnswers.filter(
-                                                    (i) => i !== idx,
-                                                  );
-                                              }
-                                            }}
-                                          />
-                                          <span>${opt.label}</span>
-                                          ${
-                                            opt.hint
-                                              ? html`<span style="font-size:0.8em; opacity:0.6;">${opt.hint}</span>`
-                                              : nothing
-                                          }
-                                        </label>
-                                      `,
-                                      )
-                                    : html`
-                                        <div style="opacity: 0.6; font-style: italic">No options available</div>
-                                      `
-                                }
-                              </div>
-                              <div class="row" style="margin-top:8px;">
+                              `
+                              : nothing
+                          }
+
+                          <!-- Confirm Buttons -->
+                          ${
+                            state.onboardingWizardStep.type === "confirm"
+                              ? html`
+                                <div class="wizard-confirm-buttons">
+                                  <button
+                                    class="wizard-button secondary"
+                                    ?disabled=${state.onboardingWizardBusy}
+                                    @click=${() => void state.advanceOnboardingWizard(false)}
+                                    aria-label="No"
+                                  >
+                                    ${state.onboardingWizardBusy ? "…" : "Нет"}
+                                  </button>
+                                  <button
+                                    class="wizard-button primary"
+                                    ?disabled=${state.onboardingWizardBusy}
+                                    @click=${() => void state.advanceOnboardingWizard(true)}
+                                    aria-label="Yes"
+                                  >
+                                    ${state.onboardingWizardBusy ? "…" : "Да"}
+                                  </button>
+                                </div>
+                              `
+                              : nothing
+                          }
+
+                          <!-- Select Options -->
+                          ${
+                            state.onboardingWizardStep.type === "select"
+                              ? html`
+                                <div class="wizard-select-options">
+                                  ${
+                                    (state.onboardingWizardStep.options ?? []).length > 0
+                                      ? (state.onboardingWizardStep.options ?? []).map(
+                                          (opt) => html`
+                                            <button
+                                              class="wizard-option"
+                                              ?disabled=${state.onboardingWizardBusy}
+                                              @click=${() => void state.advanceOnboardingWizard(opt.value)}
+                                              title=${opt.hint ?? ""}
+                                              aria-label="Select: ${opt.label}"
+                                            >
+                                              <span>${opt.label}</span>
+                                              ${opt.hint ? html`<span style="font-size: 12px; color: var(--wizard-text-light);">${opt.hint}</span>` : nothing}
+                                              <div class="wizard-option-checkmark"></div>
+                                            </button>
+                                          `,
+                                        )
+                                      : html`
+                                          <div style="opacity: 0.6; font-style: italic">Нет доступных опций</div>
+                                        `
+                                  }
+                                </div>
+                              `
+                              : nothing
+                          }
+
+                          <!-- Multiselect Options -->
+                          ${
+                            state.onboardingWizardStep.type === "multiselect"
+                              ? html`
+                                <div class="wizard-multiselect-options">
+                                  ${
+                                    (state.onboardingWizardStep.options ?? []).length > 0
+                                      ? (state.onboardingWizardStep.options ?? []).map(
+                                          (opt, idx) => html`
+                                            <button
+                                              class="wizard-multiselect-item ${state.onboardingWizardMultiAnswers.includes(idx) ? "selected" : ""}"
+                                              ?disabled=${state.onboardingWizardBusy}
+                                              @click=${() => {
+                                                const checked =
+                                                  state.onboardingWizardMultiAnswers.includes(idx);
+                                                if (checked) {
+                                                  state.onboardingWizardMultiAnswers =
+                                                    state.onboardingWizardMultiAnswers.filter(
+                                                      (i) => i !== idx,
+                                                    );
+                                                } else {
+                                                  state.onboardingWizardMultiAnswers = [
+                                                    ...state.onboardingWizardMultiAnswers,
+                                                    idx,
+                                                  ].toSorted((a, b) => a - b);
+                                                }
+                                              }}
+                                              aria-label="Select: ${opt.label}"
+                                            >
+                                              <div class="wizard-checkbox"></div>
+                                              <div class="wizard-multiselect-label">
+                                                <div class="wizard-multiselect-text">${opt.label}</div>
+                                                ${
+                                                  opt.hint
+                                                    ? html`<div class="wizard-multiselect-hint">${opt.hint}</div>`
+                                                    : nothing
+                                                }
+                                              </div>
+                                            </button>
+                                          `,
+                                        )
+                                      : html`
+                                          <div style="opacity: 0.6; font-style: italic">Нет доступных опций</div>
+                                        `
+                                  }
+                                </div>
                                 <button
-                                  class="btn primary"
+                                  class="wizard-button primary"
                                   ?disabled=${state.onboardingWizardBusy}
                                   @click=${() => void state.advanceOnboardingWizard()}
-                                  aria-label="Continue"
+                                  style="margin-top: 12px;"
                                 >
-                                  ${state.onboardingWizardBusy ? "…" : "Продолжить"}
+                                  ${state.onboardingWizardBusy ? "⏳ Продолжаю…" : "Продолжить"}
                                 </button>
-                              </div>
-                            `
-                                  : state.onboardingWizardStep.type === "note" ||
-                                      state.onboardingWizardStep.type === "action"
-                                    ? html`
-                              <div class="row" style="margin-top:8px;">
+                              `
+                              : nothing
+                          }
+
+                          <!-- Note and Action Messages -->
+                          ${
+                            state.onboardingWizardStep.type === "note" ||
+                            state.onboardingWizardStep.type === "action"
+                              ? html`
+                                <div
+                                  class="wizard-${state.onboardingWizardStep.type}"
+                                  style="margin-top: 16px;"
+                                >
+                                  <div class="wizard-note-icon">
+                                    ${state.onboardingWizardStep.type === "action" ? "⚙️" : "ℹ️"}
+                                  </div>
+                                  <div class="wizard-note-content">
+                                    ${state.onboardingWizardStep.message}
+                                  </div>
+                                </div>
                                 <button
-                                  class="btn primary"
+                                  class="wizard-button primary"
                                   ?disabled=${state.onboardingWizardBusy}
                                   @click=${() => void state.advanceOnboardingWizard(true)}
-                                  aria-label="${state.onboardingWizardStep.type === "action" ? "Execute action" : "OK"}"
+                                  style="margin-top: 16px;"
                                 >
-                                  ${state.onboardingWizardBusy ? "…" : "OK"}
+                                  ${state.onboardingWizardBusy ? "⏳ Обработка…" : "OK"}
                                 </button>
-                              </div>
-                            `
-                                    : state.onboardingWizardStep.type === "progress"
-                                      ? html`
-                                          <div
-                                            style="
-                                              margin-top: 8px;
-                                              font-size: 0.85em;
-                                              opacity: 0.7;
-                                              display: flex;
-                                              align-items: center;
-                                              gap: 4px;
-                                            "
-                                          >
-                                            <span>⏳</span>
-                                            <span>Processing…</span>
-                                          </div>
-                                        `
-                                      : nothing
-                      }
+                              `
+                              : nothing
+                          }
+
+                          <!-- Progress Spinner -->
+                          ${
+                            state.onboardingWizardStep.type === "progress"
+                              ? html`
+                                  <div class="wizard-progress-spinner">
+                                    <div class="spinner"></div>
+                                    <span class="spinner-text">Обработка…</span>
+                                  </div>
+                                `
+                              : nothing
+                          }
+                        </div>
+                      </div>
                     </div>
                   `
                 : nothing

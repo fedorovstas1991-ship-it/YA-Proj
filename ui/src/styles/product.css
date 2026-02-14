@@ -692,6 +692,607 @@
 }
 
 /* Prefers reduced motion support */
+/* ======== WIZARD UI STYLES ======== */
+
+/* Color Variables for Wizard */
+:root {
+  --wizard-primary: #7c3aed;
+  --wizard-primary-hover: #6d28d9;
+  --wizard-primary-light: rgba(124, 58, 237, 0.1);
+  --wizard-secondary: #f3f4f6;
+  --wizard-border: #e5e7eb;
+  --wizard-text: #111827;
+  --wizard-text-light: #6b7280;
+  --wizard-success: #10b981;
+  --wizard-info: #3b82f6;
+  --wizard-warning: #f59e0b;
+  --wizard-danger: #ef4444;
+}
+
+[data-theme="dark"] {
+  --wizard-secondary: #374151;
+  --wizard-border: #4b5563;
+  --wizard-text: #f3f4f6;
+  --wizard-text-light: #d1d5db;
+}
+
+/* Wizard Container */
+.wizard-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100%;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.03), rgba(59, 130, 246, 0.03));
+}
+
+.wizard-card {
+  width: 100%;
+  max-width: 480px;
+  background: white;
+  border-radius: 16px;
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.08),
+    0 0 1px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  animation: step-enter 0.4s ease-out;
+}
+
+[data-theme="dark"] .wizard-card {
+  background: #1f2937;
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.3),
+    0 0 1px rgba(0, 0, 0, 0.4);
+}
+
+/* Gradient Top Bar */
+.wizard-card::before {
+  content: "";
+  display: block;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--wizard-primary),
+    var(--wizard-info),
+    var(--wizard-primary)
+  );
+  background-size: 200% 100%;
+}
+
+/* Progress Bar Section */
+.wizard-progress {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--wizard-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wizard-step-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--wizard-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.wizard-progress-bar {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  height: 4px;
+}
+
+.wizard-segment {
+  flex: 1;
+  height: 100%;
+  background: var(--wizard-border);
+  border-radius: 2px;
+  transition: background 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.wizard-segment[data-state="completed"] {
+  background: var(--wizard-primary);
+}
+
+.wizard-segment[data-state="current"] {
+  background: var(--wizard-primary);
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+}
+
+.wizard-segment[data-state="upcoming"] {
+  background: var(--wizard-border);
+}
+
+/* Step Content */
+.wizard-step-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: step-enter 0.4s ease-out;
+  min-height: 200px;
+}
+
+.wizard-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--wizard-text);
+  letter-spacing: -0.02em;
+}
+
+.wizard-description {
+  margin: 0;
+  font-size: 14px;
+  color: var(--wizard-text-light);
+  line-height: 1.5;
+}
+
+/* Input Styles */
+.wizard-input {
+  width: 100%;
+  height: 48px;
+  padding: 12px 16px;
+  border: 1.5px solid var(--wizard-border);
+  border-radius: 12px;
+  background: white;
+  color: var(--wizard-text);
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+}
+
+[data-theme="dark"] .wizard-input {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+.wizard-input::placeholder {
+  color: var(--wizard-text-light);
+}
+
+.wizard-input:focus {
+  outline: none;
+  border-color: var(--wizard-primary);
+  box-shadow: 0 0 0 3px var(--wizard-primary-light);
+  background: white;
+}
+
+[data-theme="dark"] .wizard-input:focus {
+  background: #1f2937;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+}
+
+/* Button Styles */
+.wizard-button {
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: 1.5px solid transparent;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+}
+
+/* Primary Button */
+.wizard-button.primary {
+  background: var(--wizard-primary);
+  color: white;
+  border-color: var(--wizard-primary);
+}
+
+.wizard-button.primary:hover:not(:disabled) {
+  background: var(--wizard-primary-hover);
+  border-color: var(--wizard-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.wizard-button.primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Secondary Button */
+.wizard-button.secondary {
+  background: white;
+  color: var(--wizard-text);
+  border-color: var(--wizard-border);
+}
+
+[data-theme="dark"] .wizard-button.secondary {
+  background: #374151;
+  color: #f3f4f6;
+  border-color: #4b5563;
+}
+
+.wizard-button.secondary:hover:not(:disabled) {
+  background: var(--wizard-secondary);
+  border-color: var(--wizard-primary);
+  color: var(--wizard-primary);
+}
+
+[data-theme="dark"] .wizard-button.secondary:hover:not(:disabled) {
+  background: #4b5563;
+  border-color: var(--wizard-primary);
+  color: var(--wizard-primary);
+}
+
+/* Disabled Button */
+.wizard-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wizard-button:focus-visible {
+  outline: 2px solid var(--wizard-primary);
+  outline-offset: 2px;
+}
+
+/* Confirm Buttons Layout */
+.wizard-confirm-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+@media (max-width: 480px) {
+  .wizard-confirm-buttons {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Select Options */
+.wizard-select-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.wizard-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border: 1.5px solid var(--wizard-border);
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 14px;
+  color: var(--wizard-text);
+  position: relative;
+}
+
+[data-theme="dark"] .wizard-option {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+.wizard-option:hover {
+  border-color: var(--wizard-primary);
+  background: var(--wizard-primary-light);
+}
+
+[data-theme="dark"] .wizard-option:hover {
+  background: rgba(124, 58, 237, 0.1);
+}
+
+.wizard-option.selected {
+  border-color: var(--wizard-primary);
+  background: var(--wizard-primary-light);
+  font-weight: 600;
+}
+
+.wizard-option-checkmark {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 2px solid var(--wizard-primary);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .wizard-option-checkmark {
+  background: #1f2937;
+}
+
+.wizard-option.selected .wizard-option-checkmark {
+  opacity: 1;
+  background: var(--wizard-primary);
+  border-color: var(--wizard-primary);
+}
+
+.wizard-option.selected .wizard-option-checkmark::after {
+  content: "✓";
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Multiselect Options */
+.wizard-multiselect-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.wizard-multiselect-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--wizard-border);
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 14px;
+  color: var(--wizard-text);
+}
+
+[data-theme="dark"] .wizard-multiselect-item {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+.wizard-multiselect-item:hover {
+  border-color: var(--wizard-primary);
+  background: var(--wizard-primary-light);
+}
+
+[data-theme="dark"] .wizard-multiselect-item:hover {
+  background: rgba(124, 58, 237, 0.1);
+}
+
+.wizard-multiselect-item.selected {
+  border-color: var(--wizard-primary);
+  background: var(--wizard-primary-light);
+}
+
+[data-theme="dark"] .wizard-multiselect-item.selected {
+  background: rgba(124, 58, 237, 0.15);
+}
+
+.wizard-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--wizard-border);
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .wizard-checkbox {
+  background: #4b5563;
+  border-color: #6b7280;
+}
+
+.wizard-multiselect-item.selected .wizard-checkbox {
+  background: var(--wizard-primary);
+  border-color: var(--wizard-primary);
+  transform: scale(1.1);
+}
+
+.wizard-multiselect-item.selected .wizard-checkbox::after {
+  content: "✓";
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.wizard-multiselect-label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wizard-multiselect-text {
+  font-weight: 500;
+}
+
+.wizard-multiselect-hint {
+  font-size: 12px;
+  color: var(--wizard-text-light);
+}
+
+/* Note and Action Styles */
+.wizard-note,
+.wizard-action {
+  padding: 14px 16px;
+  border-left: 3px solid;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.02);
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+[data-theme="dark"] .wizard-note,
+[data-theme="dark"] .wizard-action {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.wizard-note {
+  border-left-color: var(--wizard-info);
+}
+
+.wizard-action {
+  border-left-color: var(--wizard-warning);
+}
+
+.wizard-note.success {
+  border-left-color: var(--wizard-success);
+}
+
+.wizard-note.danger {
+  border-left-color: var(--wizard-danger);
+}
+
+.wizard-note-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  margin-top: 2px;
+}
+
+.wizard-note-content {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--wizard-text);
+}
+
+/* Progress Spinner */
+.wizard-progress-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px 0;
+  margin-top: 12px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--wizard-border);
+  border-top-color: var(--wizard-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner-text {
+  font-size: 13px;
+  color: var(--wizard-text-light);
+  animation: dots 1.5s steps(4) infinite;
+}
+
+@keyframes dots {
+  0% {
+    content: "";
+  }
+  25% {
+    content: ".";
+  }
+  50% {
+    content: "..";
+  }
+  75% {
+    content: "...";
+  }
+}
+
+/* Step Transitions */
+@keyframes step-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes step-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+
+.step-enter {
+  animation: step-enter 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.step-enter-active {
+  animation: step-enter 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Mobile Responsiveness for Wizard */
+@media (max-width: 480px) {
+  .wizard-card {
+    border-radius: 12px;
+  }
+
+  .wizard-step-content {
+    padding: 20px;
+    gap: 14px;
+  }
+
+  .wizard-title {
+    font-size: 18px;
+  }
+
+  .wizard-input {
+    height: 44px;
+    font-size: 16px;
+    padding: 10px 14px;
+  }
+
+  .wizard-button {
+    font-size: 13px;
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+}
+
+/* Prefers Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .wizard-segment,
+  .wizard-option,
+  .wizard-checkbox,
+  .wizard-button,
+  .wizard-input,
+  .wizard-step-content,
+  .wizard-multiselect-item,
+  .spinner {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ======== END WIZARD UI STYLES ======== */
+
 @media (prefers-reduced-motion: reduce) {
   .product-rail__btn,
   .product-item,
