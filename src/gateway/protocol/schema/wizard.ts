@@ -57,6 +57,7 @@ export const WizardStepSchema = Type.Object(
       Type.Literal("note"),
       Type.Literal("select"),
       Type.Literal("text"),
+      Type.Literal("password"),
       Type.Literal("confirm"),
       Type.Literal("multiselect"),
       Type.Literal("progress"),

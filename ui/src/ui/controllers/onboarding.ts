@@ -50,7 +50,7 @@ function hydrateStepAnswers(state: UiOnboardingState, step: WizardStep | undefin
     state.onboardingWizardMultiAnswers = [];
     return;
   }
-  if (step.type === "text") {
+  if (step.type === "text" || step.type === "password") {
     const initial = step.initialValue;
     state.onboardingWizardTextAnswer =
       initial === null || initial === undefined ? "" : String(initial);
@@ -119,11 +119,9 @@ export async function startOnboardingWizard(state: UiOnboardingState) {
       await clearConfigForOnboarding(state);
     }
     const workspace = state.onboardingWizardWorkspace.trim();
-    const flow = String(state.onboardingWizardFlow ?? "").trim();
     const result = await state.client.request<WizardStartResult>("wizard.start", {
       mode: state.onboardingWizardMode,
       ...(workspace ? { workspace } : {}),
-      ...(flow ? { flow } : {}),
     });
     applyWizardResult(state, result, result.sessionId);
   } catch (err) {
@@ -165,7 +163,7 @@ function buildAnswerForCurrentStep(state: UiOnboardingState): unknown {
   if (!step) {
     return true;
   }
-  if (step.type === "text") {
+  if (step.type === "text" || step.type === "password") {
     return state.onboardingWizardTextAnswer;
   }
   if (step.type === "multiselect") {
@@ -180,6 +178,16 @@ function buildAnswerForCurrentStep(state: UiOnboardingState): unknown {
   }
   if (step.type === "action") {
     return true;
+  }
+  if (step.type === "select") {
+    // select is handled by explicit answer, return default
+    return null;
+  }
+  if (step.type === "note") {
+    return true;
+  }
+  if (step.type === "progress") {
+    return null;
   }
   return true;
 }

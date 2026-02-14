@@ -434,7 +434,7 @@ export type WizardStepOption = {
 
 export type WizardStep = {
   id: string;
-  type: "note" | "select" | "text" | "confirm" | "multiselect" | "progress" | "action";
+  type: "note" | "select" | "text" | "password" | "confirm" | "multiselect" | "progress" | "action";
   title?: string;
   message?: string;
   options?: WizardStepOption[];
