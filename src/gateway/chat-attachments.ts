@@ -74,9 +74,13 @@ function isImageMime(mime?: string): boolean {
 export async function parseMessageWithAttachments(
   message: string,
   attachments: ChatAttachment[] | undefined,
-  opts?: { maxBytes?: number; log?: AttachmentLog },
+  opts?: { maxBytes?: number; maxImageBytes?: number; log?: AttachmentLog },
 ): Promise<ParsedMessageWithImages> {
-  const maxBytes = opts?.maxBytes ?? 5_000_000; // 5 MB
+  const maxFileBytes = opts?.maxBytes ?? 5_000_000; // 5 MB
+  // Back-compat: if callers previously set maxBytes, treat that as the image limit too
+  // unless they explicitly provide a separate maxImageBytes.
+  const maxImageBytes = opts?.maxImageBytes ?? opts?.maxBytes ?? 10_000_000; // 10 MB
+  const maxOverallBytes = Math.max(maxFileBytes, maxImageBytes);
   const log = opts?.log;
   if (!attachments || attachments.length === 0) {
     return { message, images: [] };
@@ -93,6 +97,15 @@ export async function parseMessageWithAttachments(
     const mime = att.mimeType ?? "";
     const content = att.content;
     const label = att.fileName || att.type || `attachment-${idx + 1}`;
+    let warned = false;
+
+    const warnOnce = (msg: string) => {
+      if (warned) {
+        return;
+      }
+      warned = true;
+      log?.warn(msg);
+    };
 
     if (typeof content !== "string") {
       throw new Error(`attachment ${label}: content must be base64 string`);
@@ -109,22 +122,42 @@ export async function parseMessageWithAttachments(
     if (b64.length % 4 !== 0 || /[^A-Za-z0-9+/=]/.test(b64)) {
       throw new Error(`attachment ${label}: invalid base64 content`);
     }
+    let decoded: Buffer | null = null;
     try {
-      sizeBytes = Buffer.from(b64, "base64").byteLength;
+      decoded = Buffer.from(b64, "base64");
+      sizeBytes = decoded.byteLength;
     } catch {
       throw new Error(`attachment ${label}: invalid base64 content`);
     }
-    if (sizeBytes <= 0 || sizeBytes > maxBytes) {
-      throw new Error(`attachment ${label}: exceeds size limit (${sizeBytes} > ${maxBytes} bytes)`);
+    if (sizeBytes <= 0 || sizeBytes > maxOverallBytes) {
+      throw new Error(
+        `attachment ${label}: exceeds size limit (${sizeBytes} > ${maxOverallBytes} bytes)`,
+      );
     }
 
     const providedMime = normalizeMime(mime);
     const sniffedMime = normalizeMime(await sniffMimeFromBase64(b64));
     const resolvedMime = sniffedMime ?? providedMime ?? normalizeMime(mime);
+    if (!resolvedMime) {
+      // Keep this phrasing for backwards-compat with existing tests/log expectations.
+      warnOnce(`attachment ${label}: unable to detect image mime type`);
+    }
+    if (sniffedMime && providedMime && isImageMime(providedMime) && !isImageMime(sniffedMime)) {
+      warnOnce(
+        `attachment ${label}: non-image content (declared ${providedMime}, sniffed ${sniffedMime})`,
+      );
+    }
+    const perTypeMaxBytes =
+      resolvedMime && isImageMime(resolvedMime) ? maxImageBytes : maxFileBytes;
+    if (sizeBytes > perTypeMaxBytes) {
+      throw new Error(
+        `attachment ${label}: exceeds size limit (${sizeBytes} > ${perTypeMaxBytes} bytes)`,
+      );
+    }
 
     if (resolvedMime && isImageMime(resolvedMime)) {
       if (sniffedMime && providedMime && sniffedMime !== providedMime) {
-        log?.warn(
+        warnOnce(
           `attachment ${label}: mime mismatch (${providedMime} -> ${sniffedMime}), using sniffed`,
         );
       }
@@ -138,55 +171,61 @@ export async function parseMessageWithAttachments(
     }
 
     if (resolvedMime && supportedFileMimes.has(resolvedMime)) {
-      const extracted = await extractFileContentFromSource({
-        source: {
-          type: "base64",
-          data: b64,
-          mediaType: resolvedMime,
-          filename: label,
-        },
-        limits: {
-          allowUrl: false,
-          allowedMimes: supportedFileMimes,
-          maxBytes: Math.min(maxBytes, DEFAULT_INPUT_FILE_MAX_BYTES),
-          maxChars: DEFAULT_INPUT_FILE_MAX_CHARS,
-          maxRedirects: DEFAULT_INPUT_MAX_REDIRECTS,
-          timeoutMs: DEFAULT_INPUT_TIMEOUT_MS,
-          pdf: {
-            maxPages: DEFAULT_INPUT_PDF_MAX_PAGES,
-            maxPixels: DEFAULT_INPUT_PDF_MAX_PIXELS,
-            minTextChars: DEFAULT_INPUT_PDF_MIN_TEXT_CHARS,
+      try {
+        const extracted = await extractFileContentFromSource({
+          source: {
+            type: "base64",
+            data: b64,
+            mediaType: resolvedMime,
+            filename: label,
           },
-        },
-      });
+          limits: {
+            allowUrl: false,
+            allowedMimes: supportedFileMimes,
+            maxBytes: Math.min(maxFileBytes, DEFAULT_INPUT_FILE_MAX_BYTES),
+            maxChars: DEFAULT_INPUT_FILE_MAX_CHARS,
+            maxRedirects: DEFAULT_INPUT_MAX_REDIRECTS,
+            timeoutMs: DEFAULT_INPUT_TIMEOUT_MS,
+            pdf: {
+              maxPages: DEFAULT_INPUT_PDF_MAX_PAGES,
+              maxPixels: DEFAULT_INPUT_PDF_MAX_PIXELS,
+              minTextChars: DEFAULT_INPUT_PDF_MIN_TEXT_CHARS,
+            },
+          },
+        });
 
-      if (extracted.text && extracted.text.trim()) {
-        fileSections.push(`[Вложение: ${extracted.filename}]\n${extracted.text.trim()}`);
-      } else {
-        fileSections.push(`[Вложение: ${extracted.filename}]\n(текст не извлечён)`);
-      }
-      if (extracted.images?.length) {
-        for (const img of extracted.images) {
-          images.push({ type: "image", data: img.data, mimeType: img.mimeType });
+        if (extracted.text && extracted.text.trim()) {
+          fileSections.push(`[Вложение: ${extracted.filename}]\n${extracted.text.trim()}`);
+        } else {
+          fileSections.push(`[Вложение: ${extracted.filename}]\n(текст не извлечён)`);
         }
+        if (extracted.images?.length) {
+          for (const img of extracted.images) {
+            images.push({ type: "image", data: img.data, mimeType: img.mimeType });
+          }
+        }
+        continue;
+      } catch (err) {
+        // Do not fail the whole message if extraction fails (corrupt PDFs, etc.).
+        warnOnce(`attachment ${label}: extract failed: ${String(err)}`);
+        // Fall through to saveMediaBuffer path below.
       }
-      continue;
     }
 
     try {
-      const buffer = Buffer.from(b64, "base64");
+      const buffer = decoded ?? Buffer.from(b64, "base64");
       const saved = await saveMediaBuffer(
         buffer,
         resolvedMime ?? undefined,
         "inbound",
-        Math.min(maxBytes, DEFAULT_INPUT_FILE_MAX_BYTES),
+        Math.min(maxFileBytes, DEFAULT_INPUT_FILE_MAX_BYTES),
         label,
       );
       fileSections.push(
         `[Вложение: ${label}]\nФайл сохранён на gateway как "${saved.id}" (${saved.size} байт).`,
       );
     } catch (err) {
-      log?.warn(`attachment ${label}: save failed: ${String(err)}`);
+      warnOnce(`attachment ${label}: save failed: ${String(err)}`);
       fileSections.push(`[Вложение: ${label}]\n(не удалось сохранить файл)`);
     }
   }

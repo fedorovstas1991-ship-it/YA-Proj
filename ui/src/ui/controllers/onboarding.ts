@@ -137,9 +137,11 @@ export async function startOnboardingWizard(state: UiOnboardingState) {
       await clearConfigForOnboarding(state);
     }
     const workspace = state.onboardingWizardWorkspace.trim();
+    const flow = state.onboardingWizardFlow?.trim();
     const result = await state.client.request<WizardStartResult>("wizard.start", {
       mode: state.onboardingWizardMode,
       ...(workspace ? { workspace } : {}),
+      ...(flow ? { flow } : {}),
     });
     applyWizardResult(state, result, result.sessionId);
   } catch (err) {

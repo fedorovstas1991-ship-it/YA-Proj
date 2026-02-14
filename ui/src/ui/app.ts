@@ -793,7 +793,12 @@ export class OpenClawApp extends LitElement {
         ?.agents?.defaults?.workspace ?? "~/.openclaw/workspace";
     const workspace = `${workspaceBase}/${agentId}`;
     const desc = this.productCreateProjectDesc.trim();
-    await this.client.request("agents.create", { name, workspace });
+    try {
+      await this.client.request("agents.create", { name, workspace });
+    } catch (err) {
+      this.productSessionsError = String(err);
+      return;
+    }
     const persona = [
       "Ты помощник в OpenClaw. Всегда отвечай по-русски.",
       "Когда начинается новый чат или чат сброшен, поздоровайся в 1-3 предложениях и спроси, что сделать.",

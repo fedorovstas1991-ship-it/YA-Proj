@@ -377,6 +377,7 @@ export const chatHandlers: GatewayRequestHandlers = {
       try {
         const parsed = await parseMessageWithAttachments(p.message, normalizedAttachments, {
           maxBytes: 5_000_000,
+          maxImageBytes: 10_000_000,
           log: context.logGateway,
         });
         parsedMessage = parsed.message;
