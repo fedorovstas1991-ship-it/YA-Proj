@@ -1,7 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_PATH="${BASH_SOURCE[0]-}"
+
+# Support curl | bash by cloning the repo to a temp dir and re-running from file.
+# When running via stdin, Bash may not populate BASH_SOURCE[0] (nounset would crash).
+if [[ -z "$SCRIPT_PATH" || ! -f "$SCRIPT_PATH" ]]; then
+  if ! command -v git >/dev/null 2>&1; then
+    echo "This script must be run from a checked-out repo (missing BASH_SOURCE and git not found)." >&2
+    echo "Fix: git clone https://github.com/fedorovstas1991-ship-it/YA.git && cd YA && ./docker-setup.sh" >&2
+    exit 1
+  fi
+  tmp_dir="$(mktemp -d)"
+  echo "==> Cloning repo to: $tmp_dir"
+  git clone --depth 1 "https://github.com/fedorovstas1991-ship-it/YA.git" "$tmp_dir" >/dev/null
+  exec bash "$tmp_dir/docker-setup.sh"
+fi
+
+ROOT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
 COMPOSE_FILE="$ROOT_DIR/docker-compose.yml"
 EXTRA_COMPOSE_FILE="$ROOT_DIR/docker-compose.extra.yml"
 IMAGE_NAME="${OPENCLAW_IMAGE:-openclaw:local}"
@@ -18,6 +34,12 @@ require_cmd() {
 require_cmd docker
 if ! docker compose version >/dev/null 2>&1; then
   echo "Docker Compose not available (try: docker compose version)" >&2
+  exit 1
+fi
+if ! docker info >/dev/null 2>&1; then
+  echo "Docker daemon is not reachable." >&2
+  echo "If you're on macOS with Colima: run 'colima start'." >&2
+  echo "If you're using Docker Desktop: open it and wait until it's running." >&2
   exit 1
 fi
 

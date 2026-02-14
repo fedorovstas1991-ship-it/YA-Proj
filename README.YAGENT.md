@@ -54,6 +54,25 @@ Stop:
 kill $(cat ~/.openclaw-yagent/gateway.pid)
 ```
 
+## Docker Setup (Optional)
+
+If you want a Docker-based run, use the wrapper that keeps state isolated from your local installs:
+
+```bash
+cd app/openclaw
+./yagent-docker-setup.sh
+```
+
+Host-mounted state:
+
+- Config: `~/.openclaw-yagent-docker/`
+- Workspace: `~/.openclaw-yagent-docker/workspace/`
+
+If Docker isn't running on macOS:
+
+- Colima: `colima start`
+- Docker Desktop: open it and wait until it finishes starting
+
 ## Notes
 
 - This is a prototype product UI layer on top of the OpenClaw gateway.
