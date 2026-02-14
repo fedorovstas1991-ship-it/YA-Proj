@@ -1,6 +1,6 @@
-# YAgent (prototype)
+# YandexAgetn UI (prototype)
 
-This repo is a fork of OpenClaw with an in-progress, simplified product UI.
+Здесь живет прототип UI-слоя (в проекте он исторически называется `yagent`) поверх gateway.
 
 ## Current Status (2026-02-14)
 
@@ -28,19 +28,25 @@ Known gaps / TODO:
 
 ## One-Click Start (UI Onboarding)
 
-On macOS:
+On macOS (from repo root):
 
 ```bash
-cd app/openclaw
 ./yagent-onboard-ui.command
 ```
 
 What it does:
 
-- Uses profile `yagent` (stored in `~/.openclaw-yagent/`), so it doesn't touch your default OpenClaw state.
+- Uses profile `yagent` (by default) and stores state under `~/.openclaw-yagent/`.
 - Generates a token (or uses `OPENCLAW_GATEWAY_TOKEN` if provided).
-- Starts the gateway on `127.0.0.1:18789`.
-- Opens the Control UI in onboarding mode with token + gatewayUrl prefilled.
+- Starts the gateway on `127.0.0.1:18789` (configurable via env).
+- Opens the UI in onboarding mode with token + gatewayUrl prefilled.
+
+Useful env vars:
+
+- `OPENCLAW_PROFILE` (default: `yagent`)
+- `OPENCLAW_GATEWAY_PORT` (default: `18789`)
+- `OPENCLAW_GATEWAY_BIND` (default: `loopback`)
+- `OPENCLAW_GATEWAY_TOKEN` (optional; otherwise auto-generated)
 
 Artifacts:
 
@@ -56,10 +62,7 @@ kill $(cat ~/.openclaw-yagent/gateway.pid)
 
 ## Docker Setup (Optional)
 
-If you want a Docker-based run, use the wrapper that keeps state isolated from your local installs:
-
 ```bash
-cd app/openclaw
 ./yagent-docker-setup.sh
 ```
 
@@ -68,12 +71,3 @@ Host-mounted state:
 - Config: `~/.openclaw-yagent-docker/`
 - Workspace: `~/.openclaw-yagent-docker/workspace/`
 
-If Docker isn't running on macOS:
-
-- Colima: `colima start`
-- Docker Desktop: open it and wait until it finishes starting
-
-## Notes
-
-- This is a prototype product UI layer on top of the OpenClaw gateway.
-- The upstream OpenClaw README remains at `README.md`.
