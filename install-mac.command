@@ -63,6 +63,14 @@ YA_REPO="${YA_HOME}/repo"
 echo -e "${YELLOW}⏳ Setting up installation directory...${NC}"
 mkdir -p "$YA_HOME"
 
+# Setup environment variables for Docker
+export OPENCLAW_CONFIG_DIR="${HOME}/.openclaw"
+export OPENCLAW_WORKSPACE_DIR="${HOME}/.openclaw/workspace"
+export OPENCLAW_GATEWAY_TOKEN=$(openssl rand -hex 32)
+
+mkdir -p "$OPENCLAW_CONFIG_DIR"
+mkdir -p "$OPENCLAW_WORKSPACE_DIR"
+
 # Clone or update repo
 if [ -d "$YA_REPO/.git" ]; then
     echo -e "${YELLOW}⏳ Updating YA repository...${NC}"
@@ -78,12 +86,27 @@ fi
 echo -e "${YELLOW}⏳ Installing dependencies...${NC}"
 pnpm install --frozen-lockfile || pnpm install
 
-# Export gateway port (use 18789 by default)
+# Export required environment variables for Docker Compose
+export OPENCLAW_CONFIG_DIR="${OPENCLAW_CONFIG_DIR:-${HOME}/.openclaw}"
+export OPENCLAW_WORKSPACE_DIR="${OPENCLAW_WORKSPACE_DIR:-${HOME}/.openclaw/workspace}"
 export OPENCLAW_GATEWAY_PORT="${OPENCLAW_GATEWAY_PORT:-18789}"
 
-# Start Docker containers
+# Generate gateway token if not set
+if [ -z "${OPENCLAW_GATEWAY_TOKEN:-}" ]; then
+    export OPENCLAW_GATEWAY_TOKEN=$(openssl rand -hex 32)
+    echo -e "${GREEN}🔑 Generated gateway token${NC}"
+fi
+
+# Ensure config and workspace directories exist
+mkdir -p "$OPENCLAW_CONFIG_DIR"
+mkdir -p "$OPENCLAW_WORKSPACE_DIR"
+
+# Start Docker containers (with environment variables)
 echo -e "${YELLOW}⏳ Starting gateway (Docker)...${NC}"
 docker compose -f docker-compose.yml down 2>/dev/null || true
+OPENCLAW_CONFIG_DIR="$OPENCLAW_CONFIG_DIR" \
+OPENCLAW_WORKSPACE_DIR="$OPENCLAW_WORKSPACE_DIR" \
+OPENCLAW_GATEWAY_TOKEN="$OPENCLAW_GATEWAY_TOKEN" \
 docker compose -f docker-compose.yml up -d openclaw-gateway
 
 # Get gateway token
