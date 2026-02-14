@@ -129,6 +129,7 @@ export const agentHandlers: GatewayRequestHandlers = {
       try {
         const parsed = await parseMessageWithAttachments(message, normalizedAttachments, {
           maxBytes: 5_000_000,
+          maxImageBytes: 10_000_000,
           log: context.logGateway,
         });
         message = parsed.message.trim();

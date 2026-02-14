@@ -119,7 +119,21 @@ function generateAttachmentId(): string {
   return `att-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+const MAX_FILE_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+const MAX_IMAGE_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+
+function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes < 0) {
+    return "";
+  }
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 function base64FromDataUrl(dataUrl: string): string | null {
   const match = /^data:[^;]+;base64,(.+)$/.exec(dataUrl);
@@ -141,13 +155,14 @@ function addAttachmentFromFile(file: File, props: ChatProps) {
   if (!props.onAttachmentsChange) {
     return;
   }
-  if (file.size > MAX_ATTACHMENT_BYTES) {
+  const isImage = Boolean(file.type) && file.type.startsWith("image/");
+  const limit = isImage ? MAX_IMAGE_ATTACHMENT_BYTES : MAX_FILE_ATTACHMENT_BYTES;
+  if (file.size > limit) {
     window.alert(
-      `Файл слишком большой: ${file.name} (${file.size} байт). Лимит: ${MAX_ATTACHMENT_BYTES}.`,
+      `Файл слишком большой: ${file.name} (${formatBytes(file.size)}). Лимит: ${formatBytes(limit)}.`,
     );
     return;
   }
-  const isImage = Boolean(file.type) && file.type.startsWith("image/");
   const reader = new FileReader();
   reader.addEventListener("load", () => {
     const current = props.attachments ?? [];
@@ -240,7 +255,9 @@ function renderAttachmentPreview(props: ChatProps) {
                 : html`
                     <div class="chat-attachment__file">
                       <div class="chat-attachment__file-name">${att.fileName}</div>
-                      <div class="chat-attachment__file-meta">${att.mimeType}</div>
+                      <div class="chat-attachment__file-meta">
+                        ${att.mimeType}${att.sizeBytes ? ` · ${formatBytes(att.sizeBytes)}` : ""}
+                      </div>
                     </div>
                   `
             }
