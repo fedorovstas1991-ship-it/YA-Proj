@@ -388,6 +388,7 @@ export type GatewaySessionRow = {
   space?: string;
   updatedAt: number | null;
   sessionId?: string;
+  lastMessage?: { text?: string; role?: string };
   systemSent?: boolean;
   abortedLastRun?: boolean;
   thinkingLevel?: string;

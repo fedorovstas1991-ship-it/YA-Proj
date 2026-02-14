@@ -8,6 +8,8 @@ export type UiOnboardingState = {
   onboardingWizardSessionId: string | null;
   onboardingWizardStatus: "idle" | "running" | "done" | "cancelled" | "error";
   onboardingWizardStep: WizardStep | null;
+  onboardingWizardCurrentStep: number;
+  onboardingWizardTotalSteps: number;
   onboardingWizardError: string | null;
   onboardingWizardBusy: boolean;
   onboardingWizardMode: "local" | "remote";
