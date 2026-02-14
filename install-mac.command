@@ -104,10 +104,16 @@ mkdir -p "$OPENCLAW_WORKSPACE_DIR"
 # Start Docker containers (with environment variables)
 echo -e "${YELLOW}⏳ Starting gateway (Docker)...${NC}"
 docker compose -f docker-compose.yml down 2>/dev/null || true
-OPENCLAW_CONFIG_DIR="$OPENCLAW_CONFIG_DIR" \
-OPENCLAW_WORKSPACE_DIR="$OPENCLAW_WORKSPACE_DIR" \
-OPENCLAW_GATEWAY_TOKEN="$OPENCLAW_GATEWAY_TOKEN" \
+
+# Create .env file for docker-compose
+cat > .env <<EOF
+OPENCLAW_CONFIG_DIR=$OPENCLAW_CONFIG_DIR
+OPENCLAW_WORKSPACE_DIR=$OPENCLAW_WORKSPACE_DIR
+OPENCLAW_GATEWAY_TOKEN=$OPENCLAW_GATEWAY_TOKEN
+EOF
+
 docker compose -f docker-compose.yml up -d openclaw-gateway
+rm .env # Clean up the temporary .env file
 
 # Get gateway token
 GATEWAY_TOKEN=$(docker compose -f docker-compose.yml exec -T openclaw-gateway node dist/index.js health --token "dummy" 2>/dev/null | grep -o '"token":"[^"]*' | cut -d'"' -f4 || echo "unknown")
