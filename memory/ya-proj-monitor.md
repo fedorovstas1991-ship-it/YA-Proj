@@ -3,11 +3,11 @@
 repo: https://github.com/fedorovstas1991-ship-it/YA-Proj
 
 last_commit:
-  sha: f41557f0d55861beac792edb6a981a40247263d3
-  message: "Merge pull request #1 from fedorovstas1991-ship-it/codex/ui-e2e-product\n\ntest(ui-e2e): add one-tap product UI flow"
-  date: 2026-02-14T18:52:39Z
-  url: https://github.com/fedorovstas1991-ship-it/YA-Proj/commit/f41557f0d55861beac792edb6a981a40247263d3
+  sha: 98316c9131bdab3fba816bb38b5699ff382eab51
+  message: "Merge pull request #2 from fedorovstas1991-ship-it/codex/product-ui-script-docs\n\ndocs: add product UI onboarding script"
+  date: 2026-02-14T20:36:53Z
+  url: https://github.com/fedorovstas1991-ship-it/YA-Proj/commit/98316c9131bdab3fba816bb38b5699ff382eab51
 
 open_prs: []
 
-updated_at: 2026-02-14T20:16:21Z
+updated_at: 2026-02-14T20:41:23Z
