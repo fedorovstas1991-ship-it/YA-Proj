@@ -1,9 +1,5 @@
 FROM node:22-bookworm
 
-# Install Bun (required for build scripts)
-RUN curl -fsSL https://bun.sh/install | bash
-ENV PATH="/root/.bun/bin:${PATH}"
-
 RUN corepack enable
 
 WORKDIR /app
@@ -21,7 +17,25 @@ COPY ui/package.json ./ui/package.json
 COPY patches ./patches
 COPY scripts ./scripts
 
-RUN pnpm install --frozen-lockfile
+# Install dependencies with retry logic and exponential backoff
+# This handles transient network failures during package manager operations
+RUN set -e; \
+    attempt=0; \
+    max_attempts=5; \
+    while [ $attempt -lt $max_attempts ]; do \
+      if pnpm install --frozen-lockfile; then \
+        break; \
+      fi; \
+      attempt=$((attempt + 1)); \
+      if [ $attempt -lt $max_attempts ]; then \
+        wait_time=$((2 ** attempt)); \
+        echo "Install failed, attempt $attempt/$max_attempts. Retrying in ${wait_time}s..."; \
+        sleep $wait_time; \
+      else \
+        echo "Install failed after $max_attempts attempts"; \
+        exit 1; \
+      fi; \
+    done
 
 COPY . .
 RUN pnpm build
