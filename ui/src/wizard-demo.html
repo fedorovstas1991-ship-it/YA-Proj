@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wizard UI Demo</title>
+    <style>
+      :root {
+        --wizard-primary: #7c3aed;
+        --wizard-primary-hover: #6d28d9;
+        --wizard-primary-light: rgba(124, 58, 237, 0.1);
+        --wizard-secondary: #f3f4f6;
+        --wizard-border: #e5e7eb;
+        --wizard-text: #111827;
+        --wizard-text-light: #6b7280;
+        --wizard-success: #10b981;
+        --wizard-info: #3b82f6;
+        --wizard-warning: #f59e0b;
+        --wizard-danger: #ef4444;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.03), rgba(59, 130, 246, 0.03));
+        padding: 40px 20px;
+        min-height: 100vh;
+      }
+
+      .demo-container {
+        max-width: 500px;
+        margin: 0 auto;
+      }
+
+      .wizard-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100%;
+        padding: 20px;
+      }
+
+      .wizard-card {
+        width: 100%;
+        max-width: 480px;
+        background: white;
+        border-radius: 16px;
+        box-shadow:
+          0 10px 40px rgba(0, 0, 0, 0.08),
+          0 0 1px rgba(0, 0, 0, 0.12);
+        overflow: hidden;
+        animation: step-enter 0.4s ease-out;
+      }
+
+      .wizard-card::before {
+        content: "";
+        display: block;
+        height: 3px;
+        background: linear-gradient(
+          90deg,
+          var(--wizard-primary),
+          var(--wizard-info),
+          var(--wizard-primary)
+        );
+        background-size: 200% 100%;
+      }
+
+      @keyframes step-enter {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .wizard-progress {
+        padding: 20px 24px 16px;
+        border-bottom: 1px solid var(--wizard-border);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .wizard-step-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--wizard-text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .wizard-progress-bar {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        height: 4px;
+      }
+
+      .wizard-segment {
+        flex: 1;
+        height: 100%;
+        background: var(--wizard-border);
+        border-radius: 2px;
+        transition: background 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      .wizard-segment[data-state="completed"] {
+        background: var(--wizard-primary);
+      }
+
+      .wizard-segment[data-state="current"] {
+        background: var(--wizard-primary);
+        box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+      }
+
+      .wizard-segment[data-state="upcoming"] {
+        background: var(--wizard-border);
+      }
+
+      .wizard-step-content {
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        animation: step-enter 0.4s ease-out;
+        min-height: 200px;
+      }
+
+      .wizard-title {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--wizard-text);
+        letter-spacing: -0.02em;
+      }
+
+      .wizard-description {
+        margin: 0;
+        font-size: 14px;
+        color: var(--wizard-text-light);
+        line-height: 1.5;
+      }
+
+      .wizard-input {
+        width: 100%;
+        height: 48px;
+        padding: 12px 16px;
+        border: 1.5px solid var(--wizard-border);
+        border-radius: 12px;
+        background: white;
+        color: var(--wizard-text);
+        font-size: 14px;
+        font-family: inherit;
+        transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .wizard-input::placeholder {
+        color: var(--wizard-text-light);
+      }
+
+      .wizard-input:focus {
+        outline: none;
+        border-color: var(--wizard-primary);
+        box-shadow: 0 0 0 3px var(--wizard-primary-light);
+        background: white;
+      }
+
+      .wizard-button {
+        padding: 12px 20px;
+        border-radius: 10px;
+        border: 1.5px solid transparent;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 48px;
+      }
+
+      .wizard-button.primary {
+        background: var(--wizard-primary);
+        color: white;
+        border-color: var(--wizard-primary);
+      }
+
+      .wizard-button.primary:hover:not(:disabled) {
+        background: var(--wizard-primary-hover);
+        border-color: var(--wizard-primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+      }
+
+      .wizard-button.secondary {
+        background: white;
+        color: var(--wizard-text);
+        border-color: var(--wizard-border);
+      }
+
+      .wizard-button.secondary:hover:not(:disabled) {
+        background: var(--wizard-secondary);
+        border-color: var(--wizard-primary);
+        color: var(--wizard-primary);
+      }
+
+      .wizard-confirm-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 8px;
+      }
+
+      .wizard-select-options {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .wizard-option {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px;
+        border: 1.5px solid var(--wizard-border);
+        border-radius: 10px;
+        background: white;
+        cursor: pointer;
+        transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 14px;
+        color: var(--wizard-text);
+        position: relative;
+      }
+
+      .wizard-option:hover {
+        border-color: var(--wizard-primary);
+        background: var(--wizard-primary-light);
+      }
+
+      .wizard-option.selected {
+        border-color: var(--wizard-primary);
+        background: var(--wizard-primary-light);
+        font-weight: 600;
+      }
+
+      .wizard-option-checkmark {
+        width: 20px;
+        height: 20px;
+        border-radius: 6px;
+        border: 2px solid var(--wizard-primary);
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 200ms cubic-bezier(0.4, 0, 0.2, 1);
+        flex-shrink: 0;
+      }
+
+      .wizard-option.selected .wizard-option-checkmark {
+        opacity: 1;
+        background: var(--wizard-primary);
+        border-color: var(--wizard-primary);
+      }
+
+      .wizard-option.selected .wizard-option-checkmark::after {
+        content: "✓";
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .demo-section {
+        margin-bottom: 40px;
+      }
+
+      .demo-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--wizard-text);
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="demo-container">
+      <div class="demo-section">
+        <h2 class="demo-title">Text Input Example</h2>
+        <div class="wizard-card">
+          <div class="wizard-progress">
+            <span class="wizard-step-label">Step 1 of 4</span>
+            <div class="wizard-progress-bar">
+              <div class="wizard-segment" data-state="current"></div>
+              <div class="wizard-segment" data-state="upcoming"></div>
+              <div class="wizard-segment" data-state="upcoming"></div>
+              <div class="wizard-segment" data-state="upcoming"></div>
+            </div>
+          </div>
+          <div class="wizard-step-content">
+            <h2 class="wizard-title">Enter API Key</h2>
+            <p class="wizard-description">Please enter your API key to continue with the setup.</p>
+            <input type="text" class="wizard-input" placeholder="sk-..." />
+            <button class="wizard-button primary">Continue</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-section">
+        <h2 class="demo-title">Confirm Step Example</h2>
+        <div class="wizard-card">
+          <div class="wizard-progress">
+            <span class="wizard-step-label">Step 2 of 4</span>
+            <div class="wizard-progress-bar">
+              <div class="wizard-segment" data-state="completed"></div>
+              <div class="wizard-segment" data-state="current"></div>
+              <div class="wizard-segment" data-state="upcoming"></div>
+              <div class="wizard-segment" data-state="upcoming"></div>
+            </div>
+          </div>
+          <div class="wizard-step-content">
+            <h2 class="wizard-title">Confirm Settings</h2>
+            <p class="wizard-description">Are you sure you want to apply these settings?</p>
+            <div class="wizard-confirm-buttons">
+              <button class="wizard-button secondary">No</button>
+              <button class="wizard-button primary">Yes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-section">
+        <h2 class="demo-title">Select Options Example</h2>
+        <div class="wizard-card">
+          <div class="wizard-progress">
+            <span class="wizard-step-label">Step 3 of 4</span>
+            <div class="wizard-progress-bar">
+              <div class="wizard-segment" data-state="completed"></div>
+              <div class="wizard-segment" data-state="completed"></div>
+              <div class="wizard-segment" data-state="current"></div>
+              <div class="wizard-segment" data-state="upcoming"></div>
+            </div>
+          </div>
+          <div class="wizard-step-content">
+            <h2 class="wizard-title">Select Environment</h2>
+            <p class="wizard-description">Choose which environment to configure.</p>
+            <div class="wizard-select-options">
+              <button class="wizard-option selected">
+                <span>Development</span>
+                <div class="wizard-option-checkmark"></div>
+              </button>
+              <button class="wizard-option">
+                <span>Staging</span>
+                <div class="wizard-option-checkmark"></div>
+              </button>
+              <button class="wizard-option">
+                <span>Production</span>
+                <div class="wizard-option-checkmark"></div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-section">
+        <h2 class="demo-title">Progress Step Example</h2>
+        <div class="wizard-card">
+          <div class="wizard-progress">
+            <span class="wizard-step-label">Step 4 of 4</span>
+            <div class="wizard-progress-bar">
+              <div class="wizard-segment" data-state="completed"></div>
+              <div class="wizard-segment" data-state="completed"></div>
+              <div class="wizard-segment" data-state="completed"></div>
+              <div class="wizard-segment" data-state="current"></div>
+            </div>
+          </div>
+          <div class="wizard-step-content" style="justify-content: center">
+            <h2 class="wizard-title" style="text-align: center">Processing</h2>
+            <div style="text-align: center; padding: 20px">
+              <div
+                style="
+                  width: 40px;
+                  height: 40px;
+                  border: 3px solid var(--wizard-border);
+                  border-top-color: var(--wizard-primary);
+                  border-radius: 50%;
+                  margin: 0 auto 12px;
+                  animation: spin 1s linear infinite;
+                "
+              ></div>
+              <span style="color: var(--wizard-text-light); font-size: 13px">Processing...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </body>
+</html>
