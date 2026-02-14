@@ -60,6 +60,41 @@ Stop:
 kill $(cat ~/.openclaw-yagent/gateway.pid)
 ```
 
+## Product UI (manual onboarding)
+
+On macOS (from repo root):
+
+```bash
+./yagent-product-ui.command
+```
+
+What it does:
+
+- Uses profile `yagent-product` (by default) and stores state under `~/.openclaw-yagent-product/`.
+- Generates a token (or uses `OPENCLAW_GATEWAY_TOKEN` if provided).
+- Starts the gateway on `127.0.0.1:18789` (configurable via env).
+- Opens product UI on `/` with `onboarding=1`, so you can enter the Eliza API key, create a project, and chat.
+
+Useful env vars:
+
+- `OPENCLAW_PROFILE` (default: `yagent-product`)
+- `OPENCLAW_GATEWAY_PORT` (default: `18789`)
+- `OPENCLAW_GATEWAY_BIND` (default: `loopback`)
+- `OPENCLAW_GATEWAY_TOKEN` (optional; otherwise auto-generated)
+- `OPENCLAW_RESET` (default: `1` to reset state; set to `0` to keep state)
+
+Artifacts:
+
+- Token: `~/.openclaw-yagent-product/gateway.token`
+- PID: `~/.openclaw-yagent-product/gateway.pid`
+- Logs: `${TMPDIR:-/tmp}/yagent/gateway-yagent-product.log`
+
+Stop:
+
+```bash
+kill $(cat ~/.openclaw-yagent-product/gateway.pid)
+```
+
 ## Docker Setup (Optional)
 
 ```bash
@@ -70,4 +105,3 @@ Host-mounted state:
 
 - Config: `~/.openclaw-yagent-docker/`
 - Workspace: `~/.openclaw-yagent-docker/workspace/`
-

@@ -42,7 +42,7 @@ if [[ ! -f "$ROOT_DIR/dist/control-ui/index.html" ]]; then
   pnpm ui:build
 fi
 
-URL_UI="http://127.0.0.1:${PORT}/?token=${TOKEN}&gatewayUrl=ws://127.0.0.1:${PORT}"
+URL_UI="http://127.0.0.1:${PORT}/?onboarding=1&token=${TOKEN}&gatewayUrl=ws://127.0.0.1:${PORT}"
 
 # Start the gateway in the background.
 nohup node scripts/run-node.mjs --profile "$PROFILE" gateway \

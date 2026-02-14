@@ -25,7 +25,14 @@ pnpm dev
 ./yagent-onboard-ui.command
 ```
 
+## macOS: Product UI (manual onboarding)
+
+```bash
+./yagent-product-ui.command
+```
+
+Открывает product UI на `/` и принудительно показывает онбординг (ввод Eliza API key), затем можно создавать проект и общаться с моделью.
+
 ## Происхождение и лицензия
 
 Исходная кодовая база была импортирована из OpenClaw (MIT). Детали и атрибуция: `ATTRIBUTION.md`.
-
