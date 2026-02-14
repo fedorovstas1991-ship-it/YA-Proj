@@ -3,11 +3,11 @@
 repo: https://github.com/fedorovstas1991-ship-it/YA-Proj
 
 last_commit:
-  sha: a548da68f9339ed6c6ccf0f643c4e534c5bd2b7e
-  message: "docs: rewrite repo readmes"
-  date: 2026-02-14T11:03:35Z
-  url: https://github.com/fedorovstas1991-ship-it/YA-Proj/commit/a548da68f9339ed6c6ccf0f643c4e534c5bd2b7e
+  sha: f41557f0d55861beac792edb6a981a40247263d3
+  message: "Merge pull request #1 from fedorovstas1991-ship-it/codex/ui-e2e-product\n\ntest(ui-e2e): add one-tap product UI flow"
+  date: 2026-02-14T18:52:39Z
+  url: https://github.com/fedorovstas1991-ship-it/YA-Proj/commit/f41557f0d55861beac792edb6a981a40247263d3
 
 open_prs: []
 
-updated_at: 2026-02-14T18:46:00Z
+updated_at: 2026-02-14T18:56:30Z
