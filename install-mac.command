@@ -66,7 +66,6 @@ mkdir -p "$YA_HOME"
 # Setup environment variables for Docker
 export OPENCLAW_CONFIG_DIR="${HOME}/.openclaw"
 export OPENCLAW_WORKSPACE_DIR="${HOME}/.openclaw/workspace"
-export OPENCLAW_GATEWAY_TOKEN=$(openssl rand -hex 32)
 
 mkdir -p "$OPENCLAW_CONFIG_DIR"
 mkdir -p "$OPENCLAW_WORKSPACE_DIR"
@@ -90,30 +89,38 @@ pnpm install --frozen-lockfile || pnpm install
 export OPENCLAW_CONFIG_DIR="${OPENCLAW_CONFIG_DIR:-${HOME}/.openclaw}"
 export OPENCLAW_WORKSPACE_DIR="${OPENCLAW_WORKSPACE_DIR:-${HOME}/.openclaw/workspace}"
 export OPENCLAW_GATEWAY_PORT="${OPENCLAW_GATEWAY_PORT:-18789}"
-
-# Generate gateway token if not set
-if [ -z "${OPENCLAW_GATEWAY_TOKEN:-}" ]; then
-    export OPENCLAW_GATEWAY_TOKEN=$(openssl rand -hex 32)
-    echo -e "${GREEN}🔑 Generated gateway token${NC}"
-fi
+export OPENCLAW_BRIDGE_PORT="${OPENCLAW_BRIDGE_PORT:-18790}"
 
 # Ensure config and workspace directories exist
 mkdir -p "$OPENCLAW_CONFIG_DIR"
 mkdir -p "$OPENCLAW_WORKSPACE_DIR"
 
-# Start Docker containers (with environment variables)
-echo -e "${YELLOW}⏳ Starting gateway (Docker)...${NC}"
-docker compose -f docker-compose.yml down 2>/dev/null || true
+# Generate or reuse gateway token (idempotent — same token across restarts)
+ENV_FILE="$YA_REPO/.env"
+if [ -f "$ENV_FILE" ] && grep -q "^OPENCLAW_GATEWAY_TOKEN=" "$ENV_FILE"; then
+    # Reuse existing token
+    export OPENCLAW_GATEWAY_TOKEN=$(grep "^OPENCLAW_GATEWAY_TOKEN=" "$ENV_FILE" | cut -d= -f2)
+    echo -e "${GREEN}🔑 Reusing existing gateway token${NC}"
+else
+    export OPENCLAW_GATEWAY_TOKEN=$(openssl rand -hex 32)
+    echo -e "${GREEN}🔑 Generated new gateway token${NC}"
+fi
 
-# Create .env file for docker-compose
-cat > .env <<EOF
-OPENCLAW_CONFIG_DIR=$OPENCLAW_CONFIG_DIR
-OPENCLAW_WORKSPACE_DIR=$OPENCLAW_WORKSPACE_DIR
-OPENCLAW_GATEWAY_TOKEN=$OPENCLAW_GATEWAY_TOKEN
+# Write .env file BEFORE any docker compose calls (persists for all invocations)
+cat > "$ENV_FILE" <<EOF
+OPENCLAW_CONFIG_DIR=${OPENCLAW_CONFIG_DIR}
+OPENCLAW_WORKSPACE_DIR=${OPENCLAW_WORKSPACE_DIR}
+OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN}
+OPENCLAW_GATEWAY_PORT=${OPENCLAW_GATEWAY_PORT}
+OPENCLAW_BRIDGE_PORT=${OPENCLAW_BRIDGE_PORT}
+OPENCLAW_GATEWAY_BIND=lan
+OPENCLAW_IMAGE=openclaw:local
 EOF
 
+# Start Docker containers (docker compose auto-reads .env in current dir)
+echo -e "${YELLOW}⏳ Starting gateway (Docker)...${NC}"
+docker compose -f docker-compose.yml down 2>/dev/null || true
 docker compose -f docker-compose.yml up -d openclaw-gateway
-rm .env # Clean up the temporary .env file
 
 # Get gateway token
 GATEWAY_TOKEN=$(docker compose -f docker-compose.yml exec -T openclaw-gateway node dist/index.js health --token "dummy" 2>/dev/null | grep -o '"token":"[^"]*' | cut -d'"' -f4 || echo "unknown")
