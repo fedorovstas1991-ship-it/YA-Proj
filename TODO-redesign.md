@@ -528,7 +528,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 ## Технические идеи (от Gemini Flash)
 
-- [ ] Offline-режим через локальные LLM (Ollama/llama.cpp)
+- [x] Offline-режим через локальные LLM (Ollama/llama.cpp)
 - [ ] Time Travel Debug: пошаговый просмотр решений агента
 - [ ] Git Undo/Redo для действий агента в коде
 - [ ] Глобальные hotkeys из любого приложения
