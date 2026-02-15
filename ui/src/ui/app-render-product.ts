@@ -13,7 +13,7 @@ function buildHref(tab: string, basePath: string): string {
 }
 
 function renderDevDrawer(state: AppViewState) {
-  if (!state.productDevDrawerOpen) {
+  if (true /* !state.productDevDrawerOpen */) {
     return nothing;
   }
   return html`
