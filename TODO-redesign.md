@@ -342,7 +342,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-render-product.ts`:**
 
-- [x] **Удалить кнопку:** *(Manual intervention needed: direct edit tool not handling multi-line deletion reliably)*
+- [x] **Удалить кнопку:** _(Manual intervention needed: direct edit tool not handling multi-line deletion reliably)_
   - **Текущая строка:**
     ```html
     <button
@@ -384,8 +384,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-render-product.ts`:**
 
 - [x] **Проверить ссылки Legacy UI:**
-  - **Текущие строки:** `<a class="btn" href=${buildHref("chat", state.basePath)}>Legacy: Chat</a>` и другие.
-  - **TODO:** Убедиться, что `buildHref` корректно формирует ссылки.
+  - [x] Убедиться, что `buildHref` корректно формирует ссылки.
   - [x] Возможно, лаги связаны с загрузкой большого объема данных или рендерингом устаревших компонентов при переключении. Это может потребовать оптимизации в `app-view-state.ts` (например, отложенная загрузка данных для Legacy UI) или в самих Legacy компонентах.
   - [x] На данном этапе, если это JS-лаги, то проблема может быть в логике Legacy UI, которая не является частью текущей задачи по изменению Product UI. Отметить для дальнейшего исследования, если проблема сохраняется после скрытия кнопки.
 
