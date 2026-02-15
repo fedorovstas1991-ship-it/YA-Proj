@@ -243,35 +243,23 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-render-product.ts`:**
 
-- [ ] **Добавить UI для удаления проекта:**
+- [x] **Добавить UI для удаления проекта:**
   - **TODO:** В `renderProjectsPanel`, для каждого `product-project-group` (проекта), добавить кнопку "Удалить" (например, рядом с названием проекта или при наведении).
-  - **Пример UI:**
-    ```html
-    <button class="product-project-header" ...>
-      <span class="product-project-icon"
-        >${state.productCollapsedProjects.has(project.id) ? "▶" : "▼"}</span
-      >
-      <span class="product-project-name">📁 ${project.name}</span>
-      <button class="btn btn--sm danger" title="Удалить проект" @click="${(e:" Event)="">
-        { e.stopPropagation(); state.productConfirmDeleteProject(project.id); }}>${icons.trash}
-      </button>
-    </button>
-    ```
-  - [ ] **Добавить модальное окно подтверждения удаления:** Создать новую функцию `renderConfirmDeleteProjectModal(state: AppViewState)` аналогично `renderCreateProjectModal`.
+  - [x] **Добавить модальное окно подтверждения удаления:** Создать новую функцию `renderConfirmDeleteProjectModal(state: AppViewState)` аналогично `renderCreateProjectModal`.
     - **Поля:** `productConfirmDeleteProjectId`, `productConfirmDeleteProjectName`.
     - **Кнопки:** "Отмена", "Удалить".
 
 **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-view-state.ts`:**
 
-- [ ] **Добавить новые свойства состояния:**
+- [x] **Добавить новые свойства состояния:**
   - `productConfirmDeleteProjectOpen: boolean = false;`
   - `productConfirmDeleteProjectId: string | null = null;`
   - `productConfirmDeleteProjectName: string = "";`
-- [ ] **Метод `productConfirmDeleteProject(projectId: string)`:**
+- [x] **Метод `productConfirmDeleteProject(projectId: string)`:**
   - **TODO:** Устанавливает `productConfirmDeleteProjectId`, `productConfirmDeleteProjectName` и `productConfirmDeleteProjectOpen = true;`.
-- [ ] **Метод `productDeleteProject(projectId: string)`:**
+- [x] **Метод `productDeleteProject(projectId: string)`:**
   - **TODO:** Выполняет вызов `gateway.agents.delete(projectId)`.
-  - **TODO:** После успешного удаления:
+  - [x] После успешного удаления:
     - Закрыть модальное окно: `this.productConfirmDeleteProjectOpen = false;`
     - Очистить текущий `agentId` если удаленный проект был активным.
     - Обновить список проектов: `await this.productLoadProjects();`

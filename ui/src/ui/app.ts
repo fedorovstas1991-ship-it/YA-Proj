@@ -178,6 +178,9 @@ export class OpenClawApp extends LitElement {
   @state() productCreateProjectOpen = false;
   @state() productCreateProjectName = "";
   @state() productCreateProjectDesc = "";
+  @state() productConfirmDeleteProjectOpen: boolean = false;
+  @state() productConfirmDeleteProjectId: string | null = null;
+  @state() productConfirmDeleteProjectName: string = "";
   @state() productSessionsLoading = false;
   @state() productSessionsError: string | null = null;
   @state() productSessionsResult: SessionsListResult | null = null;
@@ -839,6 +842,48 @@ export class OpenClawApp extends LitElement {
       this.productCollapsedProjects.add(projectId);
     }
     this.productSaveProjects();
+  }
+
+  async productConfirmDeleteProject(projectId: string) {
+    if (!this.client || !this.connected) {
+      return;
+    }
+    const project = this.productProjects.find((p) => p.id === projectId);
+    if (!project) {
+      this.productSessionsError = `Проект с id ${projectId} не найден.`;
+      return;
+    }
+    this.productConfirmDeleteProjectId = projectId;
+    this.productConfirmDeleteProjectName = project.name;
+    this.productConfirmDeleteProjectOpen = true;
+  }
+
+  async productDeleteProject(projectId: string) {
+    if (!this.client || !this.connected) {
+      return;
+    }
+    this.productConfirmDeleteProjectOpen = false; // Close the modal immediately
+    this.productSessionsLoading = true;
+    this.productSessionsError = null;
+    try {
+      await this.client.request("agents.delete", { id: projectId });
+      this.productProjects = this.productProjects.filter((p) => p.id !== projectId);
+      this.productSaveProjects(); // Save updated project list
+      if (this.productAgentId === projectId) {
+        // If the deleted project was active, switch to default or null
+        this.productAgentId =
+          this.agentsList?.defaultId ?? this.agentsList?.agents?.[0]?.id ?? "main";
+        const nextSessionKey = `agent:${this.productAgentId}:main`;
+        await this.productOpenSession(nextSessionKey);
+      }
+      await this.productLoadSessions(); // Reload sessions as project's sessions are deleted
+    } catch (err) {
+      this.productSessionsError = String(err);
+    } finally {
+      this.productSessionsLoading = false;
+      this.productConfirmDeleteProjectId = null;
+      this.productConfirmDeleteProjectName = "";
+    }
   }
 
   async productConnectTelegram() {
