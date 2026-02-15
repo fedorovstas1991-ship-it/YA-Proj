@@ -534,7 +534,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 - [x] Глобальные hotkeys из любого приложения
 - [x] Smart Cache для LLM ответов (снижение затрат)
 - [x] Containerized exec: Docker sandbox для безопасного выполнения команд
-- [ ] Semantic search по памяти агента и скиллам
+- [x] Semantic search по памяти агента и скиллам
 - [ ] AI autocomplete для shell команд в exec
 - [ ] Дебаг-режим: визуализация промпта, токенов, изменение на лету
 - [ ] Real-time code linting в output агента
