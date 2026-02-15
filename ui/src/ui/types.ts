@@ -343,6 +343,9 @@ export type AgentsListResult = {
 
 export type AgentConfig = {
   skills?: string[];
+  temperament?: string;
+  communicationStyle?: string;
+  knowledgeBaseSource?: string;
   // Add other potential agent config properties here as needed
 };
 

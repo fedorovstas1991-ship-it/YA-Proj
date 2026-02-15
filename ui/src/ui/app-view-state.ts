@@ -265,17 +265,26 @@ export type AppViewState = {
   logsCursor: number | null;
   logsLastFetchAt: number | null;
   logsLimit: number;
-  logsMaxBytes = 100 * 1024;
-  logsAtBottom = true;
-  client: GatewayBrowserClient | null = null;
-  refreshSessionsAfterChat: Set<string> = new Set();
+  logsAtBottom: boolean;
+  client: GatewayBrowserClient | null;
+  refreshSessionsAfterChat: Set<string>;
   
   // Skill editing state
-  productEditingSkillOpen: boolean = false;
-  productEditingSkillId: string | null = null;
-  productEditingSkillName: string = "";
-  productEditingSkillDescription: string = "";
-  productEditingSkillCode: string = "";
+  productEditingSkillOpen: boolean;
+  productEditingSkillId: string | null;
+  productEditingSkillName: string;
+  productEditingSkillDescription: string;
+  productEditingSkillCode: string;
+
+  // Agent Persona editing state
+  productEditingAgentOpen: boolean;
+  productEditingAgentId: string | null;
+  productEditingAgentName: string;
+  productEditingAgentDescription: string;
+  productEditingAgentTemperament: string;
+  productEditingAgentCommunicationStyle: string;
+  productEditingAgentKnowledgeBaseSource: string; // New property
+
 
   // Dev Drawer activation
   private logoClickCount: number = 0;
@@ -319,6 +328,14 @@ export type AppViewState = {
     this.productEditingSkillDescription = "";
     this.productEditingSkillCode = "";
 
+    // Initialize agent persona editing state
+    this.productEditingAgentOpen = false;
+    this.productEditingAgentId = null;
+    this.productEditingAgentName = "";
+    this.productEditingAgentDescription = "";
+    this.productEditingAgentTemperament = "";
+    this.productEditingAgentCommunicationStyle = "";
+    this.productEditingAgentKnowledgeBaseSource = ""; // Initialize new property
 
     const savedProjects = localStorage.getItem("productProjects");
     if (savedProjects) {
@@ -363,6 +380,85 @@ export type AppViewState = {
   }
 
   // --- Actions / Methods ---
+
+  productOpenEditAgent = async (agentId: string) => {
+    if (!this.client) {
+      return;
+    }
+    this.agentsLoading = true; // Use agentsLoading to indicate busy state for agent operations
+    this.agentsError = null;
+    try {
+      const agentDetails = await this.client.request<AgentGetResult>("agents.get", { agentId });
+      this.productEditingAgentId = agentDetails.id;
+      this.productEditingAgentName = agentDetails.name || "";
+      this.productEditingAgentDescription = agentDetails.description || "";
+      this.productEditingAgentTemperament = agentDetails.config?.temperament || "";
+      this.productEditingAgentCommunicationStyle = agentDetails.config?.communicationStyle || "";
+      this.productEditingAgentKnowledgeBaseSource = agentDetails.config?.knowledgeBaseSource || "";
+      this.productEditingAgentOpen = true;
+    } catch (e) {
+      this.agentsError = String(e);
+      sendAppEvent({
+        type: "error",
+        message: `Ошибка загрузки агента "${agentId}" для редактирования: ${e}`,
+      });
+    } finally {
+      this.agentsLoading = false;
+    }
+  };
+
+  productSaveEditedAgent = async () => {
+    if (!this.client || !this.productEditingAgentId) {
+      return;
+    }
+    this.agentsLoading = true;
+    this.agentsError = null;
+    try {
+      const updatePayload = {
+        agentId: this.productEditingAgentId,
+        name: this.productEditingAgentName,
+        description: this.productEditingAgentDescription,
+        config: {
+          temperament: this.productEditingAgentTemperament,
+          communicationStyle: this.productEditingAgentCommunicationStyle,
+          knowledgeBaseSource: this.productEditingAgentKnowledgeBaseSource,
+          // Note: Skills would typically be managed separately or merged carefully if part of this config
+        },
+      };
+      await this.client.request("agents.update", updatePayload);
+      sendAppEvent({
+        type: "success",
+        message: `Агент "${this.productEditingAgentName}" обновлен.`,
+      });
+      this.productEditingAgentOpen = false;
+      this.productEditingAgentId = null;
+      this.productEditingAgentName = "";
+      this.productEditingAgentDescription = "";
+      this.productEditingAgentTemperament = "";
+      this.productEditingAgentCommunicationStyle = "";
+      this.productEditingAgentKnowledgeBaseSource = "";
+      await this.productLoadProjects(); // Reload projects to reflect updated agent names/descriptions
+    } catch (e) {
+      this.agentsError = String(e);
+      sendAppEvent({
+        type: "error",
+        message: `Ошибка сохранения агента "${this.productEditingAgentName}": ${e}`,
+      });
+    } finally {
+      this.agentsLoading = false;
+    }
+  };
+
+  productCancelEditAgent = () => {
+    this.productEditingAgentOpen = false;
+    this.productEditingAgentId = null;
+    this.productEditingAgentName = "";
+    this.productEditingAgentDescription = "";
+    this.productEditingAgentTemperament = "";
+    this.productEditingAgentCommunicationStyle = "";
+    this.productEditingAgentKnowledgeBaseSource = "";
+  };
+
 
   connect = () => {
     this.client = new GatewayBrowserClient(this.settings.gatewayUrl, this.settings.token);
