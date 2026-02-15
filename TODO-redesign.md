@@ -299,7 +299,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-render-product.ts`:**
 
 - [x] **Добавить UI для удаления чата:**
-  - **TODO:** В `product-item` для каждого чата (как в проекте, так и без проекта) добавить кнопку "Удалить" (например, при наведении).
+  - [x] В `product-item` для каждого чата (как в проекте, так и без проекта) добавить кнопку "Удалить" (например, при наведении).
   - **Пример UI:**
     ```html
     <button class="product-item ..." ...>
