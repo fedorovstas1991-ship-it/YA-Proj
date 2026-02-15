@@ -1194,7 +1194,10 @@ export class OpenClawApp extends LitElement {
   render() {
     // Conditional rendering of the onboarding wizard
     if (this.onboarding && !this.simpleOnboardingDone) {
-      return html`<onboarding-wizard @onboarding-complete=${this._handleOnboardingComplete}></onboarding-wizard>`;
+      return html`<onboarding-wizard
+      .client=${this.client} // Передача client
+      @onboarding-complete=${this._handleOnboardingComplete}
+    ></onboarding-wizard>`;
     }
     return renderApp(this as unknown as AppViewState);
   }

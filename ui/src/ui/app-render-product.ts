@@ -875,52 +875,24 @@ export function renderProductApp(state: AppViewState) {
         </button>
       </aside>
 
-      <aside class="product-sidebar" role="complementary" aria-label="Sidebar with projects and chats">
-        <div class="product-sidebar__header">
-          <div class="product-title">OpenClaw</div>
-          <div class="product-sub">Проекты</div>
-        </div>
-        <div class="product-sidebar__section">
-          <button class="btn" aria-label="Create new project" @click=${() => (state.productCreateProjectOpen = true)}>Создать проект</button>
-        </div>
-        <div class="product-sidebar__list">
-          ${projectList.map(
-            (p) => html`
-              <button
-                class="product-item ${p.id === agentId ? "active" : ""}"
-                aria-label="${p.identity?.name ?? p.name ?? p.id} проект"
-                aria-current=${p.id === agentId ? "page" : "false"}
-                @click=${() => void state.productSelectAgent(p.id)}
-              >
-                <div class="product-item__title">${p.identity?.name ?? p.name ?? p.id}</div>
-                <div class="product-item__sub">${p.id}</div>
-              </button>
-            `,
-          )}
-        </div>
-
-        <div class="product-sidebar__header" style="margin-top:12px;">
-          <div class="product-sub">Чаты</div>
-          <button class="btn btn--sm" aria-label="New chat" ?disabled=${!chatReady} @click=${() => void state.productNewChat()}>+</button>
-        </div>
-        <div class="product-sidebar__list">
-          ${sessions.map(
-            (s) => html`
-              <button
-                class="product-item ${s.key === state.sessionKey ? "active" : ""}"
-                ?disabled=${!chatReady}
-                aria-label="Чат: ${s.displayName ?? s.label ?? s.key}"
-                aria-current=${s.key === state.sessionKey ? "page" : "false"}
-                @click=${() => {
-                  void state.productOpenSession(s.key);
-                }}
-              >
-                <div class="product-item__title">${s.displayName ?? s.label ?? s.key}</div>
-                <div class="product-item__sub">${s.lastMessage?.text ?? ""}</div>
-              </button>
-            `,
-          )}
-        </div>
+      <aside class="product-sidebar" role="complementary" aria-label="Sidebar navigation">
+        ${
+          state.productPanel === "projects"
+            ? renderProjectsPanel(state)
+            : state.productPanel === "telegram"
+              ? renderTelegramPanel(state)
+              : state.productPanel === "skills"
+                ? renderSkillsPanel(state)
+                : html`
+                    <div class="product-sidebar__header">
+                      <div class="product-title">OpenClaw</div>
+                      <div class="product-sub">Настройки</div>
+                    </div>
+                    <div class="product-sidebar__section">
+                      <p>Настройки будут здесь.</p>
+                    </div>
+                  ` // Placeholder for settings panel
+        }
       </aside>
 
       <main class="product-main">
