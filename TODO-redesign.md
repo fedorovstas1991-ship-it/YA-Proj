@@ -532,7 +532,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 - [x] Time Travel Debug: пошаговый просмотр решений агента
 - [x] Git Undo/Redo для действий агента в коде
 - [x] Глобальные hotkeys из любого приложения
-- [ ] Smart Cache для LLM ответов (снижение затрат)
+- [x] Smart Cache для LLM ответов (снижение затрат)
 - [ ] Containerized exec: Docker sandbox для безопасного выполнения команд
 - [ ] Semantic search по памяти агента и скиллам
 - [ ] AI autocomplete для shell команд в exec
