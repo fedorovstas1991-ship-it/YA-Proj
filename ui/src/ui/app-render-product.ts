@@ -102,6 +102,27 @@ function renderConfirmDeleteProjectModal(state: AppViewState) {
   `;
 }
 
+function renderConfirmDeleteChatModal(state: AppViewState) {
+  if (!state.productConfirmDeleteChatOpen) {
+    return nothing;
+  }
+  return html`
+    <div class="product-modal-backdrop ${state.productConfirmDeleteChatOpen ? "open" : ""}" role="presentation" @click=${() => (state.productConfirmDeleteChatOpen = false)}>
+      <div class="product-modal" role="dialog" aria-labelledby="confirm-delete-chat-title" aria-modal="true" @click=${(e: Event) => e.stopPropagation()}>
+        <div class="product-modal__title" id="confirm-delete-chat-title">Удалить чат "${state.productConfirmDeleteChatDisplayName}"?</div>
+        <div class="product-modal__body">
+          <p>Вы уверены, что хотите удалить чат "${state.productConfirmDeleteChatDisplayName}"?</p>
+          <p>Это действие необратимо.</p>
+        </div>
+        <div class="row" style="margin-top:12px; justify-content:flex-end;">
+          <button class="btn" aria-label="Отменить удаление" @click=${() => (state.productConfirmDeleteChatOpen = false)}>Отмена</button>
+          <button class="btn danger" aria-label="Подтвердить удаление чата" @click=${() => void state.productDeleteChat(state.productConfirmDeleteChatSessionKey!)}>Удалить</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderProjectsPanel(state: AppViewState) {
   const sessions = state.productSessionsResult?.sessions ?? [];
   const projects = state.productProjects ?? [];
@@ -151,14 +172,25 @@ function renderProjectsPanel(state: AppViewState) {
                                 <button
                                   class="product-item product-item--nested ${s?.key === state.sessionKey ? "active" : ""}"
                                   ?disabled=${!chatReady}
-                                  @click=${() => {
+                                >
+                                  <div class="product-item__title" @click=${() => {
                                     if (s?.key) {
                                       void state.productOpenSession(s.key);
                                     }
-                                  }}
-                                >
-                                  <div class="product-item__title">└ ${s?.displayName ?? s?.label ?? s?.key}</div>
-                                  <div class="product-item__sub">${s?.lastMessage?.text ?? ""}</div>
+                                  }}>└ ${s?.displayName ?? s?.label ?? s?.key}</div>
+                                  <div class="product-item__sub" @click=${() => {
+                                    if (s?.key) {
+                                      void state.productOpenSession(s.key);
+                                    }
+                                  }}>${s?.lastMessage?.text ?? ""}</div>
+                                  <button class="btn btn--sm danger" title="Удалить чат" @click=${(
+                                    e: Event,
+                                  ) => {
+                                    e.stopPropagation();
+                                    state.productConfirmDeleteChat(s.key!);
+                                  }}>
+                                    ${icons.trash}
+                                  </button>
                                 </button>
                               `,
                             )}
@@ -186,12 +218,21 @@ function renderProjectsPanel(state: AppViewState) {
                     <button
                       class="product-item product-item--nested ${s.key === state.sessionKey ? "active" : ""}"
                       ?disabled=${!chatReady}
-                      @click=${() => {
-                        void state.productOpenSession(s.key);
-                      }}
                     >
-                      <div class="product-item__title">└ ${s.displayName ?? s.label ?? s.key}</div>
-                      <div class="product-item__sub">${s.lastMessage?.text ?? ""}</div>
+                      <div class="product-item__title" @click=${() => {
+                        void state.productOpenSession(s.key);
+                      }}>└ ${s.displayName ?? s.label ?? s.key}</div>
+                      <div class="product-item__sub" @click=${() => {
+                        void state.productOpenSession(s.key);
+                      }}>${s.lastMessage?.text ?? ""}</div>
+                      <button class="btn btn--sm danger" title="Удалить чат" @click=${(
+                        e: Event,
+                      ) => {
+                        e.stopPropagation();
+                        state.productConfirmDeleteChat(s.key);
+                      }}>
+                        ${icons.trash}
+                      </button>
                     </button>
                   `,
                 )}
@@ -738,5 +779,6 @@ export function renderProductApp(state: AppViewState) {
     ${renderDevDrawer(state)}
     ${renderCreateProjectModal(state)}
     ${renderConfirmDeleteProjectModal(state)}
+    ${renderConfirmDeleteChatModal(state)}
   `;
 }

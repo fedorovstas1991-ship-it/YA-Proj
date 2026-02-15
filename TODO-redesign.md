@@ -269,7 +269,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-render-product.ts`:**
 
-- [ ] **Добавить кнопку "Новый чат" в `product-project-group`:**
+- [x] **Добавить кнопку "Новый чат" в `product-project-group`:**
   - **TODO:** Внутри `product-project-header` или рядом с названием проекта добавить кнопку "+", которая будет вызывать `state.productNewChatInProject(project.id)`.
   - **Пример UI:**
     ```html
@@ -286,13 +286,13 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-view-state.ts`:**
 
-- [ ] **Модифицировать `productNewChat()` или добавить `productNewChatInProject(projectId: string)`:**
+- [x] **Модифицировать `productNewChat()` или добавить `productNewChatInProject(projectId: string)`:**
   - **Текущая логика `productNewChat()`:** Создает чат без привязки к конкретному проекту.
-  - **TODO:** Если `productNewChat()` будет использоваться для глобальных чатов, то создать новую функцию `productNewChatInProject(projectId: string)`:
-    - **TODO:** Эта функция должна будет вызывать `gateway.sessions.create()` с параметром `agentId: projectId`.
-    - **TODO:** После создания нового чата, автоматически открыть его: `this.productOpenSession(newSessionKey);`
-    - **TODO:** Обновить список сессий: `await this.productLoadSessions();`
-  - **TODO:** Если `productNewChat()` будет универсальной: добавить необязательный параметр `projectId?: string` и использовать его в вызове `gateway.sessions.create()`.
+  - [x] Если `productNewChat()` будет использоваться для глобальных чатов, то создать новую функцию `productNewChatInProject(projectId: string)`:
+    - [x] Эта функция должна будет вызывать `gateway.sessions.create()` с параметром `agentId: projectId`.
+    - [x] После создания нового чата, автоматически открыть его: `this.productOpenSession(newSessionKey);`
+    - [x] Обновить список сессий: `await this.productLoadSessions();`
+  - [x] Если `productNewChat()` будет универсальной: добавить необязательный параметр `projectId?: string` и использовать его в вызове `gateway.sessions.create()`.
 
 ### 2.4. Завершение/удаление чата (Нет UI, добавить)
 
