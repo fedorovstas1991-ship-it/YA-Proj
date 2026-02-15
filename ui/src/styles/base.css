@@ -420,3 +420,12 @@ select {
   outline: none;
   box-shadow: var(--focus-ring);
 }
+
+/* ===========================================
+   END OF BASE.CSS
+   =========================================== */
+/*
+  This file defines global CSS variables for colors, typography, spacing, and other design tokens.
+  It also includes fundamental styles, utility animations, and accessibility-focused resets.
+  Designed for easy theming and consistent application across the UI.
+*/
