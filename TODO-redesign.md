@@ -493,11 +493,11 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 ## Настройки агента
 
-- [ ] Экран настроек: выбор модели из добавленных в конфиг
-- [ ] Редактирование промпта/инструкций агента (textarea)
-- [ ] Смена API токена из UI
-- [ ] Файл: app-render-product.ts — добавить экран Settings
-- [ ] Файл: app-view-state.ts — состояния для настроек
+- [x] Экран настроек: выбор модели из добавленных в конфиг
+- [x] Редактирование промпта/инструкций агента (textarea)
+- [x] Смена API токена из UI
+- [x] Файл: app-render-product.ts — добавить экран Settings
+- [x] Файл: app-view-state.ts — состояния для настроек
 
 ## Вложения в чат
 
