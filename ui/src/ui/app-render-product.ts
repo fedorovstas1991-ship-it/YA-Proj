@@ -719,9 +719,6 @@ export function renderProductApp(state: AppViewState) {
           ${icons.link}
         </button>
         <div style="flex:1"></div>
-        <button class="product-rail__btn" title="Для разработчиков" aria-label="Инструменты разработчика" @click=${() => (state.productDevDrawerOpen = true)}>
-          &lt;/&gt;
-        </button>
       </aside>
 
       <aside class="product-sidebar" role="complementary" aria-label="Sidebar with projects and chats">

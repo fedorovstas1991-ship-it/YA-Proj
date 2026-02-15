@@ -1,6 +1,5 @@
 import { produce } from "immer";
 import { AppEvent, sendAppEvent } from "./app-events.ts";
-import { CompactionStatus } from "./app-tool-stream.ts";
 import { getSessionAgentId, getSessionDisplayName } from "./app-util.ts";
 import { ChatState, loadChatHistory, watchChatStream } from "./controllers/chat.ts";
 import { GatewayBrowserClient } from "./gateway.ts";
@@ -258,346 +257,14 @@ export type AppViewState = {
   logsCursor: number | null;
   logsLastFetchAt: number | null;
   logsLimit: number;
-  logsMaxBytes: number;
-  logsAtBottom: boolean;
-  client: GatewayBrowserClient | null;
-  refreshSessionsAfterChat: Set<string>;
-  connect: () => void;
-  setTab: (tab: Tab) => void;
-  setTheme: (theme: ThemeMode, context?: { transition: boolean }) => void;
-  applySettings: (next: UiSettings) => void;
-  loadOverview: () => Promise<void>;
-  loadAssistantIdentity: () => Promise<void>;
-  loadCron: () => Promise<void>;
-  handleWhatsAppStart: (force: boolean) => Promise<void>;
-  handleWhatsAppWait: () => Promise<void>;
-  handleWhatsAppLogout: () => Promise<void>;
-  handleChannelConfigSave: () => Promise<void>;
-  handleChannelConfigReload: () => Promise<void>;
-  handleNostrProfileEdit: (accountId: string, profile: NostrProfile | null) => void;
-  handleNostrProfileCancel: () => void;
-  handleNostrProfileFieldChange: (field: keyof NostrProfile, value: string) => void;
-  handleNostrProfileSave: () => Promise<void>;
-  handleNostrProfileImport: () => Promise<void>;
-  handleNostrProfileToggleAdvanced: () => void;
-  handleExecApprovalDecision: (decision: "allow-once" | "allow-always" | "deny") => Promise<void>;
-  handleGatewayUrlConfirm: () => void;
-  handleGatewayUrlCancel: () => void;
-  handleConfigLoad: () => Promise<void>;
-  handleConfigSave: () => Promise<void>;
-  handleConfigApply: () => Promise<void>;
-  handleConfigFormUpdate: (path: string, value: unknown) => void;
-  handleConfigFormModeChange: (mode: "form" | "raw") => void;
-  handleConfigRawChange: (raw: string) => void;
-  startOnboardingWizard: () => Promise<void>;
-  advanceOnboardingWizard: (answer?: unknown) => Promise<void>;
-  cancelOnboardingWizard: () => Promise<void>;
-  setOnboardingWizardDone: () => void;
-  setSimpleOnboardingDone: (next: boolean) => void;
-  productConfirmDeleteProject: (projectId: string) => Promise<void>;
-  productDeleteProject: (projectId: string) => Promise<void>;
-  productConfirmDeleteChat: (sessionKey: string) => Promise<void>;
-  productDeleteChat: (sessionKey: string) => Promise<void>;
-  productSelectAgent: (agentId: string) => Promise<void>;
-  productLoadSessions: () => Promise<void>;
-  productNewChat: (projectId?: string) => Promise<void>;
-  productNewChatInProject: (projectId: string) => Promise<void>;
-  productResetChat: () => Promise<void>;
-  productCreateProject: () => Promise<void>;
-  productConnectTelegram: () => Promise<void>;
-  productLoadProjects: () => void;
-  productSaveProjects: () => void;
-  productToggleProjectCollapsed: (projectId: string) => void;
-  productReloadConfig: () => Promise<void>;
-  productResetAll: () => Promise<void>;
-  productOpenSession: (sessionKey: string) => Promise<void>;
-  handleInstallSkill: (key: string) => Promise<void>;
-  handleUpdateSkill: (key: string) => Promise<void>;
-  handleToggleSkillEnabled: (key: string, enabled: boolean) => Promise<void>;
-  handleUpdateSkillEdit: (key: string, value: string) => void;
-  handleSaveSkillApiKey: (key: string, apiKey: string) => Promise<void>;
-  handleCronToggle: (jobId: string, enabled: boolean) => Promise<void>;
-  handleCronRun: (jobId: string) => Promise<void>;
-  handleCronRemove: (jobId: string) => Promise<void>;
-  handleCronAdd: () => Promise<void>;
-  handleCronRunsLoad: (jobId: string) => Promise<void>;
-  handleCronFormUpdate: (path: string, value: unknown) => void;
-  handleSessionsLoad: () => Promise<void>;
-  handleSessionsPatch: (key: string, patch: unknown) => Promise<void>;
-  handleLoadNodes: () => Promise<void>;
-  handleLoadPresence: () => Promise<void>;
-  handleLoadSkills: () => Promise<void>;
-  handleLoadDebug: () => Promise<void>;
-  handleLoadLogs: () => Promise<void>;
-  handleDebugCall: () => Promise<void>;
-  handleRunUpdate: () => Promise<void>;
-  setPassword: (next: string) => void;
-  setSessionKey: (next: string) => void;
-  setChatMessage: (next: string) => void;
-  handleSendChat: (messageOverride?: string, opts?: { restoreDraft?: boolean }) => Promise<void>;
-  handleAbortChat: () => Promise<void>;
-  removeQueuedMessage: (id: string) => void;
-  handleChatScroll: (event: Event) => void;
-  resetToolStream: () => void;
-  resetChatScroll: () => void;
-  exportLogs: (lines: string[], label: string) => void;
-  handleLogsScroll: (event: Event) => void;
-  handleOpenSidebar: (content: string) => void;
-  handleCloseSidebar: () => void;
-  handleSplitRatioChange: (ratio: number) => void;
-};
-
-export class AppViewState {
-  settings: UiSettings = DEFAULT_UI_SETTINGS;
-  password = "";
-  tab: Tab = "chat";
-  onboarding = false;
-  simpleMode = false;
-  productMode = false;
-  simpleOnboardingDone = false;
-  simpleDevToolsOpen = false;
-  productPanel: "chat" | "projects" | "telegram" = "projects";
-  productDevDrawerOpen = false;
-  productAgentId: string | null = null;
-  productCreateProjectOpen = false;
-  productCreateProjectName = "";
-  productCreateProjectDesc = "";
-  productConfirmDeleteProjectOpen = false;
-  productConfirmDeleteProjectId: string | null = null;
-  productConfirmDeleteProjectName = "";
-  productConfirmDeleteChatOpen = false;
-  productConfirmDeleteChatSessionKey: string | null = null;
-  productConfirmDeleteChatDisplayName = "";
-  productSessionsLoading = false;
-  productSessionsError: string | null = null;
-  productSessionsResult: SessionsListResult | null = null;
-  productTelegramToken = "";
-  productTelegramAllowFrom = "";
-  productTelegramBusy = false;
-  productTelegramError: string | null = null;
-  productTelegramSuccess: string | null = null;
-  productProjects: Array<{ id: string; name: string; expanded?: boolean; sessionKeys?: string[] }> =
-    [];
-  productProjectsLoading = false;
-  productProjectsError: string | null = null;
-  productEditingProjectId: string | null = null;
-  productCollapsedProjects: Set<string> = new Set();
-  basePath = "/";
-  connected = false;
-  theme: ThemeMode = "system";
-  themeResolved: "light" | "dark" = "light";
-  hello: GatewayHelloOk | null = null;
-  lastError: string | null = null;
-  eventLog: AppEvent[] = [];
-  assistantName = "OpenClaw";
-  assistantAvatar: string | null = null;
-  assistantAgentId: string | null = null;
-  sessionKey = "main";
-  chatLoading = false;
-  chatSending = false;
-  chatMessage = "";
-  chatAttachments: ChatAttachment[] = [];
-  chatMessages: unknown[] = [];
-  chatToolMessages: unknown[] = [];
-  chatStream: string | null = null;
-  chatStreamStartedAt: number | null = null;
-  chatRunId: string | null = null;
-  compactionStatus: CompactionStatus | null = null;
-  chatAvatarUrl: string | null = null;
-  chatThinkingLevel: string | null = null;
-  chatQueue: ChatQueueItem[] = [];
-  chatManualRefreshInFlight = false;
-  onboardingWizardSessionId: string | null = null;
-  onboardingWizardStatus: "idle" | "running" | "done" | "cancelled" | "error" = "idle";
-  onboardingWizardStep: WizardStep | null = null;
-  onboardingWizardError: string | null = null;
-  onboardingWizardBusy = false;
-  onboardingWizardMode: "local" | "remote" = "local";
-  onboardingWizardWorkspace = "";
-  onboardingWizardResetConfig = false;
-  onboardingWizardTextAnswer = "";
-  onboardingWizardMultiAnswers: number[] = [];
-  onboardingWizardCurrentStep = 0;
-  onboardingWizardTotalSteps = 0;
-  nodesLoading = false;
-  // NOTE: This property and related imports like fetchDevices, DevicePairingList, GatewayDevice were removed due to being unused.
-  chatNewMessagesBelow = false;
-  sidebarOpen = false;
-  sidebarContent: string | null = null;
-  sidebarError: string | null = null;
-  splitRatio = 0.5;
-  // This is a placeholder; actual implementation will be provided by the UI framework
-  scrollToBottom: (opts?: { smooth?: boolean }) => void = () => {};
-  // NOTE: These properties and related imports were removed due to being unused.
-  execApprovalsLoading = false;
-  execApprovalsSaving = false;
-  execApprovalsDirty = false;
-  execApprovalsSnapshot: ExecApprovalsSnapshot | null = null;
-  execApprovalsForm: ExecApprovalsFile | null = null;
-  execApprovalsSelectedAgent: string | null = null;
-  execApprovalsTarget: "gateway" | "node" = "gateway";
-  execApprovalsTargetNodeId: string | null = null;
-  execApprovalQueue: ExecApprovalRequest[] = [];
-  execApprovalBusy = false;
-  execApprovalError: string | null = null;
-  pendingGatewayUrl: string | null = null;
-  configLoading = false;
-  configRaw = "";
-  configRawOriginal = "";
-  configValid: boolean | null = null;
-  configIssues: unknown[] = [];
-  configSaving = false;
-  configApplying = false;
-  updateRunning = false;
-  applySessionKey = "";
-  configSnapshot: ConfigSnapshot | null = null;
-  configSchema: unknown = null;
-  configSchemaVersion: string | null = null;
-  configSchemaLoading = false;
-  configUiHints: ConfigUiHints = {};
-  configForm: Record<string, unknown> | null = null;
-  configFormOriginal: Record<string, unknown> | null = null;
-  configFormMode: "form" | "raw" = "form";
-  configSearchQuery = "";
-  configActiveSection: string | null = null;
-  configActiveSubsection: string | null = null;
-  channelsLoading = false;
-  channelsSnapshot: ChannelsStatusSnapshot | null = null;
-  channelsError: string | null = null;
-  channelsLastSuccess: number | null = null;
-  whatsappLoginMessage: string | null = null;
-  whatsappLoginQrDataUrl: string | null = null;
-  whatsappLoginConnected: boolean | null = null;
-  whatsappBusy = false;
-  nostrProfileFormState: NostrProfileFormState | null = null;
-  nostrProfileAccountId: string | null = null;
-  configFormDirty = false;
-  presenceLoading = false;
-  presenceEntries: PresenceEntry[] = [];
-  presenceError: string | null = null;
-  presenceStatus: string | null = null;
-  agentsLoading = false;
-  agentsList: AgentsListResult | null = null;
-  agentsError: string | null = null;
-  agentsSelectedId: string | null = null;
-  agentsPanel: "overview" | "files" | "tools" | "skills" | "channels" | "cron" = "overview";
-  agentFilesLoading = false;
-  agentFilesError: string | null = null;
-  agentFilesList: AgentsFilesListResult | null = null;
-  agentFileContents: Record<string, string> = {};
-  agentFileDrafts: Record<string, string> = {};
-  agentFileActive: string | null = null;
-  agentFileSaving = false;
-  agentIdentityLoading = false;
-  agentIdentityError: string | null = null;
-  agentIdentityById: Record<string, AgentIdentityResult> = {};
-  agentSkillsLoading = false;
-  agentSkillsError: string | null = null;
-  agentSkillsReport: SkillStatusReport | null = null;
-  agentSkillsAgentId: string | null = null;
-  sessionsLoading = false;
-  sessionsResult: SessionsListResult | null = null;
-  sessionsError: string | null = null;
-  sessionsFilterActive = "any";
-  sessionsFilterLimit = "20";
-  sessionsIncludeGlobal = true;
-  sessionsIncludeUnknown = true;
-  usageLoading = false;
-  usageResult: SessionsUsageResult | null = null;
-  usageCostSummary: CostUsageSummary | null = null;
-  usageError: string | null = null;
-  usageStartDate = "";
-  usageEndDate = "";
-  usageSelectedSessions: string[] = [];
-  usageSelectedDays: string[] = [];
-  usageSelectedHours: number[] = [];
-  usageChartMode: "tokens" | "cost" = "tokens";
-  usageDailyChartMode: "total" | "by-type" = "total";
-  usageTimeSeriesMode: "cumulative" | "per-turn" = "cumulative";
-  usageTimeSeriesBreakdownMode: "total" | "by-type" = "total";
-  usageTimeSeries: SessionUsageTimeSeries | null = null;
-  usageTimeSeriesLoading = false;
-  usageSessionLogs: SessionLogEntry[] | null = null;
-  usageSessionLogsLoading = false;
-  usageSessionLogsExpanded = false;
-  usageQuery = "";
-  usageQueryDraft = "";
-  usageQueryDebounceTimer: number | null = null;
-  usageSessionSort: "tokens" | "cost" | "recent" | "messages" | "errors" = "recent";
-  usageSessionSortDir: "asc" | "desc" = "desc";
-  usageRecentSessions: string[] = [];
-  usageTimeZone: "local" | "utc" = "local";
-  usageContextExpanded = false;
-  usageHeaderPinned = false;
-  usageSessionsTab: "all" | "recent" = "all";
-  usageVisibleColumns: string[] = [
-    "actions",
-    "name",
-    "agent",
-    "model",
-    "first",
-    "last",
-    "messages",
-    "tokens",
-    "cost",
-  ];
-  usageLogFilterRoles: ("user" | "tool" | "agent" | "system")[] = [];
-  usageLogFilterTools: string[] = [];
-  usageLogFilterHasTools = false;
-  usageLogFilterQuery = "";
-  cronLoading = false;
-  cronJobs: CronJob[] = [];
-  cronStatus: CronStatus | null = null;
-  cronError: string | null = null;
-  cronForm: CronFormState = {
-    agentId: "main",
-    skillId: "",
-    schedule: "every-n-minutes",
-    everyNMinutes: 15,
-    prompt: "",
-    enabled: false,
-    startNow: false,
-  };
-  cronRunsJobId: string | null = null;
-  cronRuns: CronRunLogEntry[] = [];
-  cronBusy = false;
-  skillsLoading = false;
-  skillsReport: SkillStatusReport | null = null;
-  skillsError: string | null = null;
-  skillsFilter = "";
-  skillEdits: Record<string, string> = {};
-  skillMessages: Record<string, SkillMessage> = {};
-  skillsBusyKey: string | null = null;
-  debugLoading = false;
-  debugStatus: StatusSummary | null = null;
-  debugHealth: HealthSnapshot | null = null;
-  debugModels: unknown[] = [];
-  debugHeartbeat: unknown = null;
-  debugCallMethod = "";
-  debugCallParams = "";
-  debugCallResult: string | null = null;
-  debugCallError: string | null = null;
-  logsLoading = false;
-  logsError: string | null = null;
-  logsFile: string | null = null;
-  logsEntries: LogEntry[] = [];
-  logsFilterText = "";
-  logsLevelFilters: Record<LogLevel, boolean> = {
-    error: true,
-    warn: true,
-    info: true,
-    debug: false,
-    trace: false,
-  };
-  logsAutoFollow = true;
-  logsTruncated = false;
-  logsCursor: number | null = null;
-  logsLastFetchAt: number | null = null;
-  logsLimit = 1000;
   logsMaxBytes = 100 * 1024;
   logsAtBottom = true;
   client: GatewayBrowserClient | null = null;
   refreshSessionsAfterChat: Set<string> = new Set();
+  
+  // Dev Drawer activation
+  private logoClickCount: number = 0;
+  private lastLogoClickTime: number = 0;
 
   constructor() {
     const { tab, simple, onboarding, product } = parseLocation();
@@ -653,6 +320,8 @@ export class AppViewState {
       this.onboarding = onboarding;
       this.productMode = product;
     });
+
+    window.addEventListener('keydown', this.handleKeyDown);
 
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
       if (this.theme === "system") {
@@ -1223,6 +892,38 @@ export class AppViewState {
     localStorage.setItem("simpleOnboardingDone", next ? "true" : "false");
   };
 
-  // --- Telegram specific logic for product UI ---
+  // Dev Drawer activation (methods)
+  productHandleLogoClick = () => {
+    const now = Date.now();
+    if (now - this.lastLogoClickTime < 500) {
+      // 500ms for rapid clicks
+      this.logoClickCount++;
+      if (this.logoClickCount >= 5) {
+        this.productDevDrawerOpen = !this.productDevDrawerOpen;
+        this.logoClickCount = 0;
+        this.lastLogoClickTime = 0;
+        sendAppEvent({
+          type: "info",
+          message: `Dev Drawer toggled: ${this.productDevDrawerOpen ? "on" : "off"}`,
+        });
+      }
+    } else {
+      this.logoClickCount = 1;
+    }
+    this.lastLogoClickTime = now;
+  };
+
+  handleKeyDown = (event: KeyboardEvent) => {
+    if (event.ctrlKey && event.shiftKey && event.key === "D") {
+      this.productDevDrawerOpen = !this.productDevDrawerOpen;
+      event.preventDefault(); // Prevent default browser action
+      sendAppEvent({
+        type: "info",
+        message: `Dev Drawer toggled: ${this.productDevDrawerOpen ? "on" : "off"}`,
+      });
+    }
+  };
+
+  // --- Actions / Methods ---
   // ... (rest of the class methods) ...
 }

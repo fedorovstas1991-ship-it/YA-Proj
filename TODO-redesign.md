@@ -355,16 +355,16 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
       (state.productDevDrawerOpen = true)}> &lt;/&gt;
     </button>
     ```
-  - **TODO:** Удалить этот блок `<button>` из `product-rail`.
+  - [x] Удалить этот блок `<button>` из `product-rail`.
 
 ### 3.2. Активация по секретной комбинации
 
 **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-view-state.ts`:**
 
-- [x] **Добавить свойство для отслеживания кликов по логотипу:**
+- [ ] **Добавить свойство для отслеживания кликов по логотипу:**
   - `private logoClickCount: number = 0;`
   - `private lastLogoClickTime: number = 0;`
-- [x] **Добавить метод для обработки кликов по лого:**
+- [ ] **Добавить метод для обработки кликов по лого:**
   - `productHandleLogoClick()`:
     - **TODO:** При каждом клике проверять `Date.now() - this.lastLogoClickTime < 500` (например, 500мс для быстрого двойного клика).
     - **TODO:** Если клики происходят быстро, увеличивать `logoClickCount`.
@@ -372,7 +372,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
       - `this.productDevDrawerOpen = !this.productDevDrawerOpen;`
       - Сбросить `logoClickCount` и `lastLogoClickTime`.
     - **TODO:** Иначе, сбросить `logoClickCount` и установить `lastLogoClickTime = Date.now()`.
-- [x] **Добавить обработчик клавиатуры для `Ctrl+Shift+D`:**
+- [ ] **Добавить обработчик клавиатуры для `Ctrl+Shift+D`:**
   - **TODO:** Добавить `window.addEventListener('keydown', this.handleKeyDown.bind(this));` в конструктор или `init` метод.
   - **TODO:** Реализовать `handleKeyDown(event: KeyboardEvent)`:
     - Если `event.ctrlKey && event.shiftKey && event.key === 'D'`:
@@ -386,8 +386,8 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 - [x] **Проверить ссылки Legacy UI:**
   - **Текущие строки:** `<a class="btn" href=${buildHref("chat", state.basePath)}>Legacy: Chat</a>` и другие.
   - **TODO:** Убедиться, что `buildHref` корректно формирует ссылки.
-  - **TODO:** Возможно, лаги связаны с загрузкой большого объема данных или рендерингом устаревших компонентов при переключении. Это может потребовать оптимизации в `app-view-state.ts` (например, отложенная загрузка данных для Legacy UI) или в самих Legacy компонентах.
-  - **TODO:** На данном этапе, если это JS-лаги, то проблема может быть в логике Legacy UI, которая не является частью текущей задачи по изменению Product UI. Отметить для дальнейшего исследования, если проблема сохраняется после скрытия кнопки.
+  - [x] Возможно, лаги связаны с загрузкой большого объема данных или рендерингом устаревших компонентов при переключении. Это может потребовать оптимизации в `app-view-state.ts` (например, отложенная загрузка данных для Legacy UI) или в самих Legacy компонентах.
+  - [x] На данном этапе, если это JS-лаги, то проблема может быть в логике Legacy UI, которая не является частью текущей задачи по изменению Product UI. Отметить для дальнейшего исследования, если проблема сохраняется после скрытия кнопки.
 
 ## 4. HARD RESET СКРИПТ
 
@@ -400,7 +400,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 ### 4.1. Проверка `rm -rf ~/.openclaw-yagent`
 
 - [x] **Уже есть:** `rm -rf "$STATE_DIR"` где `STATE_DIR="$HOME/.openclaw-${PROFILE}"`. Это полностью удаляет директорию профиля, что включает в себя данные gateway.
-  - **Строка:** `rm -rf "$STATE_DIR"`
+  - [x] `rm -rf "$STATE_DIR"`
 
 ### 4.2. Сброс `localStorage` в браузере
 
