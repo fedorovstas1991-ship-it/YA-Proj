@@ -26,10 +26,10 @@
 .product-rail__btn {
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--text);
+  border-radius: 8px; /* Changed from var(--radius-sm) to 8px */
+  border: 1px solid var(--border); /* Changed from var(--border) */
+  background: var(--bg-accent); /* Changed from var(--panel) to var(--bg-accent) */
+  color: var(--text); /* Changed from var(--text) */
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -45,7 +45,7 @@
   border-color: var(--accent);
   color: var(--accent);
   background: var(--accent-subtle);
-  transform: none;
+  transform: none; /* Changed from transform: none; to transform: none; (explicitly setting it) */
 }
 
 .product-rail__btn:disabled {

@@ -117,16 +117,16 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **`.product-rail` (левая панель навигации):**
 
-- [ ] `background`: `var(--bg)` (светло-серый)
-- [ ] `border-right`: `1px solid var(--border)`
+- [x] `background`: `var(--bg)` (светло-серый)
+- [x] `border-right`: `1px solid var(--border)`
 
 **`.product-rail__btn` (кнопки в левой панели):**
 
-- [ ] `border-radius`: `8px`
-- [ ] `background`: `var(--bg-accent)`
-- [ ] `color`: `var(--text)`
-- [ ] `border-color`: `var(--border)`
-- [ ] `product-rail__btn[data-active="true"], .product-rail__btn:hover`:
+- [x] `border-radius`: `8px`
+- [x] `background`: `var(--bg-accent)`
+- [x] `color`: `var(--text)`
+- [x] `border-color`: `var(--border)`
+- [x] `product-rail__btn[data-active="true"], .product-rail__btn:hover`:
   - `border-color`: `var(--accent)`
   - `color`: `var(--accent)`
   - `background`: `var(--accent-subtle)`
