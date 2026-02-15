@@ -16,23 +16,27 @@ export class OnboardingWizard extends LitElement {
       background-color: var(--anthropic-light-bg);
       color: var(--anthropic-text);
       transition: background-color 0.3s ease, color 0.3s ease;
-      font-family: var(--font-body);
+      font-family: var(--font-body, 'Inter', sans-serif); /* Используем Inter по умолчанию */
     }
 
     .wizard-container {
+      background-color: var(--anthropic-input-bg); /* Используем цвет фона для контейнера */
+      border-radius: var(--anthropic-border-radius);
+      box-shadow: var(--anthropic-shadow-lg);
+      padding: 40px;
+      width: 100%;
+      max-width: 600px; /* Уменьшил до 600px для лучшего соответствия слайдам онбординга */
+      box-sizing: border-box;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      width: 100%;
-      max-width: 800px;
-      padding: 20px;
+      text-align: center;
     }
 
     .wizard-steps {
       display: flex;
       justify-content: center;
-      gap: 16px;
+      gap: 20px; /* Увеличил отступ между шагами */
       margin-bottom: 40px;
       padding: 0;
       list-style: none;
@@ -40,7 +44,7 @@ export class OnboardingWizard extends LitElement {
 
     .wizard-step {
       color: var(--anthropic-muted-text);
-      font-size: 1.1em;
+      font-size: 1.2em; /* Увеличил размер шрифта */
       font-weight: 500;
       position: relative;
       padding-bottom: 8px;

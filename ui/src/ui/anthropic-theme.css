@@ -4,6 +4,7 @@
   --anthropic-light-bg: #fafaf8; /* User specified light bg */
   --anthropic-dark-bg: #1a1915; /* User specified dark bg */
   --anthropic-accent: #d97757; /* Terracotta */
+  --anthropic-accent-rgb: 217, 119, 87; /* RGB values for --anthropic-accent */
   --anthropic-text: #1a1915; /* Dark text for light theme */
   --anthropic-border-radius: 12px;
   --anthropic-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
