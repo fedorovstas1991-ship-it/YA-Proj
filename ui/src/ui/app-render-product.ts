@@ -159,6 +159,14 @@ function renderProjectsPanel(state: AppViewState) {
                     }}>
                       ${icons.trash}
                     </button>
+                    <button class="btn btn--sm danger" title="Удалить проект" @click=${(
+                      e: Event,
+                    ) => {
+                      e.stopPropagation();
+                      state.productConfirmDeleteProject(project.id);
+                    }}>
+                      ${icons.trash}
+                    </button>
                   </button>
                   ${
                     !state.productCollapsedProjects.has(project.id)
@@ -279,6 +287,130 @@ function renderTelegramPanel(state: AppViewState) {
         </button>
       </div>
     </section>
+  `;
+}
+
+function renderSkillsPanel(state: AppViewState) {
+  return html`
+    <section class="card">
+      <div class="card-title">Управление скиллами</div>
+      <div class="card-sub">Список доступных скиллов и их конфигурация.</div>
+      <div class="product-skills-list">
+        ${
+          state.skillsReport?.skills && state.skillsReport.skills.length > 0
+            ? state.skillsReport.skills.map(
+                (skill) => html`
+                <div class="product-skill-item">
+                  <div class="product-skill-item__header">
+                    <span class="product-skill-item__name">${skill.id}</span>
+                    ${
+                      skill.status === "active"
+                        ? html`
+                            <span class="badge ok">Активен</span>
+                          `
+                        : html`
+                            <span class="badge warn">Неактивен</span>
+                          `
+                    }
+                  </div>
+                  <div class="product-skill-item__description">${skill.description}</div>
+                  <div class="product-skill-item__actions">
+                    <button class="btn btn--sm" @click=${() => state.productEditSkill(skill.id)}>
+                      ${icons.edit} Редактировать
+                    </button>
+                    ${
+                      skill.status === "active"
+                        ? html`
+                          <button
+                            class="btn btn--sm danger"
+                            @click=${() => state.productDeactivateSkill(skill.id)}
+                            ?disabled=${state.skillsBusyKey === skill.id}
+                          >
+                            ${state.skillsBusyKey === skill.id ? "Отключаю..." : "Отключить"}
+                          </button>
+                        `
+                        : html`
+                          <button
+                            class="btn btn--sm primary"
+                            @click=${() => state.productActivateSkill(skill.id)}
+                            ?disabled=${state.skillsBusyKey === skill.id}
+                          >
+                            ${state.skillsBusyKey === skill.id ? "Включаю..." : "Включить"}
+                          </button>
+                        `
+                    }
+                  </div>
+                </div>
+              `,
+              )
+            : html`
+                <p>Нет доступных скиллов.</p>
+              `
+        }
+      </div>
+      <button class="btn primary" @click=${() => state.productCreateSkill()}>Добавить новый скилл</button>
+      ${state.skillsError ? html`<div class="callout danger" style="margin-top:12px;">${state.skillsError}</div>` : nothing}
+    </section>
+  `;
+}
+
+function renderCreateSkillModal(state: AppViewState) {
+  if (!state.productCreateSkillOpen) {
+    return nothing;
+  }
+  return html`
+    <div class="product-modal-backdrop ${state.productCreateSkillOpen ? "open" : ""}" role="presentation" @click=${() => (state.productCreateSkillOpen = false)}>
+      <div class="product-modal" role="dialog" aria-labelledby="create-skill-title" aria-modal="true" @click=${(e: Event) => e.stopPropagation()}>
+        <div class="product-modal__title" id="create-skill-title">Создать новый скилл</div>
+        <label class="field">
+          <span>ID скилла (уникальный идентификатор)</span>
+          <input
+            .value=${state.productCreateSkillId}
+            @input=${(e: Event) => (state.productCreateSkillId = (e.target as HTMLInputElement).value)}
+            placeholder="Например: my-first-skill"
+            aria-label="ID скилла"
+          />
+        </label>
+        <label class="field">
+          <span>Название скилла</span>
+          <input
+            .value=${state.productCreateSkillName}
+            @input=${(e: Event) => (state.productCreateSkillName = (e.target as HTMLInputElement).value)}
+            placeholder="Например: Мой первый скилл"
+            aria-label="Название скилла"
+          />
+        </label>
+        <label class="field">
+          <span>Описание скилла (опционально)</span>
+          <textarea
+            .value=${state.productCreateSkillDescription}
+            @input=${(e: Event) => (state.productCreateSkillDescription = (e.target as HTMLTextAreaElement).value)}
+            placeholder="Описание того, что делает этот скилл"
+            aria-label="Описание скилла"
+          ></textarea>
+        </label>
+        <label class="field">
+          <span>Код скилла</span>
+          <textarea
+            style="min-height: 200px; font-family: monospace;"
+            .value=${state.productCreateSkillFileContent}
+            @input=${(e: Event) => (state.productCreateSkillFileContent = (e.target as HTMLTextAreaElement).value)}
+            aria-label="Код скилла"
+          ></textarea>
+        </label>
+        <div class="row" style="margin-top:12px; justify-content:flex-end;">
+          <button class="btn" aria-label="Отменить создание" @click=${() => (state.productCreateSkillOpen = false)}>Отмена</button>
+          <button
+            class="btn primary"
+            aria-label="Создать скилл"
+            ?disabled=${state.skillsBusyKey === "create-skill" || !state.productCreateSkillId.trim() || !state.productCreateSkillFileContent.trim()}
+            @click=${() => void state.productSaveSkill()}
+          >
+            ${state.skillsBusyKey === "create-skill" ? "Создаю..." : "Создать"}
+          </button>
+        </div>
+      </div>
+    </div>
   `;
 }
 
@@ -633,7 +765,9 @@ export function renderProductApp(state: AppViewState) {
         ? renderProjectsPanel(state)
         : state.productPanel === "telegram"
           ? renderTelegramPanel(state)
-          : html`
+          : state.productPanel === "skills"
+            ? renderSkillsPanel(state)
+            : html`
             ${renderChat({
               sessionKey: state.sessionKey,
               onSessionKeyChange: () => undefined,
@@ -718,6 +852,16 @@ export function renderProductApp(state: AppViewState) {
         >
           ${icons.link}
         </button>
+        <button
+          class="product-rail__btn"
+          data-active=${state.productPanel === "skills"}
+          title="Скиллы"
+          aria-label="Панель скиллов"
+          aria-pressed=${state.productPanel === "skills"}
+          @click=${() => (state.productPanel = "skills")}
+        >
+          ${icons.skills}
+        </button>
         <div style="flex:1"></div>
         <button
           class="product-rail__btn"
@@ -787,5 +931,6 @@ export function renderProductApp(state: AppViewState) {
     ${renderCreateProjectModal(state)}
     ${renderConfirmDeleteProjectModal(state)}
     ${renderConfirmDeleteChatModal(state)}
+    ${renderCreateSkillModal(state)}
   `;
 }

@@ -148,6 +148,12 @@ function addAttachmentFromFile(file: File, props: ChatProps) {
     return;
   }
   const isImage = Boolean(file.type) && file.type.startsWith("image/");
+  const isTextFile =
+    Boolean(file.type) &&
+    (file.type.startsWith("text/") ||
+      file.type.includes("json") ||
+      file.type.includes("xml") ||
+      file.type.includes("pdf")); // Added check for text-like files and PDF
   const reader = new FileReader();
   reader.addEventListener("load", () => {
     const current = props.attachments ?? [];
@@ -168,8 +174,22 @@ function addAttachmentFromFile(file: File, props: ChatProps) {
       };
       props.onAttachmentsChange?.([...current, next]);
       return;
+    } else if (isTextFile) {
+      // Handle text files
+      const textContent = reader.result as string;
+      const next: ChatAttachment = {
+        id: generateAttachmentId(),
+        kind: "file", // Still kind "file" but with textContent
+        fileName: file.name || "text_file",
+        textContent: textContent,
+        mimeType: file.type || "text/plain",
+        sizeBytes: file.size,
+      };
+      props.onAttachmentsChange?.([...current, next]);
+      return;
     }
 
+    // Default handling for other binary files (if any)
     const buffer = reader.result as ArrayBuffer;
     const next: ChatAttachment = {
       id: generateAttachmentId(),
@@ -183,7 +203,11 @@ function addAttachmentFromFile(file: File, props: ChatProps) {
   });
   if (isImage) {
     reader.readAsDataURL(file);
+  } else if (isTextFile) {
+    // Read text files as text
+    reader.readAsText(file);
   } else {
+    // Read other files as ArrayBuffer
     reader.readAsArrayBuffer(file);
   }
 }
@@ -522,10 +546,11 @@ export function renderChat(props: ChatProps) {
             <button
               class="btn"
               ?disabled=${!props.connected}
-              title=${props.attachmentsLabel ?? "Вложения"}
+              title=${props.attachmentsLabel ?? "Прикрепить файл"}
+              aria-label="Прикрепить файл"
               @click=${() => filePickerEl?.click()}
             >
-              ${props.attachmentsLabel ?? "Вложения"}
+              ${icons.paperclip}
             </button>
             ${
               canAbort

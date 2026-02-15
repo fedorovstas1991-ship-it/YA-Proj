@@ -134,6 +134,15 @@
   --bg-hover: #333333; /* Adjusted */
   --bg-muted: #222222; /* Adjusted */
 
+/* Dark theme - Based on existing, but with new accent and adjusted values */
+:root[data-theme="dark"] {
+  /* Background - Warmer dark with depth */
+  --bg: #121212; /* Adjusted */
+  --bg-accent: #1e1e1e; /* Adjusted */
+  --bg-elevated: #282828; /* Adjusted */
+  --bg-hover: #333333; /* Adjusted */
+  --bg-muted: #222222; /* Adjusted */
+
   /* Card / Surface - More contrast between levels */
   --card: #1e1e1e; /* Adjusted */
   --card-foreground: #f5f5f5; /* Adjusted */
