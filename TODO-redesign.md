@@ -165,10 +165,10 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **`.product-project-group`:**
 
-- [ ] `border-radius`: `8px`
-- [ ] `border`: `1px solid var(--border)`
-- [ ] `box-shadow`: `none`
-- [ ] `product-project-group:hover`:
+- [x] `border-radius`: `8px`
+- [x] `border`: `1px solid var(--border)`
+- [x] `box-shadow`: `none`
+- [x] `product-project-group:hover`:
   - `box-shadow`: `var(--shadow-sm)`
 
 **`.product-project-header`:**

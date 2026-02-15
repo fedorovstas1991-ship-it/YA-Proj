@@ -223,7 +223,7 @@
   width: 280px;
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   z-index: 80;
   opacity: 0;
@@ -297,7 +297,7 @@
   width: min(420px, 92vw);
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 16px;
   box-shadow: var(--shadow-lg);
 }
