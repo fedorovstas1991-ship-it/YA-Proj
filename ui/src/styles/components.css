@@ -312,6 +312,7 @@
   border: 1px solid var(--border);
   background: var(--bg-elevated);
   padding: 12px 20px; /* More padding, slightly larger overall */
+  min-height: 44px; /* Ensure minimum tap target size for accessibility */
   border-radius: var(--radius-md);
   font-size: 15px; /* Slightly larger font size */
   font-weight: 500;
