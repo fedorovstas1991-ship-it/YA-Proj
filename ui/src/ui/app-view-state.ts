@@ -355,6 +355,18 @@ export type AppViewState = {
       this.onboarding = true;
     }
 
+    // Check for clearLocalStorage=1 in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("clearLocalStorage") === "1") {
+      localStorage.clear();
+      // Remove the parameter from the URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete("clearLocalStorage");
+      window.history.replaceState({}, "", url.toString());
+      this.setSimpleOnboardingDone(false); // Reset onboarding flag
+      sendAppEvent({ type: "info", message: "localStorage очищен по запросу URL." });
+    }
+
     // Attempt to connect immediately if not in onboarding and settings are present
     if (!this.onboarding && this.settings.token && this.settings.gatewayUrl) {
       this.connect();
@@ -368,7 +380,7 @@ export type AppViewState = {
       this.productMode = product;
     });
 
-    window.addEventListener('keydown', this.handleKeyDown);
+    window.addEventListener('keydown', this.handleKeyDown.bind(this));
 
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
       if (this.theme === "system") {
@@ -1041,6 +1053,18 @@ export type AppViewState = {
       this.logoClickCount = 1;
     }
     this.lastLogoClickTime = now;
+  };
+
+  // Keyboard shortcut for Dev Drawer
+  handleKeyDown = (event: KeyboardEvent) => {
+    if (event.ctrlKey && event.shiftKey && event.key === 'D') {
+      this.productDevDrawerOpen = !this.productDevDrawerOpen;
+      event.preventDefault(); // Prevent default browser action
+      sendAppEvent({
+        type: "info",
+        message: `Dev Drawer toggled via hotkey: ${this.productDevDrawerOpen ? "on" : "off"}`,
+      });
+    }
   };
 
   handleSendChat = async () => {

@@ -411,17 +411,6 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 - [x] **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-view-state.ts` (или в точке входа приложения):**
   - [x] В инициализации `AppViewState` или компонента приложения добавить логику, которая проверяет наличие `clearLocalStorage=1` в URL.
   - [x] Если параметр присутствует, выполнить `localStorage.clear()` и затем удалить этот параметр из URL, чтобы при последующих перезагрузках страницы `localStorage` не очищался повторно.
-  - **Пример логики в JS:**
-    ```typescript
-    if (new URLSearchParams(window.location.search).get("clearLocalStorage") === "1") {
-      localStorage.clear();
-      const url = new URL(window.location.href);
-      url.searchParams.delete("clearLocalStorage");
-      window.history.replaceState({}, "", url.toString());
-      // Возможно, также сбросить состояние приложения, чтобы UI отразил очистку localStorage
-      this.setSimpleOnboardingDone(false); // Предполагая, что это сбрасывает флаг онбординга
-    }
-    ```
 
 ### 4.3. Сброс всех сессий/агентов через gateway API
 
@@ -452,21 +441,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 - [x] **Уже обработано:** Если пункт 4.2 реализован (очистка `localStorage`), то `simpleOnboardingDone` будет сброшен автоматически.
 - [x] **Проверить логику в `app-view-state.ts`:**
   - [x] Убедиться, что при отсутствии `simpleOnboardingDone` в `localStorage` (или его значении `false`) приложение корректно инициирует показ онбординга (`this.onboarding = true;` и `this.simpleOnboardingDone = false;`).
-  - **Предполагаемая логика инициализации:**
-    ```typescript
-    constructor(...) {
-      // ...
-      const storedOnboardingDone = localStorage.getItem('simpleOnboardingDone');
-      this.simpleOnboardingDone = storedOnboardingDone === 'true';
-      if (!this.simpleOnboardingDone) {
-        this.onboarding = true; // Показать онбординг, если флаг не установлен
-      }
-      // ...
-    }
-    ```
   - [x] Проверить метод `setSimpleOnboardingDone(next: boolean)` в `app-view-state.ts` и убедиться, что он обновляет `localStorage`.
-    - **Текущая строка:** `setSimpleOnboardingDone: (next: boolean) => void;`
-    - **TODO:** Реализовать или проверить: `localStorage.setItem('simpleOnboardingDone', next ? 'true' : 'false'); this.simpleOnboardingDone = next;`
 
 ### 5.2. После reset должен показываться с нуля
 
