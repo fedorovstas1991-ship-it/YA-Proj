@@ -192,8 +192,8 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **WIZARD UI STYLES:**
 
-- [ ] Обновить все переменные `--wizard-*` в `product.css` в соответствии с Anthropic стилем:
-  - `--wizard-primary`: `#D97757`
+- [x] Обновить все переменные `--wizard-*` в `product.css` в соответствии с Anthropic стилем:
+  - `---wizard-primary`: `#D97757`
   - `--wizard-primary-hover`: `#C2684F`
   - `--wizard-primary-light`: `rgba(217, 119, 87, 0.1)`
   - `--wizard-secondary`: `--bg-accent`
@@ -204,9 +204,9 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
   - `--wizard-info`: `--info`
   - `--wizard-warning`: `--warn`
   - `--wizard-danger`: `--danger`
-- [ ] Обновить `background` в `.wizard-container` на `background: var(--bg);`
-- [ ] Обновить `background` в `.wizard-card::before` на более мягкий градиент или сплошной цвет `var(--wizard-primary)`.
-- [ ] Обновить `box-shadow` в `.wizard-card` на `var(--shadow-lg)`.
+- [x] Обновить `background` в `.wizard-container` на `background: var(--bg);`
+- [x] Обновить `background` в `.wizard-card::before` на более мягкий градиент или сплошной цвет `var(--wizard-primary)`.
+- [x] Обновить `box-shadow` в `.wizard-card` на `var(--shadow-lg)`.
 - [ ] Обновить стили для `[data-theme="dark"]` в Wizard-компонентах.
 
 ### 1.3. Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-render-product.ts`
