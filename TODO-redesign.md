@@ -450,8 +450,8 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 ### 5.1. Флаг `simpleOnboardingDone` в `localStorage`
 
 - [x] **Уже обработано:** Если пункт 4.2 реализован (очистка `localStorage`), то `simpleOnboardingDone` будет сброшен автоматически.
-- [ ] **Проверить логику в `app-view-state.ts`:**
-  - **TODO:** Убедиться, что при отсутствии `simpleOnboardingDone` в `localStorage` (или его значении `false`) приложение корректно инициирует показ онбординга (`this.onboarding = true;` и `this.simpleOnboardingDone = false;`).
+- [x] **Проверить логику в `app-view-state.ts`:**
+  - [x] Убедиться, что при отсутствии `simpleOnboardingDone` в `localStorage` (или его значении `false`) приложение корректно инициирует показ онбординга (`this.onboarding = true;` и `this.simpleOnboardingDone = false;`).
   - **Предполагаемая логика инициализации:**
     ```typescript
     constructor(...) {
@@ -464,7 +464,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
       // ...
     }
     ```
-  - **TODO:** Проверить метод `setSimpleOnboardingDone(next: boolean)` в `app-view-state.ts` и убедиться, что он обновляет `localStorage`.
+  - [x] Проверить метод `setSimpleOnboardingDone(next: boolean)` в `app-view-state.ts` и убедиться, что он обновляет `localStorage`.
     - **Текущая строка:** `setSimpleOnboardingDone: (next: boolean) => void;`
     - **TODO:** Реализовать или проверить: `localStorage.setItem('simpleOnboardingDone', next ? 'true' : 'false'); this.simpleOnboardingDone = next;`
 
