@@ -181,12 +181,12 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **`.product-item--nested`:**
 
-- [ ] `border-left`: `2px solid var(--border)`
-- [ ] `product-item--nested:hover`:
+- [x] `border-left`: `2px solid var(--border)`
+- [x] `product-item--nested:hover`:
   - `border-left-color`: `var(--accent)`
   - `background`: `var(--bg-hover)`
   - `transform`: `translateX(2px)`
-- [ ] `product-item--nested.active`:
+- [x] `product-item--nested.active`:
   - `border-left-color`: `var(--accent)`
   - `background`: `var(--accent-subtle)`
 

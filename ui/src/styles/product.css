@@ -579,15 +579,15 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  border-radius: 8px; /* Applied change */
-  border: 1px solid var(--border); /* Applied change */
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
   overflow: hidden;
-  box-shadow: none; /* Applied change */
+  box-shadow: none;
   transition: box-shadow var(--duration-fast) var(--ease-out);
 }
 
 .product-project-group:hover {
-  box-shadow: var(--shadow-sm); /* Applied change */
+  box-shadow: var(--shadow-sm);
 }
 
 .product-project-header {
@@ -595,8 +595,8 @@
   align-items: center;
   gap: 8px;
   padding: 12px;
-  background: var(--panel); /* Applied change */
-  border: none; /* Applied change */
+  background: var(--panel);
+  border: none;
   cursor: pointer;
   font: inherit;
   color: var(--text-strong);
@@ -607,8 +607,8 @@
 }
 
 .product-project-header:hover {
-  background: var(--bg-hover); /* Applied change */
-  color: var(--text-strong); /* Applied change */
+  background: var(--bg-hover);
+  color: var(--text-strong);
 }
 
 .product-project-header:focus-visible {
@@ -667,7 +667,7 @@
 .product-item--nested {
   border-radius: 0;
   border: none;
-  border-left: 2px solid var(--border);
+  border-left: 2px solid var(--border); /* Applied change */
   background: var(--bg);
   padding-left: 16px;
   margin: 0;
@@ -675,14 +675,14 @@
 }
 
 .product-item--nested:hover {
-  border-left-color: var(--accent);
-  background: var(--bg-hover);
-  transform: translateX(2px);
+  border-left-color: var(--accent); /* Applied change */
+  background: var(--bg-hover); /* Applied change */
+  transform: translateX(2px); /* Applied change */
 }
 
 .product-item--nested.active {
-  border-left-color: var(--accent);
-  background: var(--accent-subtle);
+  border-left-color: var(--accent); /* Applied change */
+  background: var(--accent-subtle); /* Applied change */
 }
 
 .product-item--nested + .product-item--nested {
