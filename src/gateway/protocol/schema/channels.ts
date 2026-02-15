@@ -1,57 +1,106 @@
-import { Type, Static } from "@sinclair/typebox";
-import { NonEmptyString } from "./utils";
+import { Type } from "@sinclair/typebox";
+import { NonEmptyString } from "./primitives.js";
 
-export const ChannelTelegramConfigSchema = Type.Object(
+export const TalkModeParamsSchema = Type.Object(
   {
-    token: NonEmptyString,
-    allowFrom: Type.Array(Type.Union([Type.Number(), Type.String()])),
-    groups: Type.Optional(
-      Type.Record(
-        Type.String(),
-        Type.Object({
-          requireMention: Type.Optional(Type.Boolean()),
-        }),
-      ),
-    ),
+    enabled: Type.Boolean(),
+    phase: Type.Optional(Type.String()),
   },
-  { $id: "ChannelTelegramConfig" },
+  { additionalProperties: false },
 );
 
-export type ChannelTelegramConfig = Static<typeof ChannelTelegramConfigSchema>;
+export const ChannelsStatusParamsSchema = Type.Object(
+  {
+    probe: Type.Optional(Type.Boolean()),
+    timeoutMs: Type.Optional(Type.Integer({ minimum: 0 })),
+  },
+  { additionalProperties: false },
+);
 
-export const ChannelTelegramSaveRequestSchema = Type.Object({
-  token: Type.String({ minLength: 1, description: "Telegram bot token" }),
-  allowFrom: Type.Optional(
-    Type.Array(
-      Type.Union([Type.String(), Type.Number()]),
-      { description: "List of user IDs or usernames allowed to interact with the bot" },
-    ),
-  ),
-  groups: Type.Optional(
-    Type.Record(
-      Type.String(),
-      Type.Object(
-        {
-          requireMention: Type.Optional(Type.Boolean()),
-        },
-        { description: "Configuration for specific groups by their ID" },
-      ),
-    ),
-  ),
-});
+// Channel docking: channels.status is intentionally schema-light so new
+// channels can ship without protocol updates.
+export const ChannelAccountSnapshotSchema = Type.Object(
+  {
+    accountId: NonEmptyString,
+    name: Type.Optional(Type.String()),
+    enabled: Type.Optional(Type.Boolean()),
+    configured: Type.Optional(Type.Boolean()),
+    linked: Type.Optional(Type.Boolean()),
+    running: Type.Optional(Type.Boolean()),
+    connected: Type.Optional(Type.Boolean()),
+    reconnectAttempts: Type.Optional(Type.Integer({ minimum: 0 })),
+    lastConnectedAt: Type.Optional(Type.Integer({ minimum: 0 })),
+    lastError: Type.Optional(Type.String()),
+    lastStartAt: Type.Optional(Type.Integer({ minimum: 0 })),
+    lastStopAt: Type.Optional(Type.Integer({ minimum: 0 })),
+    lastInboundAt: Type.Optional(Type.Integer({ minimum: 0 })),
+    lastOutboundAt: Type.Optional(Type.Integer({ minimum: 0 })),
+    lastProbeAt: Type.Optional(Type.Integer({ minimum: 0 })),
+    mode: Type.Optional(Type.String()),
+    dmPolicy: Type.Optional(Type.String()),
+    allowFrom: Type.Optional(Type.Array(Type.String())),
+    tokenSource: Type.Optional(Type.String()),
+    botTokenSource: Type.Optional(Type.String()),
+    appTokenSource: Type.Optional(Type.String()),
+    baseUrl: Type.Optional(Type.String()),
+    allowUnmentionedGroups: Type.Optional(Type.Boolean()),
+    cliPath: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+    dbPath: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+    port: Type.Optional(Type.Union([Type.Integer({ minimum: 0 }), Type.Null()])),
+    probe: Type.Optional(Type.Unknown()),
+    audit: Type.Optional(Type.Unknown()),
+    application: Type.Optional(Type.Unknown()),
+  },
+  { additionalProperties: true },
+);
 
-export type ChannelTelegramSaveRequest = Static<
-  typeof ChannelTelegramSaveRequestSchema
->;
+export const ChannelUiMetaSchema = Type.Object(
+  {
+    id: NonEmptyString,
+    label: NonEmptyString,
+    detailLabel: NonEmptyString,
+    systemImage: Type.Optional(Type.String()),
+  },
+  { additionalProperties: false },
+);
 
-export const ChannelTelegramSaveResponseSchema = Type.Object({
-  ok: Type.Boolean(),
-  probe: Type.Optional(
-    Type.Any(),
-  ), // Information about the connection result
-  error: Type.Optional(Type.String()),
-});
+export const ChannelsStatusResultSchema = Type.Object(
+  {
+    ts: Type.Integer({ minimum: 0 }),
+    channelOrder: Type.Array(NonEmptyString),
+    channelLabels: Type.Record(NonEmptyString, NonEmptyString),
+    channelDetailLabels: Type.Optional(Type.Record(NonEmptyString, NonEmptyString)),
+    channelSystemImages: Type.Optional(Type.Record(NonEmptyString, NonEmptyString)),
+    channelMeta: Type.Optional(Type.Array(ChannelUiMetaSchema)),
+    channels: Type.Record(NonEmptyString, Type.Unknown()),
+    channelAccounts: Type.Record(NonEmptyString, Type.Array(ChannelAccountSnapshotSchema)),
+    channelDefaultAccountId: Type.Record(NonEmptyString, NonEmptyString),
+  },
+  { additionalProperties: false },
+);
 
-export type ChannelTelegramSaveResponse = Static<
-  typeof ChannelTelegramSaveResponseSchema
->;
+export const ChannelsLogoutParamsSchema = Type.Object(
+  {
+    channel: NonEmptyString,
+    accountId: Type.Optional(Type.String()),
+  },
+  { additionalProperties: false },
+);
+
+export const WebLoginStartParamsSchema = Type.Object(
+  {
+    force: Type.Optional(Type.Boolean()),
+    timeoutMs: Type.Optional(Type.Integer({ minimum: 0 })),
+    verbose: Type.Optional(Type.Boolean()),
+    accountId: Type.Optional(Type.String()),
+  },
+  { additionalProperties: false },
+);
+
+export const WebLoginWaitParamsSchema = Type.Object(
+  {
+    timeoutMs: Type.Optional(Type.Integer({ minimum: 0 })),
+    accountId: Type.Optional(Type.String()),
+  },
+  { additionalProperties: false },
+);

@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YAgent: Flash Ideas for Developers</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-color: #fafaf8; /* Anthropic light background */
+        --accent-color: #d97757; /* Anthropic terracotta */
+        --text-color: #374151; /* Dark grey text */
+        --subtle-text-color: #6b7280; /* Muted grey text */
+        --border-color: #e5e7eb; /* Light grey border */
+        --shadow-color: rgba(0, 0, 0, 0.08);
+        --radius-md: 10px;
+        --radius-lg: 12px;
+        --font-inter: "Inter", sans-serif;
+      }
+
+      body {
+        font-family: var(--font-inter);
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        margin: 0;
+        padding: 0;
+        line-height: 1.6;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+      }
+
+      .presentation-container {
+        width: 100%;
+        max-width: 900px;
+        margin: 2rem auto;
+        box-shadow: 0 10px 30px var(--shadow-color);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        background-color: #ffffff; /* Pure white for the slides */
+      }
+
+      .slide {
+        padding: 40px 60px;
+        min-height: 450px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .slide:last-child {
+        border-bottom: none;
+      }
+
+      h1 {
+        font-size: 2.8em;
+        color: var(--accent-color);
+        margin-bottom: 0.5em;
+        font-weight: 700;
+      }
+
+      h2 {
+        font-size: 2em;
+        color: var(--text-color);
+        margin-bottom: 0.8em;
+        font-weight: 600;
+      }
+
+      h3 {
+        font-size: 1.5em;
+        color: var(--text-color);
+        margin-bottom: 0.6em;
+        font-weight: 600;
+      }
+
+      p {
+        font-size: 1.1em;
+        margin-bottom: 1em;
+        color: var(--text-color);
+      }
+
+      ul {
+        list-style-type: none;
+        padding-left: 0;
+        margin-bottom: 1.5em;
+      }
+
+      ul li {
+        position: relative;
+        padding-left: 25px;
+        margin-bottom: 0.8em;
+        font-size: 1.1em;
+        color: var(--text-color);
+      }
+
+      ul li:last-child {
+        margin-bottom: 0;
+      }
+
+      ul li::before {
+        content: "•";
+        color: var(--accent-color);
+        position: absolute;
+        left: 0;
+        font-size: 1.2em;
+        line-height: 1;
+      }
+
+      .accent-text {
+        color: var(--accent-color);
+        font-weight: 500;
+      }
+
+      .footer {
+        font-size: 0.9em;
+        color: var(--subtle-text-color);
+        text-align: center;
+        margin-top: 2rem;
+        padding-bottom: 2rem;
+      }
+
+      .slide-title {
+        text-align: center;
+        margin-bottom: 2em;
+      }
+      .slide-title h1 {
+        font-size: 3.5em;
+        margin-bottom: 0.2em;
+      }
+      .slide-title p {
+        font-size: 1.3em;
+        color: var(--subtle-text-color);
+      }
+
+      .key-idea {
+        background-color: var(--bg-color);
+        border-left: 4px solid var(--accent-color);
+        padding: 20px;
+        margin-top: 1.5em;
+        border-radius: var(--radius-md);
+      }
+      .key-idea h3 {
+        margin-top: 0;
+        color: var(--accent-color);
+      }
+      .key-idea p {
+        font-size: 1em;
+        margin-bottom: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="presentation-container">
+      <!-- Slide 1: Title Slide -->
+      <div class="slide slide-title">
+        <h1>YAgent: Flash Ideas</h1>
+        <p>Неожиданные технические улучшения для разработчиков</p>
+        <p class="accent-text">Продукт-менеджер: Antigravity</p>
+      </div>
+
+      <!-- Slide 2: Introduction -->
+      <div class="slide">
+        <h2>Введение: Выходим за рамки очевидного</h2>
+        <p>
+          Мы уже работаем над базовыми улучшениями: Anthropic-дизайн, управление проектами/чатами,
+          меню разработчика, хард ресет. Но что, если взглянуть глубже?
+        </p>
+        <p>
+          Эта презентация предлагает
+          <span class="accent-text">12 неочевидных технических идей</span>, которые могут
+          трансформировать опыт разработчика с YAgent, делая его мощнее, безопаснее и интуитивнее.
+        </p>
+      </div>
+
+      <!-- Slide 3: Code & Dev Experience -->
+      <div class="slide">
+        <h2>Код и Опыт Разработчика</h2>
+        <ul>
+          <li>
+            <h3>AI-powered CLI Autocomplete for `exec`</h3>
+            <p>
+              Контекстно-зависимый автокомплит для команд CLI, предлагающий аргументы, флаги и
+              полные команды на основе проекта и цели агента. Ускоряет взаимодействие с шеллом.
+            </p>
+          </li>
+          <li>
+            <h3>Git-integrated "Undo/Redo" for Agent Actions</h3>
+            <p>
+              Система контроля версий для изменений, внесенных агентом. Каждая операция
+              <code>write</code> или <code>edit</code> — это "коммит", позволяющий откатить
+              изменения или просмотреть diff.
+            </p>
+          </li>
+          <li>
+            <h3>Real-time Code Linting/Suggestion within Agent Output</h3>
+            <p>
+              Встраивание легковесного линтера, который в реальном времени подсвечивает
+              синтаксические ошибки и предлагает улучшения кода, генерируемого агентом, прямо в
+              чате.
+            </p>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Slide 4: Knowledge & Debugging -->
+      <div class="slide">
+        <h2>Знания и Отладка Агента</h2>
+        <ul>
+          <li>
+            <h3>Semantic Search for Agent Memories/Skills</h3>
+            <p>
+              Поиск по всем взаимодействиям агента, памяти (<code>MEMORY.md</code>) и определениям
+              навыков с помощью естественного языка, а не ключевых слов.
+            </p>
+          </li>
+          <li>
+            <h3>Interactive "Debug Mode" for Agent Prompt Engineering</h3>
+            <p>
+              Визуализация текущего промпта агента, использования токенов и возможность
+              динамического изменения частей промпта с мгновенным просмотром результатов.
+            </p>
+          </li>
+          <li>
+            <h3>"Time Travel" Debugging for Agent Sessions</h3>
+            <p>
+              Запись полного состояния сессии агента (история промптов, вызовы инструментов,
+              внутренние мысли) для пошаговой отладки процесса принятия решений агентом.
+            </p>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Slide 5: Performance & Security -->
+      <div class="slide">
+        <h2>Производительность и Безопасность</h2>
+        <ul>
+          <li>
+            <h3>Offline-first Mode with Local LLM Bridging</h3>
+            <p>
+              Режим работы без подключения к интернету, использующий локальные LLM (например,
+              Llama.cpp) на машине пользователя для конфиденциальных задач и стабильности.
+            </p>
+          </li>
+          <li>
+            <h3>Smart Cache for Tool Outputs/LLM Responses</h3>
+            <p>
+              Интеллектуальное кэширование результатов вызовов инструментов и ответов LLM для
+              снижения задержек и стоимости API, с автоматической инвалидацией кэша.
+            </p>
+          </li>
+          <li>
+            <h3>Containerized Environment for Code Execution (Sandboxing)</h3>
+            <p>
+              Исполнение команд <code>exec</code> в изолированных контейнерах Docker для
+              предотвращения случайного изменения файловой системы хоста и повышения безопасности.
+            </p>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Slide 6: Advanced Capabilities & UX Hacks -->
+      <div class="slide">
+        <h2>Продвинутые Возможности и UX-хаки</h2>
+        <ul>
+          <li>
+            <h3>"Agent Swarm" Orchestration</h3>
+            <p>
+              Возможность для агента запускать и координировать работу субагентов для выполнения
+              сложных, многокомпонентных задач, с визуализацией их взаимодействия.
+            </p>
+          </li>
+          <li>
+            <h3>Dynamic Skill Generation/Refinement based on User Feedback</h3>
+            <p>
+              Система, которая предлагает создание новых навыков или уточнение существующих на
+              основе часто повторяющихся пользовательских запросов и действий.
+            </p>
+          </li>
+          <li>
+            <h3>Unified Cross-Application Shortcuts/Hotkeys</h3>
+            <p>
+              Глобальные горячие клавиши для запуска специфических действий YAgent из любого
+              приложения (например, "суммировать выделенный текст").
+            </p>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Slide 7: Conclusion -->
+      <div class="slide slide-title">
+        <h2>Будущее YAgent</h2>
+        <p>
+          Эти идеи направлены на то, чтобы YAgent стал не просто помощником, а
+          <span class="accent-text">неотъемлемым инструментом для разработчика</span>,
+          оптимизирующим каждый аспект его работы.
+        </p>
+        <p>Ваша обратная связь критически важна для приоритизации и дальнейшего развития!</p>
+      </div>
+    </div>
+    <div class="footer">© 2026 YAgent. All rights reserved.</div>
+  </body>
+</html>

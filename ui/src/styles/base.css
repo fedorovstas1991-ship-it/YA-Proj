@@ -1,0 +1,431 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+:root {
+  /* Background */
+  --bg: #ffffff; /* Changed from #f9f9f7 */
+  --bg-accent: #f3f4f6; /* Changed from #ededeb */
+  --bg-elevated: #ffffff; /* Changed from #ffffff */
+  --bg-hover: #f0f0f0; /* Changed from #e6e6e4 */
+  --bg-muted: #e5e7eb; /* Changed from #e0e0de */
+
+  /* Card / Surface */
+  --card: #ffffff;
+  --card-foreground: #1f2937; /* Changed from #1c1c1a */
+  --card-highlight: rgba(0, 0, 0, 0.05); /* Changed from rgba(0, 0, 0, 0.02) */
+  --popover: #ffffff;
+  --popover-foreground: var(--card-foreground);
+
+  /* Panel */
+  --panel: #ffffff; /* Changed from #f9f9f7 */
+  --panel-strong: #f3f4f6; /* Changed from #eaeae8 */
+  --panel-hover: #e5e7eb; /* Changed from #e0e0de */
+  --chrome: rgba(255, 255, 255, 0.9); /* Changed from rgba(249, 249, 247, 0.9) */
+  --chrome-strong: rgba(255, 255, 255, 0.95); /* Changed from rgba(249, 249, 247, 0.95) */
+
+  /* Text */
+  --text: #374151; /* Changed from #1c1c1a */
+  --text-strong: #1f2937; /* Changed from #0a0a0a */
+  --chat-text: var(--text);
+  --muted: #6b7280; /* Changed from #7a7a7a */
+  --muted-strong: #4b5563;
+  --muted-foreground: var(--muted);
+
+  /* Border */
+  --border: #d1d5db; /* Changed from #d9d9d9 */
+  --border-strong: #9ca3af;
+  --border-hover: #6b7280;
+  --input: #f9fafb;
+  --ring: #d97757;
+
+  /* Accent */
+  --accent: #d97757;
+  --accent-rgb: 217, 119, 87; /* New: RGB values for accent color */
+  --accent-hover: #c2684f;
+  --accent-muted: #d97757;
+  --accent-subtle: rgba(var(--accent-rgb), 0.1); /* Use accent-rgb */
+  --accent-foreground: #ffffff;
+  --accent-glow: rgba(var(--accent-rgb), 0.15); /* Use accent-rgb */
+  --primary: var(--accent);
+  --primary-foreground: #ffffff;
+
+  /* Secondary */
+  --secondary: var(--bg-accent);
+  --secondary-foreground: var(--text);
+  --accent-2: #10b981;
+  --accent-2-muted: rgba(16, 185, 129, 0.7);
+  --accent-2-subtle: rgba(16, 185, 129, 0.1);
+
+  /* Semantic */
+  --ok: #10b981;
+  --ok-muted: rgba(16, 185, 129, 0.75);
+  --ok-subtle: rgba(16, 185, 129, 0.1);
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --warn: #f59e0b;
+  --warn-muted: rgba(245, 158, 11, 0.75);
+  --warn-subtle: rgba(245, 158, 11, 0.1);
+  --danger: #ef4444;
+  --danger-muted: rgba(239, 68, 68, 0.75);
+  --danger-subtle: rgba(239, 68, 68, 0.1);
+  --info: #3b82f6;
+  --info-muted: rgba(59, 130, 246, 0.75);
+  --info-subtle: rgba(59, 130, 246, 0.1);
+
+  /* Focus */
+  --focus: rgba(217, 119, 87, 0.2);
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--ring);
+  --focus-glow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ring), 0 0 20px var(--accent-glow);
+
+  /* Grid */
+  --grid-line: rgba(0, 0, 0, 0.08);
+
+  /* Typography */
+  --mono:
+    "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Font Sizing for Customization (New) */
+  --font-size-sm: 0.85em; /* e.g., for small text, utility text */
+  --font-size-md: 1em; /* Base font size reference */
+  --font-size-lg: 1.15em; /* e.g., for titles */
+
+  /* UI Density (New) */
+  --spacing-unit: 8px; /* Base unit for spacing calculations */
+  --padding-sm: calc(var(--spacing-unit) * 1);
+  --padding-md: calc(var(--spacing-unit) * 1.5);
+  --padding-lg: calc(var(--spacing-unit) * 2);
+
+  /* Shadows - Soft with subtle contrast */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05); /* Changed from 0 1px 2px rgba(0, 0, 0, 0.04) */
+  --shadow-md:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); /* Changed from 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06) */
+  --shadow-lg:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); /* Changed from 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05) */
+  --shadow-xl:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); /* Changed from 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.08) */
+  --shadow-glow: 0 0 24px var(--accent-glow);
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+  --radius: 12px; /* Default radius */
+
+  /* Transitions - Snappy but smooth */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 120ms;
+  --duration-normal: 200ms;
+  --duration-slow: 350ms;
+
+  color-scheme: light;
+}
+
+/* Dark theme - Based on existing, but with new accent and adjusted values */
+:root[data-theme="dark"] {
+  /* Background - Warmer dark with depth */
+  --bg: #121212; /* Adjusted */
+  --bg-accent: #1e1e1e; /* Adjusted */
+  --bg-elevated: #282828; /* Adjusted */
+  --bg-hover: #333333; /* Adjusted */
+  --bg-muted: #222222; /* Adjusted */
+
+  /* Card / Surface - More contrast between levels */
+  --card: #1e1e1e; /* Adjusted */
+  --card-foreground: #f5f5f5; /* Adjusted */
+  --card-highlight: rgba(255, 255, 255, 0.08); /* Adjusted */
+  --popover: #1e1e1e; /* Adjusted */
+  --popover-foreground: var(--card-foreground);
+
+  /* Panel */
+  --panel: #121212; /* Adjusted */
+  --panel-strong: #1e1e1e; /* Adjusted */
+  --panel-hover: #333333; /* Adjusted */
+  --chrome: rgba(18, 18, 18, 0.95); /* Adjusted */
+  --chrome-strong: rgba(18, 18, 18, 0.98); /* Adjusted */
+
+  /* Text - Slightly warmer */
+  --text: #e0e0e0; /* Adjusted */
+  --text-strong: #fafafa; /* Adjusted */
+  --chat-text: var(--text);
+  --muted: #a0a0a0; /* Adjusted */
+  --muted-strong: #757575; /* Adjusted */
+  --muted-foreground: #b0b0b0; /* Adjusted */
+
+  /* Border - Subtle but defined */
+  --border: #3a3a3a; /* Adjusted */
+  --border-strong: #5a5a5a; /* Adjusted */
+  --border-hover: #757575; /* Adjusted */
+  --input: #27272a;
+  --ring: #d97757;
+
+  /* Accent - Anthropic terracotta for dark theme too */
+  --accent: #d97757;
+  --accent-rgb: 217, 119, 87; /* New: RGB values for accent color */
+  --accent-hover: #c2684f;
+  --accent-muted: #d97757;
+  --accent-subtle: rgba(var(--accent-rgb), 0.15); /* Use accent-rgb */
+  --accent-foreground: #fafafa;
+  --accent-glow: rgba(var(--accent-rgb), 0.25); /* Use accent-rgb */
+  --primary: var(--accent);
+  --primary-foreground: #ffffff;
+
+  /* Secondary - Teal accent for variety */
+  --secondary: #282828; /* Adjusted */
+  --secondary-foreground: #f5f5f5; /* Adjusted */
+  --accent-2: #14b8a6;
+  --accent-2-muted: rgba(20, 184, 166, 0.7);
+  --accent-2-subtle: rgba(20, 184, 166, 0.15);
+
+  /* Semantic - More saturated */
+  --ok: #22c55e;
+  --ok-muted: rgba(34, 197, 94, 0.75);
+  --ok-subtle: rgba(34, 197, 94, 0.12);
+  --destructive: #ef4444;
+  --destructive-foreground: #fafafa;
+  --warn: #f59e0b;
+  --warn-muted: rgba(245, 158, 11, 0.75);
+  --warn-subtle: rgba(245, 158, 11, 0.12);
+  --danger: #ef4444;
+  --danger-muted: rgba(239, 68, 68, 0.75);
+  --danger-subtle: rgba(239, 68, 68, 0.12);
+  --info: #3b82f6;
+  --info-muted: rgba(59, 130, 246, 0.75);
+  --info-subtle: rgba(59, 130, 246, 0.12);
+
+  /* Focus - With glow */
+  --focus: rgba(217, 119, 87, 0.3); /* Adjusted */
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--ring);
+  --focus-glow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ring), 0 0 20px var(--accent-glow);
+
+  /* Grid */
+  --grid-line: rgba(255, 255, 255, 0.06); /* Adjusted */
+
+  /* Shadows - Richer with subtle color */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4); /* Adjusted */
+  --shadow-md: 0 4px 15px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.03); /* Adjusted */
+  --shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.03); /* Adjusted */
+  --shadow-xl: 0 24px 50px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.03); /* Adjusted */
+  --shadow-glow: 0 0 30px var(--accent-glow);
+
+  /* Radii - Slightly larger for friendlier feel */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+  --radius: 12px;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font: 400 15px/1.6 var(--font-body); /* Increased font size to 15px and line-height to 1.6 */
+  letter-spacing: -0.02em;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Theme transition */
+@keyframes theme-circle-transition {
+  0% {
+    clip-path: circle(0% at var(--theme-switch-x, 50%) var(--theme-switch-y, 50%));
+  }
+  100% {
+    clip-path: circle(150% at var(--theme-switch-x, 50%) var(--theme-switch-y, 50%));
+  }
+}
+
+html.theme-transition {
+  view-transition-name: theme;
+}
+
+html.theme-transition::view-transition-old(theme) {
+  mix-blend-mode: normal;
+  animation: none;
+  z-index: 1;
+}
+
+html.theme-transition::view-transition-new(theme) {
+  mix-blend-mode: normal;
+  z-index: 2;
+  animation: theme-circle-transition 0.4s var(--ease-out) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-transition::view-transition-old(theme),
+  html.theme-transition::view-transition-new(theme) {
+    animation: none !important;
+  }
+}
+
+openclaw-app {
+  display: block;
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: var(--accent-subtle);
+  color: var(--text-strong);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+/* Animations - Polished with spring feel */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes dashboard-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulse-subtle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(255, 92, 92, 0);
+  }
+  50% {
+    box-shadow: 0 0 20px var(--accent-glow);
+  }
+}
+
+/* Stagger animation delays for grouped elements */
+.stagger-1 {
+  animation-delay: 0ms;
+}
+.stagger-2 {
+  animation-delay: 50ms;
+}
+.stagger-3 {
+  animation-delay: 100ms;
+}
+.stagger-4 {
+  animation-delay: 150ms;
+}
+.stagger-5 {
+  animation-delay: 200ms;
+}
+.stagger-6 {
+  animation-delay: 250ms;
+}
+
+/* Focus visible styles */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* ===========================================
+   END OF BASE.CSS
+   =========================================== */
+/*
+  This file defines global CSS variables for colors, typography, spacing, and other design tokens.
+  It also includes fundamental styles, utility animations, and accessibility-focused resets.
+  Designed for easy theming and consistent application across the UI.
+*/

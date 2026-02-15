@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>YAgent — Идеи для менеджеров</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #fafaf8;
+        --ink: #1f2937;
+        --muted: #6b7280;
+        --accent: #d97757;
+        --accent-soft: rgba(217, 119, 87, 0.12);
+        --card: #ffffff;
+        --border: #e5e7eb;
+        --shadow: 0 8px 24px rgba(17, 24, 39, 0.08);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        line-height: 1.45;
+      }
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 56px 28px 80px;
+      }
+      h1 {
+        font-size: 40px;
+        margin: 0 0 8px;
+        letter-spacing: -0.02em;
+      }
+      h2 {
+        font-size: 24px;
+        margin: 28px 0 12px;
+        letter-spacing: -0.01em;
+      }
+      p.lead {
+        color: var(--muted);
+        font-size: 18px;
+        max-width: 760px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 18px;
+        margin-top: 20px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px;
+        box-shadow: var(--shadow);
+      }
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .title {
+        font-size: 18px;
+        font-weight: 700;
+        margin: 10px 0 6px;
+      }
+      .desc {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      /* Mockups */
+      .mockup {
+        margin-top: 14px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: #fdfdfc;
+        padding: 12px;
+        box-shadow: inset 0 0 0 1px rgba(217, 119, 87, 0.05);
+      }
+      .row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .chip {
+        padding: 6px 10px;
+        border-radius: 8px;
+        background: #f3f4f6;
+        font-size: 12px;
+      }
+      .btn {
+        margin-left: auto;
+        padding: 6px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--accent);
+        background: var(--accent);
+        color: white;
+        font-weight: 600;
+        font-size: 12px;
+      }
+      .list {
+        margin-top: 10px;
+        display: grid;
+        gap: 8px;
+      }
+      .item {
+        display: grid;
+        grid-template-columns: 18px 1fr auto;
+        gap: 10px;
+        align-items: center;
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 8px 10px;
+        font-size: 13px;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+      .badge {
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .footer {
+        margin-top: 40px;
+        padding-top: 18px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>YAgent — 12 магических фич для менеджеров</h1>
+      <p class="lead">
+        Идеи для людей без кода и терминала. Фокус: делегирование, прозрачность, управление командой
+        и аналитика — всё в одном простом интерфейсе.
+      </p>
+
+      <div class="grid">
+        <!-- 1 -->
+        <div class="card">
+          <span class="tag">Делегирование</span>
+          <div class="title">Магический Бриф</div>
+          <div class="desc">
+            Одной фразой формирует задачу, план, чек‑лист и ожидаемые результаты.
+          </div>
+          <div class="mockup">
+            <div class="row">
+              <div class="chip">«Сделай план запуска за 2 недели»</div>
+              <button class="btn">Сформировать</button>
+            </div>
+            <div class="list">
+              <div class="item">
+                <span class="dot"></span> Цели и KPI запуска <span class="badge">готово</span>
+              </div>
+              <div class="item">
+                <span class="dot"></span> План по дням <span class="badge">в работе</span>
+              </div>
+              <div class="item">
+                <span class="dot"></span> Риски и зависимости <span class="badge">ожидает</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2 -->
+        <div class="card">
+          <span class="tag">Команда</span>
+          <div class="title">Автораспределение задач</div>
+          <div class="desc">
+            AI подбирает исполнителей по загруженности и навыкам, предлагает варианты.
+          </div>
+          <div class="mockup">
+            <div class="row">
+              <div class="chip">Задач: 6 • Людей: 4</div>
+              <button class="btn">Разложить</button>
+            </div>
+            <div class="list">
+              <div class="item">
+                <span class="dot"></span> Катя — исследование рынка
+                <span class="badge">70% загрузки</span>
+              </div>
+              <div class="item">
+                <span class="dot"></span> Илья — презентация <span class="badge">45% загрузки</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 -->
+        <div class="card">
+          <span class="tag">Контроль</span>
+          <div class="title">Единое окно статусов</div>
+          <div class="desc">Сводка прогресса проектов в одном экране: статус, риски, блокеры.</div>
+          <div class="mockup">
+            <div class="list">
+              <div class="item">
+                <span class="dot"></span> Запуск продукта <span class="badge">🟠 риск</span>
+              </div>
+              <div class="item">
+                <span class="dot"></span> Подготовка отчёта <span class="badge">🟢 по плану</span>
+              </div>
+              <div class="item">
+                <span class="dot"></span> Найм аналитика <span class="badge">🔴 блокер</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 -->
+        <div class="card">
+          <span class="tag">Автоматизация</span>
+          <div class="title">Шаблоны «Сделай как в прошлый раз»</div>
+          <div class="desc">
+            AI находит похожий проект и копирует структуру/задачи с адаптацией.
+          </div>
+          <div class="mockup">
+            <div class="row">
+              <div class="chip">Найдено 2 похожих проекта</div>
+              <button class="btn">Применить</button>
+            </div>
+            <div class="list">
+              <div class="item">
+                <span class="dot"></span> Go‑to‑Market план <span class="badge">+ 12 задач</span>
+              </div>
+              <div class="item">
+                <span class="dot"></span> Материалы для sales <span class="badge">+ 8 задач</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5 -->
+        <div class="card">
+          <span class="tag">Аналитика</span>
+          <div class="title">Командный радар здоровья</div>
+          <div class="desc">AI оценивает загрузку, фокус и риски выгорания без метрик кода.</div>
+          <div class="mockup">
+            <div class="list">
+              <div class="item">
+                <span class="dot"></span> Спринт фокус: 72% <span class="badge">норма</span>
+              </div>
+              <div class="item">
+                <span class="dot"></span> Риски срыва: 2 <span class="badge">требует внимания</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6 -->
+        <div class="card">
+          <span class="tag">Коммуникации</span>
+          <div class="title">AI‑стендап за минуту</div>
+          <div class="desc">Собирает апдейты от команды и оформляет в понятный отчет.</div>
+          <div class="mockup">
+            <div class="row">
+              <div class="chip">Собрано 6 апдейтов</div>
+              <button class="btn">Сформировать</button>
+            </div>
+            <div class="list">
+              <div class="item">
+                <span class="dot"></span> Что сделано <span class="badge">6 пунктов</span>
+              </div>
+              <div class="item"><span class="dot"></span> Блокеры <span class="badge">1</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7 -->
+        <div class="card">
+          <span class="tag">Результаты</span>
+          <div class="title">Сверка ожиданий</div>
+          <div class="desc">AI сравнивает план vs факт, выделяет отклонения и причины.</div>
+          <div class="mockup">
+            <div class="list">
+              <div class="item">
+                <span class="dot"></span> Сроки: −2 дня <span class="badge">ок</span>
+              </div>
+              <div class="item">
+                <span class="dot"></span> Бюджет: +8% <span class="badge">проверить</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 8 -->
+        <div class="card">
+          <span class="tag">Фокус</span>
+          <div class="title">Менеджерский «Автопилот»</div>
+          <div class="desc">AI сам напоминает, подталкивает и эскалирует просрочки.</div>
+          <div class="mockup">
+            <div class="list">
+              <div class="item">
+                <span class="dot"></span> Напоминание: логотип сегодня
+                <span class="badge">отправлено</span>
+              </div>
+              <div class="item">
+                <span class="dot"></span> Эскалация: нет ответа 48ч
+                <span class="badge">включено</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 9 -->
+        <div class="card">
+          <span class="tag">Принятие решений</span>
+          <div class="title">Сценарный симулятор</div>
+          <div class="desc">«Если сделаем X, что будет с KPI?» — AI быстро моделирует эффект.</div>
+          <div class="mockup">
+            <div class="row">
+              <div class="chip">Сценарий: сдвиг релиза на 1 неделю</div>
+              <button class="btn">Оценить</button>
+            </div>
+            <div class="list">
+              <div class="item">
+                <span class="dot"></span> Риск churn: −4% <span class="badge">лучше</span>
+              </div>
+              <div class="item">
+                <span class="dot"></span> Стоимость: +6% <span class="badge">выше</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 10 -->
+        <div class="card">
+          <span class="tag">Знания</span>
+          <div class="title">Умный протокол встреч</div>
+          <div class="desc">Собирает решения, владельцев и сроки прямо из заметок менеджера.</div>
+          <div class="mockup">
+            <div class="list">
+              <div class="item">
+                <span class="dot"></span> Решение: изменить ценообразование
+                <span class="badge">владелец: Таня</span>
+              </div>
+              <div class="item">
+                <span class="dot"></span> Срок: 18 фев <span class="badge">напомнить</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 11 -->
+        <div class="card">
+          <span class="tag">Команда</span>
+          <div class="title">Рост и развитие в один клик</div>
+          <div class="desc">AI предлагает план развития по ролям и измеряет прогресс.</div>
+          <div class="mockup">
+            <div class="list">
+              <div class="item">
+                <span class="dot"></span> Аналитик → Senior <span class="badge">5 шагов</span>
+              </div>
+              <div class="item">
+                <span class="dot"></span> Маркетолог → Lead <span class="badge">3 навыка</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 12 -->
+        <div class="card">
+          <span class="tag">Финансы</span>
+          <div class="title">Бюджет по задачам</div>
+          <div class="desc">Простая оценка затрат на задачи и предупреждения о перерасходе.</div>
+          <div class="mockup">
+            <div class="list">
+              <div class="item">
+                <span class="dot"></span> Кампания Q1 <span class="badge">осталось 120k</span>
+              </div>
+              <div class="item">
+                <span class="dot"></span> Перерасход: подрядчик <span class="badge">+12%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        Стиль: Anthropic (#FAFAF8, #D97757, Inter). Макеты иллюстрируют пользовательские экраны
+        менеджера.
+      </div>
+    </div>
+  </body>
+</html>
