@@ -256,9 +256,9 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
   - `productConfirmDeleteProjectId: string | null = null;`
   - `productConfirmDeleteProjectName: string = "";`
 - [x] **Метод `productConfirmDeleteProject(projectId: string)`:**
-  - **TODO:** Устанавливает `productConfirmDeleteProjectId`, `productConfirmDeleteProjectName` и `productConfirmDeleteProjectOpen = true;`.
+  - [x] Устанавливает `productConfirmDeleteProjectId`, `productConfirmDeleteProjectName` и `productConfirmDeleteProjectOpen = true;`.
 - [x] **Метод `productDeleteProject(projectId: string)`:**
-  - **TODO:** Выполняет вызов `gateway.agents.delete(projectId)`.
+  - [x] Выполняет вызов `gateway.agents.delete(projectId)`.
   - [x] После успешного удаления:
     - Закрыть модальное окно: `this.productConfirmDeleteProjectOpen = false;`
     - Очистить текущий `agentId` если удаленный проект был активным.

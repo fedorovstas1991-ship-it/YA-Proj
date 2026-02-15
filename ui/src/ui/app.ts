@@ -1,742 +1,1167 @@
-import { html, nothing } from "lit";
+import { LitElement } from "lit";
+import { customElement, state } from "lit/decorators.js";
+import type { EventLogEntry } from "./app-events.ts";
 import type { AppViewState } from "./app-view-state.ts";
-import { refreshChatAvatar } from "./app-chat.ts";
-import { loadChatHistory, type ChatState } from "./controllers/chat.ts";
-import { icons } from "./icons.ts";
-import { normalizeBasePath, pathForTab } from "./navigation.ts";
-import { renderChat } from "./views/chat.ts";
+import type { DevicePairingList } from "./controllers/devices.ts";
+import type { ExecApprovalRequest } from "./controllers/exec-approval.ts";
+import type { ExecApprovalsFile, ExecApprovalsSnapshot } from "./controllers/exec-approvals.ts";
+import type { SkillMessage } from "./controllers/skills.ts";
+import type { GatewayBrowserClient, GatewayHelloOk } from "./gateway.ts";
+import type { Tab } from "./navigation.ts";
+import type { ResolvedTheme, ThemeMode } from "./theme.ts";
+import type {
+  AgentsListResult,
+  AgentsFilesListResult,
+  AgentIdentityResult,
+  ConfigSnapshot,
+  ConfigUiHints,
+  CronJob,
+  CronRunLogEntry,
+  CronStatus,
+  HealthSnapshot,
+  LogEntry,
+  LogLevel,
+  PresenceEntry,
+  ChannelsStatusSnapshot,
+  SessionsListResult,
+  SkillStatusReport,
+  StatusSummary,
+  NostrProfile,
+} from "./types.ts";
+import type { WizardStep } from "./types.ts";
+import type { NostrProfileFormState } from "./views/channels.nostr-profile-form.ts";
+import { normalizeAgentId } from "../../../src/routing/session-key.js";
+import {
+  handleChannelConfigReload as handleChannelConfigReloadInternal,
+  handleChannelConfigSave as handleChannelConfigSaveInternal,
+  handleNostrProfileCancel as handleNostrProfileCancelInternal,
+  handleNostrProfileEdit as handleNostrProfileEditInternal,
+  handleNostrProfileFieldChange as handleNostrProfileFieldChangeInternal,
+  handleNostrProfileImport as handleNostrProfileImportInternal,
+  handleNostrProfileSave as handleNostrProfileSaveInternal,
+  handleNostrProfileToggleAdvanced as handleNostrProfileToggleAdvancedInternal,
+  handleWhatsAppLogout as handleWhatsAppLogoutInternal,
+  handleWhatsAppStart as handleWhatsAppStartInternal,
+  handleWhatsAppWait as handleWhatsAppWaitInternal,
+} from "./app-channels.ts";
+import {
+  handleAbortChat as handleAbortChatInternal,
+  handleSendChat as handleSendChatInternal,
+  removeQueuedMessage as removeQueuedMessageInternal,
+} from "./app-chat.ts";
+import { DEFAULT_CRON_FORM, DEFAULT_LOG_LEVEL_FILTERS } from "./app-defaults.ts";
+import { connectGateway as connectGatewayInternal } from "./app-gateway.ts";
+import {
+  handleConnected,
+  handleDisconnected,
+  handleFirstUpdated,
+  handleUpdated,
+} from "./app-lifecycle.ts";
+import { renderApp } from "./app-render.ts";
+import {
+  exportLogs as exportLogsInternal,
+  handleChatScroll as handleChatScrollInternal,
+  handleLogsScroll as handleLogsScrollInternal,
+  resetChatScroll as resetChatScrollInternal,
+  scheduleChatScroll as scheduleChatScrollInternal,
+} from "./app-scroll.ts";
+import {
+  applySettings as applySettingsInternal,
+  loadCron as loadCronInternal,
+  loadOverview as loadOverviewInternal,
+  setTab as setTabInternal,
+  setTheme as setThemeInternal,
+  onPopState as onPopStateInternal,
+} from "./app-settings.ts";
+import {
+  resetToolStream as resetToolStreamInternal,
+  type ToolStreamEntry,
+  type CompactionStatus,
+} from "./app-tool-stream.ts";
+import { resolveInjectedAssistantIdentity } from "./assistant-identity.ts";
+import { loadAssistantIdentity as loadAssistantIdentityInternal } from "./controllers/assistant-identity.ts";
+import { loadConfig as loadConfigInternal } from "./controllers/config.ts";
+import {
+  advanceOnboardingWizard as advanceOnboardingWizardInternal,
+  cancelOnboardingWizard as cancelOnboardingWizardInternal,
+  setOnboardingWizardDone as setOnboardingWizardDoneInternal,
+  startOnboardingWizard as startOnboardingWizardInternal,
+} from "./controllers/onboarding.ts";
+import { loadSettings, type UiSettings } from "./storage.ts";
+import { type ChatAttachment, type ChatQueueItem, type CronFormState } from "./ui-types.ts";
 
-function buildHref(tab: string, basePath: string): string {
-  const base = normalizeBasePath(basePath ?? "");
-  const path = pathForTab(tab as never, base);
-  return path;
-}
-
-function renderDevDrawer(state: AppViewState) {
-  if (!state.productDevDrawerOpen) {
-    return nothing;
+declare global {
+  interface Window {
+    __OPENCLAW_CONTROL_UI_BASE_PATH__?: string;
   }
-  return html`
-    <div class="product-dev-drawer ${state.productDevDrawerOpen ? "open" : ""}" role="dialog" aria-labelledby="dev-drawer-title" aria-modal="true">
-      <div class="product-dev-drawer__header">
-        <div id="dev-drawer-title">Для разработчиков</div>
-        <button class="btn btn--sm" aria-label="Закрыть панель разработчика" title="Закрыть" @click=${() => (state.productDevDrawerOpen = false)}>
-          ${icons.x}
-        </button>
-      </div>
-      <div class="product-dev-drawer__body">
-        <button class="btn" @click=${() => void state.productReloadConfig()}>
-          Обновить конфиг
-        </button>
-        <button class="btn danger" @click=${() => void state.productResetAll()}>
-          Сбросить все
-        </button>
-        <a class="btn" href=${buildHref("chat", state.basePath)}>Legacy: Chat</a>
-        <a class="btn" href=${buildHref("overview", state.basePath)}>Legacy: Overview</a>
-        <a class="btn" href=${buildHref("channels", state.basePath)}>Legacy: Channels</a>
-        <a class="btn" href=${buildHref("agents", state.basePath)}>Legacy: Agents</a>
-        <a class="btn" href=${buildHref("skills", state.basePath)}>Legacy: Skills</a>
-        <a class="btn" href=${buildHref("config", state.basePath)}>Legacy: Config</a>
-        <a class="btn" href=${buildHref("logs", state.basePath)}>Legacy: Logs</a>
-        <div class="callout" style="margin-top:12px;">
-          Legacy UI доступен только здесь. Product UI остается минимальным.
-        </div>
-      </div>
-    </div>
-  `;
 }
 
-function renderCreateProjectModal(state: AppViewState) {
-  if (!state.productCreateProjectOpen) {
-    return nothing;
+const injectedAssistantIdentity = resolveInjectedAssistantIdentity();
+
+function resolveOnboardingMode(): boolean {
+  if (!window.location.search) {
+    return false;
   }
-  return html`
-    <div class="product-modal-backdrop ${state.productCreateProjectOpen ? "open" : ""}" role="presentation" @click=${() => (state.productCreateProjectOpen = false)}>
-      <div class="product-modal" role="dialog" aria-labelledby="create-project-title" aria-modal="true" @click=${(e: Event) => e.stopPropagation()}>
-        <div class="product-modal__title" id="create-project-title">Новый проект</div>
-        <label class="field">
-          <span>Название</span>
-          <input
-            .value=${state.productCreateProjectName}
-            @input=${(e: Event) => (state.productCreateProjectName = (e.target as HTMLInputElement).value)}
-            placeholder="Например: Маркетинг"
-            aria-label="Название проекта"
-          />
-        </label>
-        <label class="field">
-          <span>Описание (опционально)</span>
-          <input
-            .value=${state.productCreateProjectDesc}
-            @input=${(e: Event) => (state.productCreateProjectDesc = (e.target as HTMLInputElement).value)}
-            placeholder="Что делать в этом проекте"
-            aria-label="Описание проекта"
-          />
-        </label>
-        <div class="row" style="margin-top:12px; justify-content:flex-end;">
-          <button class="btn" aria-label="Отменить создание" @click=${() => (state.productCreateProjectOpen = false)}>Отмена</button>
-          <button class="btn primary" aria-label="Создать новый проект" @click=${() => void state.productCreateProject()}>Создать</button>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function renderConfirmDeleteProjectModal(state: AppViewState) {
-  if (!state.productConfirmDeleteProjectOpen) {
-    return nothing;
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get("onboarding");
+  if (!raw) {
+    return false;
   }
-  return html`
-    <div class="product-modal-backdrop ${state.productConfirmDeleteProjectOpen ? "open" : ""}" role="presentation" @click=${() => (state.productConfirmDeleteProjectOpen = false)}>
-      <div class="product-modal" role="dialog" aria-labelledby="confirm-delete-project-title" aria-modal="true" @click=${(e: Event) => e.stopPropagation()}>
-        <div class="product-modal__title" id="confirm-delete-project-title">Удалить проект "${state.productConfirmDeleteProjectName}"?</div>
-        <div class="product-modal__body">
-          <p>Выверены, что хотите удалить проект "${state.productConfirmDeleteProjectName}"?</p>
-          <p>Это действие необратимо и удалит все связанные чаты.</p>
-        </div>
-        <div class="row" style="margin-top:12px; justify-content:flex-end;">
-          <button class="btn" aria-label="Отменить удаление" @click=${() => (state.productConfirmDeleteProjectOpen = false)}>Отмена</button>
-          <button class="btn danger" aria-label="Подтвердить удаление проекта" @click=${() => void state.productDeleteProject(state.productConfirmDeleteProjectId!)}>Удалить</button>
-        </div>
-      </div>
-    </div>
-  `;
+  const normalized = raw.trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
 }
 
-function renderProjectsPanel(state: AppViewState) {
-  const sessions = state.productSessionsResult?.sessions ?? [];
-  const projects = state.productProjects ?? [];
-  const chatReady = state.connected && state.simpleOnboardingDone;
+function resolveSimpleMode(): boolean {
+  if (!window.location.search) {
+    return false;
+  }
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get("simple");
+  if (!raw) {
+    return false;
+  }
+  const normalized = raw.trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
+}
 
-  // Get sessions not in any project
-  const projectSessionKeys = new Set(projects.flatMap((p) => p.sessionKeys ?? []));
-  const ungroupedSessions = sessions.filter((s) => !projectSessionKeys.has(s.key));
+function resolveProductMode(): boolean {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("simple") === "1") {
+    return false;
+  }
+  if (params.get("legacy") === "1" || params.get("dev") === "1") {
+    return false;
+  }
+  const pathname = window.location.pathname || "/";
+  // Default to product UI on root path only. Legacy tabs remain available at /chat, /channels, etc.
+  return pathname === "/" || pathname.endsWith("/index.html");
+}
 
-  return html`
-    <div class="product-projects-panel">
-      ${
-        projects.length > 0
-          ? html`
-            ${projects.map(
-              (project) => html`
-                <div class="product-project-group">
-                  <button
-                    class="product-project-header"
-                    @click=${() => state.productToggleProjectCollapsed(project.id)}
-                  >
-                    <span class="product-project-icon">${state.productCollapsedProjects.has(project.id) ? "▶" : "▼"}</span>
-                    <span class="product-project-name">📁 ${project.name}</span>
-                    <button class="btn btn--sm" title="Новый чат в проекте" @click=${(e: Event) => {
-                      e.stopPropagation();
-                      void state.productNewChatInProject(project.id);
-                    }}>+
-                    </button>
-                    <button class="btn btn--sm danger" title="Удалить проект" @click=${(
-                      e: Event,
-                    ) => {
-                      e.stopPropagation();
-                      state.productConfirmDeleteProject(project.id);
-                    }}>
-                      ${icons.trash}
-                    </button>
-                  </button>
-                  ${
-                    !state.productCollapsedProjects.has(project.id)
-                      ? html`
-                        <div class="product-project-chats">
-                          ${(project.sessionKeys ?? [])
-                            .map((key) => sessions.find((s) => s.key === key))
-                            .filter(Boolean)
-                            .map(
-                              (s) => html`
-                                <button
-                                  class="product-item product-item--nested ${s?.key === state.sessionKey ? "active" : ""}"
-                                  ?disabled=${!chatReady}
-                                  @click=${() => {
-                                    if (s?.key) {
-                                      void state.productOpenSession(s.key);
-                                    }
-                                  }}
-                                >
-                                  <div class="product-item__title">└ ${s?.displayName ?? s?.label ?? s?.key}</div>
-                                  <div class="product-item__sub">${s?.lastMessage?.text ?? ""}</div>
-                                </button>
-                              `,
-                            )}
-                        </div>
-                      `
-                      : nothing
-                  }
-                </div>
-              `,
-            )}
-          `
-          : nothing
+const SIMPLE_ONBOARDING_DONE_KEY = "openclaw.control.simple.onboarding.done.v1";
+
+function loadSimpleOnboardingDone(): boolean {
+  if (resolveOnboardingMode()) {
+    return false;
+  }
+  try {
+    return localStorage.getItem(SIMPLE_ONBOARDING_DONE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function saveSimpleOnboardingDone(next: boolean) {
+  try {
+    if (next) {
+      localStorage.setItem(SIMPLE_ONBOARDING_DONE_KEY, "1");
+      return;
+    }
+    localStorage.removeItem(SIMPLE_ONBOARDING_DONE_KEY);
+  } catch {
+    // Ignore localStorage errors in privacy-restricted environments.
+  }
+}
+
+@customElement("openclaw-app")
+export class OpenClawApp extends LitElement {
+  @state() settings: UiSettings = loadSettings();
+  @state() password = "";
+  @state() tab: Tab = "chat";
+  @state() onboarding = resolveOnboardingMode();
+  @state() simpleMode = resolveSimpleMode();
+  @state() productMode = resolveProductMode();
+  @state() simpleOnboardingDone = loadSimpleOnboardingDone();
+  @state() simpleDevToolsOpen = false;
+  @state() productPanel: "chat" | "projects" | "telegram" = "chat";
+  @state() productDevDrawerOpen = false;
+  @state() productAgentId: string | null = null;
+  @state() productCreateProjectOpen = false;
+  @state() productCreateProjectName = "";
+  @state() productCreateProjectDesc = "";
+  @state() productConfirmDeleteProjectOpen: boolean = false;
+  @state() productConfirmDeleteProjectId: string | null = null;
+  @state() productConfirmDeleteProjectName: string = "";
+  @state() productConfirmDeleteChatOpen: boolean = false;
+  @state() productConfirmDeleteChatSessionKey: string | null = null;
+  @state() productConfirmDeleteChatDisplayName: string = "";
+  @state() productSessionsLoading = false;
+  @state() productSessionsError: string | null = null;
+  @state() productSessionsResult: SessionsListResult | null = null;
+  @state() productTelegramToken = "";
+  @state() productTelegramAllowFrom = "";
+  @state() productTelegramBusy = false;
+  @state() productTelegramError: string | null = null;
+  @state() productTelegramSuccess: string | null = null;
+  @state() productProjects: Array<{
+    id: string;
+    name: string;
+    expanded?: boolean;
+    sessionKeys?: string[];
+  }> = [];
+  @state() productProjectsLoading = false;
+  @state() productProjectsError: string | null = null;
+  @state() productEditingProjectId: string | null = null;
+  @state() productCollapsedProjects = new Set<string>();
+  @state() connected = false;
+  @state() theme: ThemeMode = this.settings.theme ?? "system";
+  @state() themeResolved: ResolvedTheme = "dark";
+  @state() hello: GatewayHelloOk | null = null;
+  @state() lastError: string | null = null;
+  @state() eventLog: EventLogEntry[] = [];
+  private eventLogBuffer: EventLogEntry[] = [];
+  private toolStreamSyncTimer: number | null = null;
+  private sidebarCloseTimer: number | null = null;
+
+  @state() assistantName = injectedAssistantIdentity.name;
+  @state() assistantAvatar = injectedAssistantIdentity.avatar;
+  @state() assistantAgentId = injectedAssistantIdentity.agentId ?? null;
+
+  @state() sessionKey = this.settings.sessionKey;
+  @state() chatLoading = false;
+  @state() chatSending = false;
+  @state() chatMessage = "";
+  @state() chatMessages: unknown[] = [];
+  @state() chatToolMessages: unknown[] = [];
+  @state() chatStream: string | null = null;
+  @state() chatStreamStartedAt: number | null = null;
+  @state() chatRunId: string | null = null;
+  @state() compactionStatus: CompactionStatus | null = null;
+  @state() chatAvatarUrl: string | null = null;
+  @state() chatThinkingLevel: string | null = null;
+  @state() chatQueue: ChatQueueItem[] = [];
+  @state() chatAttachments: ChatAttachment[] = [];
+  @state() chatManualRefreshInFlight = false;
+  @state() onboardingWizardSessionId: string | null = null;
+  @state() onboardingWizardStatus: "idle" | "running" | "done" | "cancelled" | "error" = "idle";
+  @state() onboardingWizardStep: WizardStep | null = null;
+  @state() onboardingWizardError: string | null = null;
+  @state() onboardingWizardBusy = false;
+  @state() onboardingWizardMode: "local" | "remote" = "local";
+  @state() onboardingWizardFlow: string = "";
+  @state() onboardingWizardWorkspace = "";
+  @state() onboardingWizardResetConfig = true;
+  @state() onboardingWizardTextAnswer = "";
+  @state() onboardingWizardMultiAnswers: number[] = [];
+  @state() onboardingWizardCurrentStep = 0;
+  @state() onboardingWizardTotalSteps = 0;
+  // Sidebar state for tool output viewing
+  @state() sidebarOpen = false;
+  @state() sidebarContent: string | null = null;
+  @state() sidebarError: string | null = null;
+  @state() splitRatio = this.settings.splitRatio;
+
+  @state() nodesLoading = false;
+  @state() nodes: Array<Record<string, unknown>> = [];
+  @state() devicesLoading = false;
+  @state() devicesError: string | null = null;
+  @state() devicesList: DevicePairingList | null = null;
+  @state() execApprovalsLoading = false;
+  @state() execApprovalsSaving = false;
+  @state() execApprovalsDirty = false;
+  @state() execApprovalsSnapshot: ExecApprovalsSnapshot | null = null;
+  @state() execApprovalsForm: ExecApprovalsFile | null = null;
+  @state() execApprovalsSelectedAgent: string | null = null;
+  @state() execApprovalsTarget: "gateway" | "node" = "gateway";
+  @state() execApprovalsTargetNodeId: string | null = null;
+  @state() execApprovalQueue: ExecApprovalRequest[] = [];
+  @state() execApprovalBusy = false;
+  @state() execApprovalError: string | null = null;
+  @state() pendingGatewayUrl: string | null = null;
+
+  @state() configLoading = false;
+  @state() configRaw = "{\n}\n";
+  @state() configRawOriginal = "";
+  @state() configValid: boolean | null = null;
+  @state() configIssues: unknown[] = [];
+  @state() configSaving = false;
+  @state() configApplying = false;
+  @state() updateRunning = false;
+  @state() applySessionKey = this.settings.lastActiveSessionKey;
+  @state() configSnapshot: ConfigSnapshot | null = null;
+  @state() configSchema: unknown = null;
+  @state() configSchemaVersion: string | null = null;
+  @state() configSchemaLoading = false;
+  @state() configUiHints: ConfigUiHints = {};
+  @state() configForm: Record<string, unknown> | null = null;
+  @state() configFormOriginal: Record<string, unknown> | null = null;
+  @state() configFormDirty = false;
+  @state() configFormMode: "form" | "raw" = "form";
+  @state() configSearchQuery = "";
+  @state() configActiveSection: string | null = null;
+  @state() configActiveSubsection: string | null = null;
+
+  @state() channelsLoading = false;
+  @state() channelsSnapshot: ChannelsStatusSnapshot | null = null;
+  @state() channelsError: string | null = null;
+  @state() channelsLastSuccess: number | null = null;
+  @state() whatsappLoginMessage: string | null = null;
+  @state() whatsappLoginQrDataUrl: string | null = null;
+  @state() whatsappLoginConnected: boolean | null = null;
+  @state() whatsappBusy = false;
+  @state() nostrProfileFormState: NostrProfileFormState | null = null;
+  @state() nostrProfileAccountId: string | null = null;
+
+  @state() presenceLoading = false;
+  @state() presenceEntries: PresenceEntry[] = [];
+  @state() presenceError: string | null = null;
+  @state() presenceStatus: string | null = null;
+
+  @state() agentsLoading = false;
+  @state() agentsList: AgentsListResult | null = null;
+  @state() agentsError: string | null = null;
+  @state() agentsSelectedId: string | null = null;
+  @state() agentsPanel: "overview" | "files" | "tools" | "skills" | "channels" | "cron" =
+    "overview";
+  @state() agentFilesLoading = false;
+  @state() agentFilesError: string | null = null;
+  @state() agentFilesList: AgentsFilesListResult | null = null;
+  @state() agentFileContents: Record<string, string> = {};
+  @state() agentFileDrafts: Record<string, string> = {};
+  @state() agentFileActive: string | null = null;
+  @state() agentFileSaving = false;
+  @state() agentIdentityLoading = false;
+  @state() agentIdentityError: string | null = null;
+  @state() agentIdentityById: Record<string, AgentIdentityResult> = {};
+  @state() agentSkillsLoading = false;
+  @state() agentSkillsError: string | null = null;
+  @state() agentSkillsReport: SkillStatusReport | null = null;
+  @state() agentSkillsAgentId: string | null = null;
+
+  @state() sessionsLoading = false;
+  @state() sessionsResult: SessionsListResult | null = null;
+  @state() sessionsError: string | null = null;
+  @state() sessionsFilterActive = "";
+  @state() sessionsFilterLimit = "120";
+  @state() sessionsIncludeGlobal = true;
+  @state() sessionsIncludeUnknown = false;
+
+  @state() usageLoading = false;
+  @state() usageResult: import("./types.js").SessionsUsageResult | null = null;
+  @state() usageCostSummary: import("./types.js").CostUsageSummary | null = null;
+  @state() usageError: string | null = null;
+  @state() usageStartDate = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  })();
+  @state() usageEndDate = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  })();
+  @state() usageSelectedSessions: string[] = [];
+  @state() usageSelectedDays: string[] = [];
+  @state() usageSelectedHours: number[] = [];
+  @state() usageChartMode: "tokens" | "cost" = "tokens";
+  @state() usageDailyChartMode: "total" | "by-type" = "by-type";
+  @state() usageTimeSeriesMode: "cumulative" | "per-turn" = "per-turn";
+  @state() usageTimeSeriesBreakdownMode: "total" | "by-type" = "by-type";
+  @state() usageTimeSeries: import("./types.js").SessionUsageTimeSeries | null = null;
+  @state() usageTimeSeriesLoading = false;
+  @state() usageSessionLogs: import("./views/usage.js").SessionLogEntry[] | null = null;
+  @state() usageSessionLogsLoading = false;
+  @state() usageSessionLogsExpanded = false;
+  // Applied query (used to filter the already-loaded sessions list client-side).
+  @state() usageQuery = "";
+  // Draft query text (updates immediately as the user types; applied via debounce or "Search").
+  @state() usageQueryDraft = "";
+  @state() usageSessionSort: "tokens" | "cost" | "recent" | "messages" | "errors" = "recent";
+  @state() usageSessionSortDir: "desc" | "asc" = "desc";
+  @state() usageRecentSessions: string[] = [];
+  @state() usageTimeZone: "local" | "utc" = "local";
+  @state() usageContextExpanded = false;
+  @state() usageHeaderPinned = false;
+  @state() usageSessionsTab: "all" | "recent" = "all";
+  @state() usageVisibleColumns: string[] = [
+    "channel",
+    "agent",
+    "provider",
+    "model",
+    "messages",
+    "tools",
+    "errors",
+    "duration",
+  ];
+  @state() usageLogFilterRoles: import("./views/usage.js").SessionLogRole[] = [];
+  @state() usageLogFilterTools: string[] = [];
+  @state() usageLogFilterHasTools = false;
+  @state() usageLogFilterQuery = "";
+
+  // Non-reactive (don’t trigger renders just for timer bookkeeping).
+  usageQueryDebounceTimer: number | null = null;
+
+  @state() cronLoading = false;
+  @state() cronJobs: CronJob[] = [];
+  @state() cronStatus: CronStatus | null = null;
+  @state() cronError: string | null = null;
+  @state() cronForm: CronFormState = { ...DEFAULT_CRON_FORM };
+  @state() cronRunsJobId: string | null = null;
+  @state() cronRuns: CronRunLogEntry[] = [];
+  @state() cronBusy = false;
+
+  @state() skillsLoading = false;
+  @state() skillsReport: SkillStatusReport | null = null;
+  @state() skillsError: string | null = null;
+  @state() skillsFilter = "";
+  @state() skillEdits: Record<string, string> = {};
+  @state() skillsBusyKey: string | null = null;
+  @state() skillMessages: Record<string, SkillMessage> = {};
+
+  @state() debugLoading = false;
+  @state() debugStatus: StatusSummary | null = null;
+  @state() debugHealth: HealthSnapshot | null = null;
+  @state() debugModels: unknown[] = [];
+  @state() debugHeartbeat: unknown = null;
+  @state() debugCallMethod = "";
+  @state() debugCallParams = "{}";
+  @state() debugCallResult: string | null = null;
+  @state() debugCallError: string | null = null;
+
+  @state() logsLoading = false;
+  @state() logsError: string | null = null;
+  @state() logsFile: string | null = null;
+  @state() logsEntries: LogEntry[] = [];
+  @state() logsFilterText = "";
+  @state() logsLevelFilters: Record<LogLevel, boolean> = {
+    ...DEFAULT_LOG_LEVEL_FILTERS,
+  };
+  @state() logsAutoFollow = true;
+  @state() logsTruncated = false;
+  @state() logsCursor: number | null = null;
+  @state() logsLastFetchAt: number | null = null;
+  @state() logsLimit = 500;
+  @state() logsMaxBytes = 250_000;
+  @state() logsAtBottom = true;
+
+  client: GatewayBrowserClient | null = null;
+  private chatScrollFrame: number | null = null;
+  private chatScrollTimeout: number | null = null;
+  private chatHasAutoScrolled = false;
+  private chatUserNearBottom = true;
+  @state() chatNewMessagesBelow = false;
+  private nodesPollInterval: number | null = null;
+  private logsPollInterval: number | null = null;
+  private debugPollInterval: number | null = null;
+  private logsScrollFrame: number | null = null;
+  private toolStreamById = new Map<string, ToolStreamEntry>();
+  private toolStreamOrder: string[] = [];
+  refreshSessionsAfterChat = new Set<string>();
+  private productHistoryLoaded = new Set<string>();
+  private productGreeted = new Set<string>();
+  basePath = "";
+  private popStateHandler = () =>
+    onPopStateInternal(this as unknown as Parameters<typeof onPopStateInternal>[0]);
+  private themeMedia: MediaQueryList | null = null;
+  private themeMediaHandler: ((event: MediaQueryListEvent) => void) | null = null;
+  private topbarObserver: ResizeObserver | null = null;
+
+  createRenderRoot() {
+    return this;
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    handleConnected(this as unknown as Parameters<typeof handleConnected>[0]);
+  }
+
+  protected firstUpdated() {
+    handleFirstUpdated(this as unknown as Parameters<typeof handleFirstUpdated>[0]);
+  }
+
+  disconnectedCallback() {
+    handleDisconnected(this as unknown as Parameters<typeof handleDisconnected>[0]);
+    super.disconnectedCallback();
+  }
+
+  protected updated(changed: Map<PropertyKey, unknown>) {
+    handleUpdated(this as unknown as Parameters<typeof handleUpdated>[0], changed);
+    if (this.productMode) {
+      const connectedChanged = changed.has("connected");
+      const agentsChanged = changed.has("agentsList");
+      if ((connectedChanged || agentsChanged) && this.connected) {
+        if (!this.productAgentId) {
+          this.productAgentId =
+            this.agentsList?.defaultId ?? this.agentsList?.agents?.[0]?.id ?? "main";
+        }
+        if (!this.productSessionsResult) {
+          void this.productLoadSessions();
+        }
+        if (!this.configSnapshot && !this.configLoading) {
+          void this.productReloadConfig();
+        }
+        // Load projects from localStorage
+        if (this.productProjects.length === 0 && this.productCollapsedProjects.size === 0) {
+          this.productLoadProjects();
+        }
+        void this.productEnsureChatLoaded();
       }
+    }
+  }
 
-      ${
-        ungroupedSessions.length > 0
-          ? html`
-            <div class="product-project-group">
-              <div class="product-project-header product-project-header--ungrouped">
-                <span class="product-project-name">Без проекта</span>
-              </div>
-              <div class="product-project-chats">
-                ${ungroupedSessions.map(
-                  (s) => html`
-                    <button
-                      class="product-item product-item--nested ${s.key === state.sessionKey ? "active" : ""}"
-                      ?disabled=${!chatReady}
-                      @click=${() => {
-                        void state.productOpenSession(s.key);
-                      }}
-                    >
-                      <div class="product-item__title">└ ${s.displayName ?? s.label ?? s.key}</div>
-                      <div class="product-item__sub">${s.lastMessage?.text ?? ""}</div>
-                    </button>
-                  `,
-                )}
-              </div>
-            </div>
-          `
-          : nothing
+  connect() {
+    connectGatewayInternal(this as unknown as Parameters<typeof connectGatewayInternal>[0]);
+  }
+
+  handleChatScroll(event: Event) {
+    handleChatScrollInternal(
+      this as unknown as Parameters<typeof handleChatScrollInternal>[0],
+      event,
+    );
+  }
+
+  handleLogsScroll(event: Event) {
+    handleLogsScrollInternal(
+      this as unknown as Parameters<typeof handleLogsScrollInternal>[0],
+      event,
+    );
+  }
+
+  exportLogs(lines: string[], label: string) {
+    exportLogsInternal(lines, label);
+  }
+
+  resetToolStream() {
+    resetToolStreamInternal(this as unknown as Parameters<typeof resetToolStreamInternal>[0]);
+  }
+
+  resetChatScroll() {
+    resetChatScrollInternal(this as unknown as Parameters<typeof resetChatScrollInternal>[0]);
+  }
+
+  scrollToBottom(opts?: { smooth?: boolean }) {
+    resetChatScrollInternal(this as unknown as Parameters<typeof resetChatScrollInternal>[0]);
+    scheduleChatScrollInternal(
+      this as unknown as Parameters<typeof scheduleChatScrollInternal>[0],
+      true,
+      Boolean(opts?.smooth),
+    );
+  }
+
+  async loadAssistantIdentity() {
+    await loadAssistantIdentityInternal(this);
+  }
+
+  applySettings(next: UiSettings) {
+    applySettingsInternal(this as unknown as Parameters<typeof applySettingsInternal>[0], next);
+  }
+
+  setTab(next: Tab) {
+    setTabInternal(this as unknown as Parameters<typeof setTabInternal>[0], next);
+  }
+
+  setTheme(next: ThemeMode, context?: Parameters<typeof setThemeInternal>[2]) {
+    setThemeInternal(this as unknown as Parameters<typeof setThemeInternal>[0], next, context);
+  }
+
+  async loadOverview() {
+    await loadOverviewInternal(this as unknown as Parameters<typeof loadOverviewInternal>[0]);
+  }
+
+  async loadCron() {
+    await loadCronInternal(this as unknown as Parameters<typeof loadCronInternal>[0]);
+  }
+
+  async handleAbortChat() {
+    await handleAbortChatInternal(this as unknown as Parameters<typeof handleAbortChatInternal>[0]);
+  }
+
+  removeQueuedMessage(id: string) {
+    removeQueuedMessageInternal(
+      this as unknown as Parameters<typeof removeQueuedMessageInternal>[0],
+      id,
+    );
+  }
+
+  async handleSendChat(
+    messageOverride?: string,
+    opts?: Parameters<typeof handleSendChatInternal>[2],
+  ) {
+    await handleSendChatInternal(
+      this as unknown as Parameters<typeof handleSendChatInternal>[0],
+      messageOverride,
+      opts,
+    );
+  }
+
+  async startOnboardingWizard() {
+    this.setSimpleOnboardingDone(false);
+    await startOnboardingWizardInternal(this);
+    if (this.onboardingWizardStatus === "done") {
+      this.setSimpleOnboardingDone(true);
+    }
+  }
+
+  async advanceOnboardingWizard(answer?: unknown) {
+    await advanceOnboardingWizardInternal(this, answer);
+    if (this.onboardingWizardStatus === "done") {
+      this.setSimpleOnboardingDone(true);
+    }
+  }
+
+  async cancelOnboardingWizard() {
+    await cancelOnboardingWizardInternal(this);
+  }
+
+  private resolveProductActiveAgentId(): string {
+    const fallback =
+      this.productAgentId ??
+      this.agentsList?.defaultId ??
+      this.agentsList?.agents?.[0]?.id ??
+      "main";
+    return normalizeAgentId(fallback);
+  }
+
+  async productReloadConfig() {
+    await loadConfigInternal(this);
+  }
+
+  async productEnsureChatLoaded() {
+    if (!this.client || !this.connected) {
+      return;
+    }
+    const key = this.sessionKey;
+    if (!key) {
+      return;
+    }
+    if (this.productHistoryLoaded.has(key)) {
+      return;
+    }
+    this.productHistoryLoaded.add(key);
+    await loadChatHistory(this);
+    if (this.chatMessages.length === 0 && this.simpleOnboardingDone) {
+      if (!this.productGreeted.has(key)) {
+        this.productGreeted.add(key);
+        void this.productGreet("first_open");
       }
-    </div>
-  `;
-}
+    }
+  }
 
-function renderTelegramPanel(state: AppViewState) {
-  return html`
-    <section class="card">
-      <div class="card-title">Telegram</div>
-      <div class="card-sub">Подключение бота (доступ по allowlist).</div>
-      <label class="field">
-        <span>Bot token</span>
-        <input
-          type="password"
-          .value=${state.productTelegramToken}
-          @input=${(e: Event) => (state.productTelegramToken = (e.target as HTMLInputElement).value)}
-          placeholder="123456:ABC..."
-        />
-      </label>
-      <label class="field">
-        <span>Твой user id</span>
-        <input
-          .value=${state.productTelegramAllowFrom}
-          @input=${(e: Event) => (state.productTelegramAllowFrom = (e.target as HTMLInputElement).value)}
-          placeholder="Например: 123456789"
-        />
-      </label>
-      ${state.productTelegramError ? html`<div class="callout danger">${state.productTelegramError}</div>` : nothing}
-      ${state.productTelegramSuccess ? html`<div class="callout ok">${state.productTelegramSuccess}</div>` : nothing}
-      <div class="row" style="margin-top:12px;">
-        <button
-          class="btn primary"
-          ?disabled=${state.productTelegramBusy}
-          @click=${() => void state.productConnectTelegram()}
-        >
-          ${state.productTelegramBusy ? "Подключаю..." : "Подключить Telegram"}
-        </button>
-      </div>
-    </section>
-  `;
-}
+  async productOpenSession(key: string) {
+    this.productPanel = "chat";
+    this.sessionKey = key;
+    this.chatMessage = "";
+    this.chatAttachments = [];
+    this.chatStream = null;
+    this.chatStreamStartedAt = null;
+    this.chatRunId = null;
+    this.chatQueue = [];
+    this.resetToolStream();
+    this.resetChatScroll();
+    this.applySettings({
+      ...this.settings,
+      sessionKey: key,
+      lastActiveSessionKey: key,
+    });
+    await loadChatHistory(this);
+    if (this.chatMessages.length === 0 && this.simpleOnboardingDone) {
+      if (!this.productGreeted.has(key)) {
+        this.productGreeted.add(key);
+        void this.productGreet("first_open");
+      }
+    }
+    this.productHistoryLoaded.add(key);
+  }
 
-export function renderProductApp(state: AppViewState) {
-  const chatDisabledReason = state.connected ? null : "Нет подключения к gateway.";
-  const chatReady = state.connected && state.simpleOnboardingDone;
-  const agentId =
-    state.productAgentId ??
-    state.agentsList?.defaultId ??
-    state.agentsList?.agents?.[0]?.id ??
-    "main";
+  async productSelectAgent(agentId: string) {
+    const nextAgentId = normalizeAgentId(agentId);
+    this.productAgentId = nextAgentId;
+    const nextSessionKey = `agent:${nextAgentId}:main`;
+    await this.productOpenSession(nextSessionKey);
+    await this.productLoadSessions();
+    void this.loadAssistantIdentity();
+  }
 
-  const sessions = state.productSessionsResult?.sessions ?? [];
-  const projectList = state.agentsList?.agents ?? [];
+  async productLoadSessions() {
+    if (!this.client || !this.connected) {
+      return;
+    }
+    if (this.productSessionsLoading) {
+      return;
+    }
+    this.productSessionsLoading = true;
+    this.productSessionsError = null;
+    try {
+      const agentId = this.resolveProductActiveAgentId();
+      const res = await this.client.request<SessionsListResult>("sessions.list", {
+        agentId,
+        includeGlobal: false,
+        includeUnknown: false,
+        includeDerivedTitles: true,
+        includeLastMessage: true,
+        limit: 80,
+      });
+      this.productSessionsResult = res;
+    } catch (err) {
+      this.productSessionsError = String(err);
+    } finally {
+      this.productSessionsLoading = false;
+    }
+  }
 
-  const main = !state.connected
-    ? html`
-        <section class="card">
-          <div class="card-title">Подключение</div>
-          <div class="card-sub">Введи URL и токен gateway.</div>
-          <div class="form-grid">
-            <label class="field">
-              <span>WebSocket URL</span>
-              <input
-                .value=${state.settings.gatewayUrl}
-                @input=${(e: Event) => state.applySettings({ ...state.settings, gatewayUrl: (e.target as HTMLInputElement).value })}
-                placeholder="ws://127.0.0.1:18789"
-              />
-            </label>
-            <label class="field">
-              <span>Gateway token</span>
-              <input
-                .value=${state.settings.token}
-                @input=${(e: Event) => state.applySettings({ ...state.settings, token: (e.target as HTMLInputElement).value })}
-                placeholder="OPENCLAW_GATEWAY_TOKEN"
-              />
-            </label>
-            <label class="field">
-              <span>Password (если есть)</span>
-              <input
-                type="password"
-                .value=${state.password}
-                @input=${(e: Event) => (state.password = (e.target as HTMLInputElement).value)}
-              />
-            </label>
-          </div>
-          <div class="row" style="margin-top:12px;">
-            <button class="btn primary" @click=${() => state.connect()}>Подключить</button>
-          </div>
-          ${state.lastError ? html`<div class="callout danger" style="margin-top:12px;">${state.lastError}</div>` : nothing}
-        </section>
-      `
-    : !state.simpleOnboardingDone
-      ? html`
-          <section class="card">
-            <div class="card-title">Настройка</div>
-            <div class="card-sub">Нужно только ввести Eliza API key (сохраняется локально на gateway).</div>
-            ${
-              state.onboardingWizardStatus !== "running"
-                ? html`
-                    <div class="row">
-                      <button
-                        class="btn primary"
-                        ?disabled=${state.onboardingWizardBusy}
-                        @click=${() => {
-                          state.onboardingWizardFlow = "eliza";
-                          state.onboardingWizardMode = "local";
-                          state.onboardingWizardWorkspace = "";
-                          state.onboardingWizardResetConfig = false;
-                          void state.startOnboardingWizard();
-                        }}
-                      >
-                        ${state.onboardingWizardBusy ? "Запуск..." : "Старт"}
-                      </button>
-                    </div>
-                  `
-                : nothing
-            }
-            ${state.onboardingWizardError ? html`<div class="callout danger" style="margin-top:12px;">${state.onboardingWizardError}</div>` : nothing}
-            ${
-              state.onboardingWizardStatus === "running" && state.onboardingWizardStep
-                ? html`
-                    <div class="wizard-container" style="margin: -20px -24px -16px; padding: 20px 24px 16px;">
-                      <div class="wizard-card">
-                        <!-- Progress Bar -->
-                        <div class="wizard-progress">
-                          <span class="wizard-step-label">
-                            Step ${state.onboardingWizardCurrentStep ?? 1} of ${state.onboardingWizardTotalSteps ?? 1}
-                          </span>
-                          <div class="wizard-progress-bar">
-                            ${Array.from({ length: state.onboardingWizardTotalSteps ?? 1 }).map(
-                              (_, i) => html`
-                                <div
-                                  class="wizard-segment"
-                                  data-state=${
-                                    i < (state.onboardingWizardCurrentStep ?? 0)
-                                      ? "completed"
-                                      : i === (state.onboardingWizardCurrentStep ?? 0)
-                                        ? "current"
-                                        : "upcoming"
-                                  }
-                                ></div>
-                              `,
-                            )}
-                          </div>
-                        </div>
+  async productNewChat() {
+    if (!this.client || !this.connected) {
+      return;
+    }
+    this.productPanel = "chat";
+    const agentId = this.resolveProductActiveAgentId();
+    const key = `agent:${agentId}:subagent:${crypto.randomUUID()}`.toLowerCase();
+    try {
+      await this.client.request("sessions.patch", {
+        key,
+        label: "Чат",
+        spawnedBy: `agent:${agentId}:main`,
+      });
+    } catch {
+      // Best-effort: session may be created lazily later.
+    }
+    this.sessionKey = key;
+    this.chatMessage = "";
+    this.chatAttachments = [];
+    this.chatStream = null;
+    this.chatStreamStartedAt = null;
+    this.chatRunId = null;
+    this.chatQueue = [];
+    this.resetToolStream();
+    this.resetChatScroll();
+    this.applySettings({
+      ...this.settings,
+      sessionKey: key,
+      lastActiveSessionKey: key,
+    });
+    await this.productLoadSessions();
+    this.productHistoryLoaded.delete(key);
+    this.productGreeted.delete(key);
+    await loadChatHistory(this);
+    this.productHistoryLoaded.add(key);
+    void this.productGreet("new_chat");
+  }
 
-                        <!-- Step Content -->
-                        <div class="wizard-step-content">
-                          ${
-                            state.onboardingWizardStep.title
-                              ? html`<h2 class="wizard-title">${state.onboardingWizardStep.title}</h2>`
-                              : nothing
-                          }
-                          ${
-                            state.onboardingWizardStep.message
-                              ? html`<p class="wizard-description">${state.onboardingWizardStep.message}</p>`
-                              : nothing
-                          }
+  async productNewChatInProject(projectId: string) {
+    if (!this.client || !this.connected) {
+      return;
+    }
+    this.productPanel = "chat";
+    const key = `agent:${projectId}:subagent:${crypto.randomUUID()}`.toLowerCase();
+    try {
+      await this.client.request("sessions.patch", {
+        key,
+        label: "Чат",
+        spawnedBy: `agent:${projectId}:main`,
+      });
+    } catch {
+      // Best-effort: session may be created lazily later.
+    }
+    this.sessionKey = key;
+    this.chatMessage = "";
+    this.chatAttachments = [];
+    this.chatStream = null;
+    this.chatStreamStartedAt = null;
+    this.chatRunId = null;
+    this.chatQueue = [];
+    this.resetToolStream();
+    this.resetChatScroll();
+    this.applySettings({
+      ...this.settings,
+      sessionKey: key,
+      lastActiveSessionKey: key,
+    });
+    await this.productLoadSessions();
+    this.productHistoryLoaded.delete(key);
+    this.productGreeted.delete(key);
+    await loadChatHistory(this);
+    this.productHistoryLoaded.add(key);
+    void this.productGreet("new_chat");
+  }
 
-                          <!-- Text Input -->
-                          ${
-                            state.onboardingWizardStep.type === "text"
-                              ? html`
-                                <input
-                                  type="text"
-                                  class="wizard-input"
-                                  .value=${state.onboardingWizardTextAnswer}
-                                  @input=${(e: Event) =>
-                                    (state.onboardingWizardTextAnswer = (
-                                      e.target as HTMLInputElement
-                                    ).value)}
-                                  placeholder=${state.onboardingWizardStep.placeholder ?? "Введите значение"}
-                                  ?disabled=${state.onboardingWizardBusy}
-                                  @keydown=${(e: KeyboardEvent) => {
-                                    if (e.key === "Enter") {
-                                      void state.advanceOnboardingWizard();
-                                    }
-                                  }}
-                                  aria-label="Text input"
-                                />
-                                <button
-                                  class="wizard-button primary"
-                                  ?disabled=${state.onboardingWizardBusy || !state.onboardingWizardTextAnswer.trim()}
-                                  @click=${() => void state.advanceOnboardingWizard()}
-                                >
-                                  ${state.onboardingWizardBusy ? "⏳ Сохраняю…" : "Продолжить"}
-                                </button>
-                              `
-                              : nothing
-                          }
+  async productResetChat() {
+    if (!this.client || !this.connected) {
+      return;
+    }
+    this.productPanel = "chat";
+    const key = this.sessionKey;
+    try {
+      await this.client.request("sessions.reset", { key });
+    } catch (err) {
+      this.lastError = String(err);
+      return;
+    }
+    this.chatMessage = "";
+    this.chatAttachments = [];
+    this.chatStream = null;
+    this.chatStreamStartedAt = null;
+    this.chatRunId = null;
+    this.chatQueue = [];
+    this.resetToolStream();
+    this.resetChatScroll();
+    await this.productLoadSessions();
+    this.productHistoryLoaded.delete(key);
+    this.productGreeted.delete(key);
+    await loadChatHistory(this);
+    this.productHistoryLoaded.add(key);
+    void this.productGreet("reset");
+  }
 
-                          <!-- Password Input -->
-                          ${
-                            state.onboardingWizardStep.type === "password"
-                              ? html`
-                                <input
-                                  type="password"
-                                  class="wizard-input"
-                                  .value=${state.onboardingWizardTextAnswer}
-                                  @input=${(e: Event) =>
-                                    (state.onboardingWizardTextAnswer = (
-                                      e.target as HTMLInputElement
-                                    ).value)}
-                                  placeholder=${state.onboardingWizardStep.placeholder ?? "Введите пароль"}
-                                  ?disabled=${state.onboardingWizardBusy}
-                                  @keydown=${(e: KeyboardEvent) => {
-                                    if (e.key === "Enter") {
-                                      void state.advanceOnboardingWizard();
-                                    }
-                                  }}
-                                  aria-label="Password input"
-                                />
-                                <button
-                                  class="wizard-button primary"
-                                  ?disabled=${state.onboardingWizardBusy || !state.onboardingWizardTextAnswer.trim()}
-                                  @click=${() => void state.advanceOnboardingWizard()}
-                                >
-                                  ${state.onboardingWizardBusy ? "⏳ Сохраняю…" : "Продолжить"}
-                                </button>
-                              `
-                              : nothing
-                          }
+  async productGreet(reason: "new_chat" | "reset" | "first_open") {
+    if (!this.client || !this.connected) {
+      return;
+    }
+    const runId = `greet-${crypto.randomUUID()}`;
+    this.chatRunId = runId;
+    this.chatStream = "";
+    this.chatStreamStartedAt = Date.now();
+    try {
+      await this.client.request("chat.greet", {
+        sessionKey: this.sessionKey,
+        reason,
+        idempotencyKey: runId,
+      });
+    } catch (err) {
+      this.lastError = String(err);
+      this.chatRunId = null;
+      this.chatStream = null;
+      this.chatStreamStartedAt = null;
+    }
+  }
 
-                          <!-- Confirm Buttons -->
-                          ${
-                            state.onboardingWizardStep.type === "confirm"
-                              ? html`
-                                <div class="wizard-confirm-buttons">
-                                  <button
-                                    class="wizard-button secondary"
-                                    ?disabled=${state.onboardingWizardBusy}
-                                    @click=${() => void state.advanceOnboardingWizard(false)}
-                                    aria-label="No"
-                                  >
-                                    ${state.onboardingWizardBusy ? "…" : "Нет"}
-                                  </button>
-                                  <button
-                                    class="wizard-button primary"
-                                    ?disabled=${state.onboardingWizardBusy}
-                                    @click=${() => void state.advanceOnboardingWizard(true)}
-                                    aria-label="Yes"
-                                  >
-                                    ${state.onboardingWizardBusy ? "…" : "Да"}
-                                  </button>
-                                </div>
-                              `
-                              : nothing
-                          }
+  async productCreateProject() {
+    if (!this.client || !this.connected) {
+      return;
+    }
+    const name = this.productCreateProjectName.trim();
+    if (!name) {
+      this.productSessionsError = "Нужно имя проекта.";
+      return;
+    }
+    const agentId = normalizeAgentId(name);
+    const workspaceBase =
+      (this.configSnapshot?.config as { agents?: { defaults?: { workspace?: string } } } | null)
+        ?.agents?.defaults?.workspace ?? "~/.openclaw/workspace";
+    const workspace = `${workspaceBase}/${agentId}`;
+    const desc = this.productCreateProjectDesc.trim();
+    await this.client.request("agents.create", { name, workspace });
+    const persona = [
+      "Ты помощник в OpenClaw. Всегда отвечай по-русски.",
+      "Когда начинается новый чат или чат сброшен, поздоровайся в 1-3 предложениях и спроси, что сделать.",
+      "Предлагай понятные шаги кнопками (не проси вводить команды).",
+      "Если пользователь прислал файлы, скажи что ты получил и что можешь сделать: кратко перечисли варианты.",
+      "Если Telegram ещё не подключён, предложи подключить Telegram.",
+      desc ? `Контекст проекта: ${desc}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+    try {
+      await this.client.request("agents.files.set", { agentId, name: "USER.md", content: persona });
+    } catch {
+      // ignore
+    }
+    await loadAgents(this);
+    this.productLoadProjects(); // Add this line
+    this.productCreateProjectOpen = false;
+    this.productCreateProjectName = "";
+    this.productCreateProjectDesc = "";
+    await this.productSelectAgent(agentId);
+  }
 
-                          <!-- Select Options -->
-                          ${
-                            state.onboardingWizardStep.type === "select"
-                              ? html`
-                                <div class="wizard-select-options">
-                                  ${
-                                    (state.onboardingWizardStep.options ?? []).length > 0
-                                      ? (state.onboardingWizardStep.options ?? []).map(
-                                          (opt) => html`
-                                            <button
-                                              class="wizard-option"
-                                              ?disabled=${state.onboardingWizardBusy}
-                                              @click=${() => void state.advanceOnboardingWizard(opt.value)}
-                                              title=${opt.hint ?? ""}
-                                              aria-label="Select: ${opt.label}"
-                                            >
-                                              <span>${opt.label}</span>
-                                              ${opt.hint ? html`<span style="font-size: 12px; color: var(--wizard-text-light);">${opt.hint}</span>` : nothing}
-                                              <div class="wizard-option-checkmark"></div>
-                                            </button>
-                                          `,
-                                        )
-                                      : html`
-                                          <div style="opacity: 0.6; font-style: italic">Нет доступных опций</div>
-                                        `
-                                  }
-                                </div>
-                              `
-                              : nothing
-                          }
+  productLoadProjects() {
+    import("./storage.projects.ts").then(({ loadProjects, loadCollapsedProjects }) => {
+      this.productProjects = loadProjects();
+      this.productCollapsedProjects = loadCollapsedProjects();
+    });
+  }
 
-                          <!-- Multiselect Options -->
-                          ${
-                            state.onboardingWizardStep.type === "multiselect"
-                              ? html`
-                                <div class="wizard-multiselect-options">
-                                  ${
-                                    (state.onboardingWizardStep.options ?? []).length > 0
-                                      ? (state.onboardingWizardStep.options ?? []).map(
-                                          (opt, idx) => html`
-                                            <button
-                                              class="wizard-multiselect-item ${state.onboardingWizardMultiAnswers.includes(idx) ? "selected" : ""}"
-                                              ?disabled=${state.onboardingWizardBusy}
-                                              @click=${() => {
-                                                const checked =
-                                                  state.onboardingWizardMultiAnswers.includes(idx);
-                                                if (checked) {
-                                                  state.onboardingWizardMultiAnswers =
-                                                    state.onboardingWizardMultiAnswers.filter(
-                                                      (i) => i !== idx,
-                                                    );
-                                                } else {
-                                                  state.onboardingWizardMultiAnswers = [
-                                                    ...state.onboardingWizardMultiAnswers,
-                                                    idx,
-                                                  ].toSorted((a, b) => a - b);
-                                                }
-                                              }}
-                                              aria-label="Select: ${opt.label}"
-                                            >
-                                              <div class="wizard-checkbox"></div>
-                                              <div class="wizard-multiselect-label">
-                                                <div class="wizard-multiselect-text">${opt.label}</div>
-                                                ${
-                                                  opt.hint
-                                                    ? html`<div class="wizard-multiselect-hint">${opt.hint}</div>`
-                                                    : nothing
-                                                }
-                                              </div>
-                                            </button>
-                                          `,
-                                        )
-                                      : html`
-                                          <div style="opacity: 0.6; font-style: italic">Нет доступных опций</div>
-                                        `
-                                  }
-                                </div>
-                                <button
-                                  class="wizard-button primary"
-                                  ?disabled=${state.onboardingWizardBusy}
-                                  @click=${() => void state.advanceOnboardingWizard()}
-                                  style="margin-top: 12px;"
-                                >
-                                  ${state.onboardingWizardBusy ? "⏳ Продолжаю…" : "Продолжить"}
-                                </button>
-                              `
-                              : nothing
-                          }
+  productSaveProjects() {
+    import("./storage.projects.ts").then(({ saveProjects, saveCollapsedProjects }) => {
+      saveProjects(this.productProjects);
+      saveCollapsedProjects(this.productCollapsedProjects);
+    });
+  }
 
-                          <!-- Note and Action Messages -->
-                          ${
-                            state.onboardingWizardStep.type === "note" ||
-                            state.onboardingWizardStep.type === "action"
-                              ? html`
-                                <div
-                                  class="wizard-${state.onboardingWizardStep.type}"
-                                  style="margin-top: 16px;"
-                                >
-                                  <div class="wizard-note-icon">
-                                    ${state.onboardingWizardStep.type === "action" ? "⚙️" : "ℹ️"}
-                                  </div>
-                                  <div class="wizard-note-content">
-                                    ${
-                                      state.onboardingWizardStep.type === "action"
-                                        ? state.onboardingWizardStep.message
-                                        : html`<p>${state.onboardingWizardStep.message}</p>`
-                                    }
-                                  </div>
-                                </div>
-                                <button
-                                  class="wizard-button primary"
-                                  ?disabled=${state.onboardingWizardBusy}
-                                  @click=${() => void state.advanceOnboardingWizard(true)}
-                                  style="margin-top: 16px;"
-                                >
-                                  ${state.onboardingWizardBusy ? "⏳ Обработка…" : "OK"}
-                                </button>
-                              `
-                              : nothing
-                          }
+  productToggleProjectCollapsed(projectId: string) {
+    this.productCollapsedProjects = new Set(this.productCollapsedProjects);
+    if (this.productCollapsedProjects.has(projectId)) {
+      this.productCollapsedProjects.delete(projectId);
+    } else {
+      this.productCollapsedProjects.add(projectId);
+    }
+    this.productSaveProjects();
+  }
 
-                          <!-- Progress Spinner -->
-                          ${
-                            state.onboardingWizardStep.type === "progress"
-                              ? html`
-                                  <div class="wizard-progress-spinner">
-                                    <div class="spinner"></div>
-                                    <span class="spinner-text">Обработка…</span>
-                                  </div>
-                                `
-                              : nothing
-                          }
-                        </div>
-                      </div>
-                    </div>
-                  `
-                : nothing
-            }
-          </section>
-        `
-      : state.productPanel === "projects"
-        ? renderProjectsPanel(state)
-        : state.productPanel === "telegram"
-          ? renderTelegramPanel(state)
-          : html`
-            ${renderChat({
-              sessionKey: state.sessionKey,
-              onSessionKeyChange: () => undefined,
-              thinkingLevel: state.chatThinkingLevel,
-              showThinking: false,
-              loading: state.chatLoading,
-              sending: state.chatSending,
-              compactionStatus: state.compactionStatus,
-              assistantAvatarUrl: state.chatAvatarUrl,
-              messages: state.chatMessages,
-              toolMessages: state.chatToolMessages,
-              stream: state.chatStream,
-              streamStartedAt: state.chatStreamStartedAt,
-              draft: state.chatMessage,
-              queue: state.chatQueue,
-              connected: state.connected,
-              canSend: state.connected,
-              disabledReason: chatDisabledReason,
-              error: state.lastError,
-              sessions: state.sessionsResult,
-              focusMode: false,
-              onRefresh: () =>
-                Promise.all([
-                  loadChatHistory(state as unknown as ChatState),
-                  refreshChatAvatar(state as unknown as Parameters<typeof refreshChatAvatar>[0]),
-                ]),
-              onToggleFocusMode: () => undefined,
-              onChatScroll: (event) => state.handleChatScroll(event),
-              onDraftChange: (next) => (state.chatMessage = next),
-              attachments: state.chatAttachments,
-              onAttachmentsChange: (next) => (state.chatAttachments = next),
-              onSend: () => state.handleSendChat(),
-              canAbort: Boolean(state.chatRunId),
-              onAbort: () => void state.handleAbortChat(),
-              onQueueRemove: (id) => state.removeQueuedMessage(id),
-              onNewSession: () => void state.productNewChat(),
-              onResetSession: () => void state.productResetChat(),
-              allowNewSession: true,
-              newSessionLabel: "Новый чат",
-              resetLabel: "Сбросить чат",
-              stopLabel: "Стоп",
-              sendLabel: "Отправить",
-              attachmentsLabel: "Вложения",
-              messageLabel: "Сообщение",
-              showNewMessages: state.chatNewMessagesBelow && !state.chatManualRefreshInFlight,
-              onScrollToBottom: () => state.scrollToBottom(),
-              sidebarOpen: state.sidebarOpen,
-              sidebarContent: state.sidebarContent,
-              sidebarError: state.sidebarError,
-              splitRatio: state.splitRatio,
-              onOpenSidebar: (content: string) => state.handleOpenSidebar(content),
-              onCloseSidebar: () => state.handleCloseSidebar(),
-              onSplitRatioChange: (ratio: number) => state.handleSplitRatioChange(ratio),
-              assistantName: state.assistantName,
-              assistantAvatar: state.assistantAvatar,
-            })}
-          `;
+  async productConfirmDeleteProject(projectId: string) {
+    if (!this.client || !this.connected) {
+      return;
+    }
+    const project = this.productProjects.find((p) => p.id === projectId);
+    if (!project) {
+      this.productSessionsError = `Проект с id ${projectId} не найден.`;
+      return;
+    }
+    this.productConfirmDeleteProjectId = projectId;
+    this.productConfirmDeleteProjectName = project.name;
+    this.productConfirmDeleteProjectOpen = true;
+  }
 
-  return html`
-    <div class="product-shell">
-      <aside class="product-rail" role="navigation" aria-label="Главная навигация">
-        <button class="product-rail__btn" title="Новый чат" aria-label="Новый чат" ?disabled=${!chatReady} @click=${() => void state.productNewChat()}>
-          +
-        </button>
-        <button
-          class="product-rail__btn"
-          data-active=${state.productPanel === "projects"}
-          title="Проекты"
-          aria-label="Панель проектов"
-          aria-pressed=${state.productPanel === "projects"}
-          @click=${() => (state.productPanel = "projects")}
-        >
-          ${icons.folder}
-        </button>
-        <button
-          class="product-rail__btn"
-          data-active=${state.productPanel === "telegram"}
-          title="Telegram"
-          aria-label="Панель Telegram"
-          aria-pressed=${state.productPanel === "telegram"}
-          @click=${() => (state.productPanel = "telegram")}
-        >
-          ${icons.link}
-        </button>
-        <div style="flex:1"></div>
-        <button class="product-rail__btn" title="Для разработчиков" aria-label="Инструменты разработчика" @click=${() => (state.productDevDrawerOpen = true)}>
-          &lt;/&gt;
-        </button>
-      </aside>
+  async productDeleteProject(projectId: string) {
+    if (!this.client || !this.connected) {
+      return;
+    }
+    this.productConfirmDeleteProjectOpen = false; // Close the modal immediately
+    this.productSessionsLoading = true;
+    this.productSessionsError = null;
+    try {
+      await this.client.request("agents.delete", { id: projectId });
+      this.productProjects = this.productProjects.filter((p) => p.id !== projectId);
+      this.productSaveProjects(); // Save updated project list
+      if (this.productAgentId === projectId) {
+        // If the deleted project was active, switch to default or null
+        this.productAgentId =
+          this.agentsList?.defaultId ?? this.agentsList?.agents?.[0]?.id ?? "main";
+        const nextSessionKey = `agent:${this.productAgentId}:main`;
+        await this.productOpenSession(nextSessionKey);
+      }
+      await this.productLoadSessions(); // Reload sessions as project's sessions are deleted
+    } catch (err) {
+      this.productSessionsError = String(err);
+    } finally {
+      this.productSessionsLoading = false;
+      this.productConfirmDeleteProjectId = null;
+      this.productConfirmDeleteProjectName = "";
+    }
+  }
 
-      <aside class="product-sidebar" role="complementary" aria-label="Sidebar with projects and chats">
-        <div class="product-sidebar__header">
-          <div class="product-title">OpenClaw</div>
-          <div class="product-sub">Проекты</div>
-        </div>
-        <div class="product-sidebar__section">
-          <button class="btn" aria-label="Create new project" @click=${() => (state.productCreateProjectOpen = true)}>Создать проект</button>
-        </div>
-        <div class="product-sidebar__list">
-          ${projectList.map(
-            (p) => html`
-              <button
-                class="product-item ${p.id === agentId ? "active" : ""}"
-                aria-label="${p.identity?.name ?? p.name ?? p.id} проект"
-                aria-current=${p.id === agentId ? "page" : "false"}
-                @click=${() => void state.productSelectAgent(p.id)}
-              >
-                <div class="product-item__title">${p.identity?.name ?? p.name ?? p.id}</div>
-                <div class="product-item__sub">${p.id}</div>
-              </button>
-            `,
-          )}
-        </div>
+  async productConfirmDeleteChat(sessionKey: string) {
+    if (!this.client || !this.connected) {
+      return;
+    }
+    const session = this.productSessionsResult?.sessions.find((s) => s.key === sessionKey);
+    if (!session) {
+      this.productSessionsError = `Чат с ключом ${sessionKey} не найден.`;
+      return;
+    }
+    this.productConfirmDeleteChatSessionKey = sessionKey;
+    this.productConfirmDeleteChatDisplayName = session.displayName ?? session.label ?? session.key;
+    this.productConfirmDeleteChatOpen = true;
+  }
 
-        <div class="product-sidebar__header" style="margin-top:12px;">
-          <div class="product-sub">Чаты</div>
-          <button class="btn btn--sm" aria-label="New chat" ?disabled=${!chatReady} @click=${() => void state.productNewChat()}>+</button>
-        </div>
-        <div class="product-sidebar__list">
-          ${sessions.map(
-            (s) => html`
-              <button
-                class="product-item ${s.key === state.sessionKey ? "active" : ""}"
-                ?disabled=${!chatReady}
-                aria-label="Чат: ${s.displayName ?? s.label ?? s.key}"
-                aria-current=${s.key === state.sessionKey ? "page" : "false"}
-                @click=${() => {
-                  void state.productOpenSession(s.key);
-                }}
-              >
-                <div class="product-item__title">${s.displayName ?? s.label ?? s.key}</div>
-                <div class="product-item__sub">${s.lastMessage?.text ?? ""}</div>
-              </button>
-            `,
-          )}
-        </div>
-      </aside>
+  async productDeleteChat(sessionKey: string) {
+    if (!this.client || !this.connected) {
+      return;
+    }
+    this.productConfirmDeleteChatOpen = false; // Close the modal immediately
+    this.productSessionsLoading = true;
+    this.productSessionsError = null;
+    try {
+      await this.client.request("sessions.delete", { key: sessionKey });
+      // If the deleted chat was active, switch to default agent's main chat
+      if (this.sessionKey === sessionKey) {
+        const defaultAgentId =
+          this.agentsList?.defaultId ?? this.agentsList?.agents?.[0]?.id ?? "main";
+        this.sessionKey = `agent:${defaultAgentId}:main`;
+      }
+      await this.productLoadSessions(); // Reload sessions
+    } catch (err) {
+      this.productSessionsError = String(err);
+    } finally {
+      this.productSessionsLoading = false;
+      this.productConfirmDeleteChatSessionKey = null;
+      this.productConfirmDeleteChatDisplayName = "";
+    }
+  }
 
-      <main class="product-main">
-        ${main}
-      </main>
-    </div>
-    ${renderDevDrawer(state)}
-    ${renderCreateProjectModal(state)}
-    ${renderConfirmDeleteProjectModal(state)}
-  `;
+  async productConnectTelegram() {
+    if (!this.client || !this.connected) {
+      return;
+    }
+    this.productTelegramBusy = true;
+    this.productTelegramError = null;
+    this.productTelegramSuccess = null;
+    try {
+      const baseHash = this.configSnapshot?.hash;
+      if (!baseHash) {
+        this.productTelegramError = "Нет hash конфига. Открой dev drawer и сделай Обновить конфиг.";
+        return;
+      }
+      const token = this.productTelegramToken.trim();
+      const allowFrom = this.productTelegramAllowFrom.trim();
+      if (!token) {
+        this.productTelegramError = "Нужен Telegram bot token.";
+        return;
+      }
+      if (!allowFrom) {
+        this.productTelegramError = "Нужен твой Telegram user id (цифры).";
+        return;
+      }
+      const patch = {
+        channels: {
+          telegram: {
+            enabled: true,
+            botToken: token,
+            dmPolicy: "allowlist",
+            allowFrom: [allowFrom],
+          },
+        },
+        bindings: [
+          {
+            agentId: "main",
+            match: { channel: "telegram", accountId: "default" },
+          },
+        ],
+      };
+      await this.client.request("config.patch", {
+        raw: JSON.stringify(patch),
+        baseHash,
+        note: "product-ui telegram connect",
+      });
+      this.productTelegramToken = "";
+      this.productTelegramAllowFrom = "";
+      this.productTelegramSuccess = "Telegram подключен. Gateway перезапускается.";
+    } catch (err) {
+      this.productTelegramError = String(err);
+    } finally {
+      this.productTelegramBusy = false;
+    }
+  }
+
+  async productResetAll() {
+    if (!this.client || !this.connected) {
+      return;
+    }
+    const confirmed = window.confirm("Сбросить конфиг и начать заново?");
+    if (!confirmed) {
+      return;
+    }
+    this.productHistoryLoaded.clear();
+    this.productGreeted.clear();
+    this.setSimpleOnboardingDone(false);
+    this.onboardingWizardFlow = "eliza";
+    this.onboardingWizardMode = "local";
+    this.onboardingWizardWorkspace = "";
+    this.onboardingWizardResetConfig = true;
+    await this.startOnboardingWizard();
+  }
+
+  setOnboardingWizardDone() {
+    setOnboardingWizardDoneInternal(this);
+    this.setSimpleOnboardingDone(true);
+  }
+
+  setSimpleOnboardingDone(next: boolean) {
+    this.simpleOnboardingDone = next;
+    saveSimpleOnboardingDone(next);
+  }
+
+  async handleWhatsAppStart(force: boolean) {
+    await handleWhatsAppStartInternal(this, force);
+  }
+
+  async handleWhatsAppWait() {
+    await handleWhatsAppWaitInternal(this);
+  }
+
+  async handleWhatsAppLogout() {
+    await handleWhatsAppLogoutInternal(this);
+  }
+
+  async handleChannelConfigSave() {
+    await handleChannelConfigSaveInternal(this);
+  }
+
+  async handleChannelConfigReload() {
+    await handleChannelConfigReloadInternal(this);
+  }
+
+  handleNostrProfileEdit(accountId: string, profile: NostrProfile | null) {
+    handleNostrProfileEditInternal(this, accountId, profile);
+  }
+
+  handleNostrProfileCancel() {
+    handleNostrProfileCancelInternal(this);
+  }
+
+  handleNostrProfileFieldChange(field: keyof NostrProfile, value: string) {
+    handleNostrProfileFieldChangeInternal(this, field, value);
+  }
+
+  async handleNostrProfileSave() {
+    await handleNostrProfileSaveInternal(this);
+  }
+
+  async handleNostrProfileImport() {
+    await handleNostrProfileImportInternal(this);
+  }
+
+  handleNostrProfileToggleAdvanced() {
+    handleNostrProfileToggleAdvancedInternal(this);
+  }
+
+  async handleExecApprovalDecision(decision: "allow-once" | "allow-always" | "deny") {
+    const active = this.execApprovalQueue[0];
+    if (!active || !this.client || this.execApprovalBusy) {
+      return;
+    }
+    this.execApprovalBusy = true;
+    this.execApprovalError = null;
+    try {
+      await this.client.request("exec.approval.resolve", {
+        id: active.id,
+        decision,
+      });
+      this.execApprovalQueue = this.execApprovalQueue.filter((entry) => entry.id !== active.id);
+    } catch (err) {
+      this.execApprovalError = `Exec approval failed: ${String(err)}`;
+    } finally {
+      this.execApprovalBusy = false;
+    }
+  }
+
+  handleGatewayUrlConfirm() {
+    const nextGatewayUrl = this.pendingGatewayUrl;
+    if (!nextGatewayUrl) {
+      return;
+    }
+    this.pendingGatewayUrl = null;
+    applySettingsInternal(this as unknown as Parameters<typeof applySettingsInternal>[0], {
+      ...this.settings,
+      gatewayUrl: nextGatewayUrl,
+    });
+    this.connect();
+  }
+
+  handleGatewayUrlCancel() {
+    this.pendingGatewayUrl = null;
+  }
+
+  // Sidebar handlers for tool output viewing
+  handleOpenSidebar(content: string) {
+    if (this.sidebarCloseTimer != null) {
+      window.clearTimeout(this.sidebarCloseTimer);
+      this.sidebarCloseTimer = null;
+    }
+    this.sidebarContent = content;
+    this.sidebarError = null;
+    this.sidebarOpen = true;
+  }
+
+  handleCloseSidebar() {
+    this.sidebarOpen = false;
+    // Clear content after transition
+    if (this.sidebarCloseTimer != null) {
+      window.clearTimeout(this.sidebarCloseTimer);
+    }
+    this.sidebarCloseTimer = window.setTimeout(() => {
+      if (this.sidebarOpen) {
+        return;
+      }
+      this.sidebarContent = null;
+      this.sidebarError = null;
+      this.sidebarCloseTimer = null;
+    }, 200);
+  }
+
+  handleSplitRatioChange(ratio: number) {
+    const newRatio = Math.max(0.4, Math.min(0.7, ratio));
+    this.splitRatio = newRatio;
+    this.applySettings({ ...this.settings, splitRatio: newRatio });
+  }
+
+  render() {
+    return renderApp(this as unknown as AppViewState);
+  }
 }
