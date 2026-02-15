@@ -533,7 +533,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 - [x] Git Undo/Redo для действий агента в коде
 - [x] Глобальные hotkeys из любого приложения
 - [x] Smart Cache для LLM ответов (снижение затрат)
-- [ ] Containerized exec: Docker sandbox для безопасного выполнения команд
+- [x] Containerized exec: Docker sandbox для безопасного выполнения команд
 - [ ] Semantic search по памяти агента и скиллам
 - [ ] AI autocomplete для shell команд в exec
 - [ ] Дебаг-режим: визуализация промпта, токенов, изменение на лету
