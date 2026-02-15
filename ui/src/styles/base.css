@@ -2,36 +2,36 @@
 
 :root {
   /* Background */
-  --bg: #f9f9f7;
-  --bg-accent: #ededeb;
-  --bg-elevated: #ffffff;
-  --bg-hover: #e6e6e4;
-  --bg-muted: #e0e0de;
+  --bg: #ffffff; /* Changed from #f9f9f7 */
+  --bg-accent: #f3f4f6; /* Changed from #ededeb */
+  --bg-elevated: #ffffff; /* Changed from #ffffff */
+  --bg-hover: #f0f0f0; /* Changed from #e6e6e4 */
+  --bg-muted: #e5e7eb; /* Changed from #e0e0de */
 
   /* Card / Surface */
   --card: #ffffff;
-  --card-foreground: #1c1c1a;
-  --card-highlight: rgba(0, 0, 0, 0.02);
+  --card-foreground: #1f2937; /* Changed from #1c1c1a */
+  --card-highlight: rgba(0, 0, 0, 0.05); /* Changed from rgba(0, 0, 0, 0.02) */
   --popover: #ffffff;
   --popover-foreground: var(--card-foreground);
 
   /* Panel */
-  --panel: #f9f9f7;
-  --panel-strong: #eaeae8;
-  --panel-hover: #e0e0de;
-  --chrome: rgba(249, 249, 247, 0.9);
-  --chrome-strong: rgba(249, 249, 247, 0.95);
+  --panel: #ffffff; /* Changed from #f9f9f7 */
+  --panel-strong: #f3f4f6; /* Changed from #eaeae8 */
+  --panel-hover: #e5e7eb; /* Changed from #e0e0de */
+  --chrome: rgba(255, 255, 255, 0.9); /* Changed from rgba(249, 249, 247, 0.9) */
+  --chrome-strong: rgba(255, 255, 255, 0.95); /* Changed from rgba(249, 249, 247, 0.95) */
 
   /* Text */
-  --text: #1c1c1a;
-  --text-strong: #0a0a0a;
+  --text: #374151; /* Changed from #1c1c1a */
+  --text-strong: #1f2937; /* Changed from #0a0a0a */
   --chat-text: var(--text);
-  --muted: #7a7a7a;
+  --muted: #6b7280; /* Changed from #7a7a7a */
   --muted-strong: #4b5563;
   --muted-foreground: var(--muted);
 
   /* Border */
-  --border: #d9d9d9;
+  --border: #d1d5db; /* Changed from #d9d9d9 */
   --border-strong: #9ca3af;
   --border-hover: #6b7280;
   --input: #f9fafb;
@@ -41,16 +41,16 @@
   --accent: #d97757;
   --accent-hover: #c2684f;
   --accent-muted: #d97757;
-  --accent-subtle: rgba(217, 119, 87, 0.08);
-  --accent-foreground: #ffffff;
-  --accent-glow: rgba(217, 119, 87, 0.1);
+  --accent-subtle: rgba(217, 119, 87, 0.1); /* Changed from rgba(217, 119, 87, 0.08) */
+  --accent-foreground: #ffffff; /* Changed from #ffffff */
+  --accent-glow: rgba(217, 119, 87, 0.15); /* Changed from rgba(217, 119, 87, 0.1) */
   --primary: var(--accent);
   --primary-foreground: #ffffff;
 
   /* Secondary */
   --secondary: var(--bg-accent);
   --secondary-foreground: var(--text);
-  --accent-2: #10b981; /* Green for secondary accent if needed */
+  --accent-2: #10b981;
   --accent-2-muted: rgba(16, 185, 129, 0.7);
   --accent-2-subtle: rgba(16, 185, 129, 0.1);
 
@@ -85,10 +85,13 @@
   --font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   /* Shadows - Soft with subtle contrast */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05); /* Changed from 0 1px 2px rgba(0, 0, 0, 0.04) */
+  --shadow-md:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); /* Changed from 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06) */
+  --shadow-lg:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); /* Changed from 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05) */
+  --shadow-xl:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); /* Changed from 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.08) */
   --shadow-glow: 0 0 24px var(--accent-glow);
 
   /* Radii */
@@ -113,54 +116,54 @@
 /* Dark theme - Based on existing, but with new accent and adjusted values */
 :root[data-theme="dark"] {
   /* Background - Warmer dark with depth */
-  --bg: #0e1014;
-  --bg-accent: #121418;
-  --bg-elevated: #181b20;
-  --bg-hover: #20242b;
-  --bg-muted: #1c2026;
+  --bg: #121212; /* Adjusted */
+  --bg-accent: #1e1e1e; /* Adjusted */
+  --bg-elevated: #282828; /* Adjusted */
+  --bg-hover: #333333; /* Adjusted */
+  --bg-muted: #222222; /* Adjusted */
 
   /* Card / Surface - More contrast between levels */
-  --card: #181b20;
-  --card-foreground: #e4e4e7;
-  --card-highlight: rgba(255, 255, 255, 0.04);
-  --popover: #181b20;
-  --popover-foreground: #e4e4e7;
+  --card: #1e1e1e; /* Adjusted */
+  --card-foreground: #f5f5f5; /* Adjusted */
+  --card-highlight: rgba(255, 255, 255, 0.08); /* Adjusted */
+  --popover: #1e1e1e; /* Adjusted */
+  --popover-foreground: var(--card-foreground);
 
   /* Panel */
-  --panel: #0e1014;
-  --panel-strong: #181b20;
-  --panel-hover: #20242b;
-  --chrome: rgba(14, 16, 20, 0.95);
-  --chrome-strong: rgba(14, 16, 20, 0.98);
+  --panel: #121212; /* Adjusted */
+  --panel-strong: #1e1e1e; /* Adjusted */
+  --panel-hover: #333333; /* Adjusted */
+  --chrome: rgba(18, 18, 18, 0.95); /* Adjusted */
+  --chrome-strong: rgba(18, 18, 18, 0.98); /* Adjusted */
 
   /* Text - Slightly warmer */
-  --text: #e8e8e9;
-  --text-strong: #fafafa;
-  --chat-text: #e8e8e9;
-  --muted: #a0a0a5;
-  --muted-strong: #52525b;
-  --muted-foreground: #71717a;
+  --text: #e0e0e0; /* Adjusted */
+  --text-strong: #fafafa; /* Adjusted */
+  --chat-text: var(--text);
+  --muted: #a0a0a0; /* Adjusted */
+  --muted-strong: #757575; /* Adjusted */
+  --muted-foreground: #b0b0b0; /* Adjusted */
 
   /* Border - Subtle but defined */
-  --border: #2f333a;
-  --border-strong: #4a505b;
-  --border-hover: #52525b;
+  --border: #3a3a3a; /* Adjusted */
+  --border-strong: #5a5a5a; /* Adjusted */
+  --border-hover: #757575; /* Adjusted */
   --input: #27272a;
-  --ring: #d97757; /* Updated to Anthropic accent */
+  --ring: #d97757;
 
   /* Accent - Anthropic terracotta for dark theme too */
   --accent: #d97757;
   --accent-hover: #c2684f;
   --accent-muted: #d97757;
-  --accent-subtle: rgba(217, 119, 87, 0.12);
+  --accent-subtle: rgba(217, 119, 87, 0.15); /* Adjusted */
   --accent-foreground: #fafafa;
-  --accent-glow: rgba(217, 119, 87, 0.2);
+  --accent-glow: rgba(217, 119, 87, 0.25); /* Adjusted */
   --primary: var(--accent);
   --primary-foreground: #ffffff;
 
   /* Secondary - Teal accent for variety */
-  --secondary: #1e2028;
-  --secondary-foreground: #f4f4f5;
+  --secondary: #282828; /* Adjusted */
+  --secondary-foreground: #f5f5f5; /* Adjusted */
   --accent-2: #14b8a6;
   --accent-2-muted: rgba(20, 184, 166, 0.7);
   --accent-2-subtle: rgba(20, 184, 166, 0.15);
@@ -182,18 +185,18 @@
   --info-subtle: rgba(59, 130, 246, 0.12);
 
   /* Focus - With glow */
-  --focus: rgba(217, 119, 87, 0.25); /* Updated to Anthropic accent */
+  --focus: rgba(217, 119, 87, 0.3); /* Adjusted */
   --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--ring);
   --focus-glow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ring), 0 0 20px var(--accent-glow);
 
   /* Grid */
-  --grid-line: rgba(255, 255, 255, 0.04);
+  --grid-line: rgba(255, 255, 255, 0.06); /* Adjusted */
 
   /* Shadows - Richer with subtle color */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.02);
-  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.02);
-  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.02);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4); /* Adjusted */
+  --shadow-md: 0 4px 15px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.03); /* Adjusted */
+  --shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.03); /* Adjusted */
+  --shadow-xl: 0 24px 50px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.03); /* Adjusted */
   --shadow-glow: 0 0 30px var(--accent-glow);
 
   /* Radii - Slightly larger for friendlier feel */

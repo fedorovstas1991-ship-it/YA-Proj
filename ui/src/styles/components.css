@@ -534,10 +534,159 @@
   font-family: var(--mono);
 }
 
+
 /* ===========================================
-   Callouts - Informative with subtle depth
+   Progress Indicators
    =========================================== */
 
+/* Linear Progress Bar */
+.progress-bar {
+  width: 100%;
+  height: 8px; /* Slimmer bar */
+  background-color: var(--bg-muted);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  width: 0%; /* Will be controlled by JS */
+  background-color: var(--accent);
+  border-radius: var(--radius-full);
+  transition: width 0.4s var(--ease-out);
+}
+
+.progress-bar.striped .progress-bar-fill {
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.15) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.15) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 1rem 1rem;
+  animation: progress-bar-stripes 1s linear infinite;
+}
+
+@keyframes progress-bar-stripes {
+  0% { background-position-x: 1rem; }
+  100% { background-position-x: 0; }
+}
+
+/* Spinner */
+.spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(var(--accent-rgb), 0.2);
+  border-radius: 50%;
+  border-top-color: var(--accent);
+  animation: spin 1s ease-in-out infinite;
+  -webkit-animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { -webkit-transform: rotate(360deg); }
+}
+@-webkit-keyframes spin {
+  to { -webkit-transform: rotate(360deg); }
+}
+
+/* ===========================================
+   Feedback - Toasts, Alerts, Validation
+   =========================================== */
+
+/* Toast Container */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Toast Message */
+.toast {
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--shadow-md);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.5;
+  max-width: 350px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: fade-in-up var(--duration-normal) var(--ease-out) forwards;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.toast.success {
+  border-color: var(--ok-subtle);
+  background: var(--ok-subtle);
+  color: var(--ok);
+}
+
+.toast.info {
+  border-color: var(--info-subtle);
+  background: var(--info-subtle);
+  color: var(--info);
+}
+
+.toast.warn {
+  border-color: var(--warn-subtle);
+  background: var(--warn-subtle);
+  color: var(--warn);
+}
+
+.toast.danger {
+  border-color: var(--danger-subtle);
+  background: var(--danger-subtle);
+  color: var(--danger);
+}
+
+.toast-icon {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8px;
+  flex-shrink: 0;
+}
+
+/* Inline Validation Message */
+.validation-message {
+  font-size: 13px;
+  color: var(--danger);
+  margin-top: 4px;
+}
+
+.field.error input,
+.field.error textarea,
+.field.error select {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 1px var(--danger);
+}
+
+/* Enhancements for existing callouts to match new feedback styles */
 .callout {
   padding: 18px 22px; /* Increased padding */
   border-radius: var(--radius-md);
@@ -546,7 +695,11 @@
   font-size: 15px; /* Slightly larger font size */
   line-height: 1.6;
   position: relative;
+  display: flex; /* Make it flex to align icon if any */
+  gap: 12px; /* Space for icon if any */
+  align-items: flex-start;
 }
+
 
 .callout.danger {
   border-color: var(--danger-subtle);
@@ -928,8 +1081,9 @@
    =========================================== */
 
 .table {
-  display: grid;
-  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden; /* Ensures borders/shadows are contained */
 }
 
 .table-head,
@@ -938,26 +1092,43 @@
   grid-template-columns: 1.4fr 1fr 0.8fr 0.7fr 0.8fr 0.8fr 0.8fr 0.8fr 0.6fr;
   gap: 12px;
   align-items: center;
+  padding: 12px 18px; /* Increased padding for spaciousness */
 }
 
 .table-head {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--muted);
-  padding: 0 12px;
+  font-size: 13px; /* Slightly larger header font */
+  font-weight: 600; /* Bolder header */
+  color: var(--muted-strong); /* Stronger muted color */
+  background: var(--bg-accent); /* Subtle background for header */
+  border-bottom: 1px solid var(--border); /* Clearer separation */
+  text-transform: uppercase; /* Anthropic style */
+  letter-spacing: 0.05em; /* Anthropic style */
 }
 
 .table-row {
-  border: 1px solid var(--border);
-  padding: 10px 12px;
-  border-radius: var(--radius-md);
+  border-bottom: 1px solid var(--border); /* Subtle row separation */
   background: var(--card);
-  transition: border-color var(--duration-fast) ease;
+  transition: background var(--duration-fast) ease;
+}
+
+.table-row:last-child {
+  border-bottom: none; /* No border for the last row */
 }
 
 .table-row:hover {
-  border-color: var(--border-strong);
+  background: var(--bg-hover); /* Light hover effect */
 }
+
+.table-cell {
+  /* Default cell style */
+  padding: 4px 0; /* Add some vertical padding to cells */
+}
+
+.table-cell--sorted {
+  background: var(--accent-subtle); /* Highlight for sorted column */
+  /* Could also add an icon for sorted state */
+}
+
 
 .session-link {
   text-decoration: none;
