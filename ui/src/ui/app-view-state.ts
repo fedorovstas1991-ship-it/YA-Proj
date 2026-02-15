@@ -57,10 +57,7 @@ export type AppViewState = {
   productConfirmDeleteChatOpen: boolean;
   productConfirmDeleteChatSessionKey: string | null;
   productConfirmDeleteChatDisplayName: string;
-  productConfirmDeleteChatOpen: boolean = false;
-  productConfirmDeleteChatSessionKey: string | null = null;
-  productConfirmDeleteChatDisplayName: string = "";
-  productSessionsLoading: boolean = false;
+  productSessionsLoading: boolean;
   productSessionsError: string | null;
   productSessionsResult: SessionsListResult | null;
   productTelegramToken: string;
