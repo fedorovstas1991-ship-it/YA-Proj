@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import './onboarding-welcome.js';
 import './onboarding-api-key.js';
+import { GatewayBrowserClient, GatewayHelloOk } from '../ui/gateway.ts'; // Correct path to gateway.ts
 
 @customElement('onboarding-wizard')
 export class OnboardingWizard extends LitElement {
@@ -81,6 +82,9 @@ export class OnboardingWizard extends LitElement {
   @property({ type: Array })
   steps: string[] = ['Welcome', 'API Key'];
 
+  @property({ attribute: false })
+  client: GatewayBrowserClient | null = null; // Добавлено свойство client
+
   render() {
     return html`
       <div class="wizard-container">
@@ -112,10 +116,43 @@ export class OnboardingWizard extends LitElement {
     }
   }
 
-  private _handleConnectApiKey(event: CustomEvent) {
-    console.log('API Key Connected:', event.detail.apiKey);
-    // Here you would typically save the API key and complete onboarding
-    this.dispatchEvent(new CustomEvent('onboarding-complete', { bubbles: true, composed: true }));
+  private async _handleConnectApiKey(event: CustomEvent) {
+    const apiKey = event.detail.apiKey;
+    if (!this.client) {
+      console.error('Gateway client not available.');
+      // Здесь можно было бы отправить событие для отображения ошибки в OpenClawApp
+      return;
+    }
+
+    try {
+      const patch = {
+        env: {
+          OPENROUTER_API_KEY: apiKey,
+        },
+        agents: {
+          defaults: {
+            model: {
+              primary: "openrouter/moonshotai/kimi-k2.5",
+            },
+            models: {
+              "openrouter/moonshotai/kimi-k2.5": {},
+            },
+          },
+        },
+      };
+
+      await this.client.request('config.patch', {
+        raw: JSON.stringify(patch),
+        reason: 'Onboarding API Key setup',
+      });
+
+      console.log('API Key Connected and config patched:', apiKey);
+      this.dispatchEvent(new CustomEvent('onboarding-complete', { bubbles: true, composed: true }));
+    } catch (error) {
+      console.error('Failed to connect API Key:', error);
+      // Здесь можно было бы отправить событие для отображения ошибки в OpenClawApp
+      // event.detail.error = error; // Передача ошибки обратно в event.detail
+    }
   }
 
   private _handleSkipOnboarding() {
