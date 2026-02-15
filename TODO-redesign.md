@@ -81,8 +81,8 @@ This phase focuses on redesigning the primary navigation elements and overall pa
 
 ## Progress
 
-- [ ] Header and Global Navigation: Initial review of existing header/nav components.
-- [ ] Header and Global Navigation: Design and implement the new header with Anthropic-style typography and color.
+- [x] Header and Global Navigation: Initial review of existing header/nav components.
+- [x] Header and Global Navigation: Design and implement the new header with Anthropic-style typography and color.
 - [ ] Header and Global Navigation: Implement responsive global navigation.
 - [ ] Sidebar/Main Content Layout: Define the main layout structure.
 - [ ] Sidebar/Main Content Layout: Redesign sidebar styling (background, text, icons).
