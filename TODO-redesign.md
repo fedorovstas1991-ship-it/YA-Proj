@@ -134,18 +134,18 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **`.product-sidebar` (боковая панель проектов/чатов):**
 
-- [ ] `background`: `var(--bg-elevated)`
-- [ ] `border-right`: `1px solid var(--border)`
+- [x] `background`: `var(--bg-elevated)`
+- [x] `border-right`: `1px solid var(--border)`
 
 **`.product-item` (элементы списка проектов/чатов):**
 
-- [ ] `border-radius`: `8px`
-- [ ] `background`: `var(--panel-strong)` (светло-серый)
-- [ ] `product-item:hover`:
+- [x] `border-radius`: `8px`
+- [x] `background`: `var(--panel-strong)` (светло-серый)
+- [x] `product-item:hover`:
   - `border-color`: `var(--border-strong)`
   - `background`: `var(--bg-hover)`
   - `transform`: `translateX(2px)` (менее выраженный эффект)
-- [ ] `product-item.active`:
+- [x] `product-item.active`:
   - `border-color`: `var(--accent)`
   - `background`: `var(--accent-subtle)`
 
