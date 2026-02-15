@@ -16,18 +16,18 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **Шрифт:**
 
-- [ ] Заменить `font-body` и `font-display` с "Space Grotesk" на "Inter".
+- [x] Заменить `font-body` и `font-display` с "Space Grotesk" на "Inter".
   - **Текущая строка:** `font-body: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;`
   - **Текущая строка:** `font-display: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;`
-  - **TODO:** Обновить `@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");` на `Inter`.
-  - **TODO:** Заменить `font-body` и `font-display` на `"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;`
+  - [x] Обновить `@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");` на `Inter`.
+  - [x] Заменить `font-body` и `font-display` на `"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;`
 
 **Цветовая палитра (светлая тема по умолчанию):**
 
-- [ ] Установить светлую тему по умолчанию, а не темную.
+- [x] Установить светлую тему по умолчанию, а не темную.
   - **Текущая строка:** `:root { ... color-scheme: dark; }`
-  - **TODO:** Перенести переменные светлой темы из `:root[data-theme="light"]` в `:root` и адаптировать.
-  - **TODO:** Переопределить `:root[data-theme="dark"]` для темной темы.
+  - [x] Перенести переменные светлой темы из `:root[data-theme="light"]` в `:root` и адаптировать.
+  - [x] Переопределить `:root[data-theme="dark"]` для темной темы.
 
 **Цветовые переменные Anthropic Style:**
 
@@ -104,14 +104,14 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **Общие стили:**
 
-- [ ] Удалить `background: radial-gradient(...)` из `.product-shell` в `product.css` и `.product-shell` в `base.css` (для светлой и темной темы).
+- [x] Удалить `background: radial-gradient(...)` из `.product-shell` в `product.css` и `.product-shell` в `base.css` (для светлой и темной темы).
 - [x] Обновить `color-scheme: dark;` на `color-scheme: light;` в `:root`.
 
 ### 1.2. Изменения в `/root/.openclaw/workspace/YA/ui/src/styles/product.css`
 
 **`.product-shell`:**
 
-- [ ] Удалить градиент:
+- [x] Удалить градиент:
   - **Текущая строка:** `background: radial-gradient(900px 500px at 20% -10%, rgba(255, 92, 92, 0.12), transparent 60%), radial-gradient(700px 400px at 90% 0%, rgba(20, 184, 166, 0.12), transparent 55%), var(--bg);`
   - **TODO:** Заменить на `background: var(--bg);`
 
