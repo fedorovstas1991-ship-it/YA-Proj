@@ -595,8 +595,8 @@
   align-items: center;
   gap: 8px;
   padding: 12px;
-  background: var(--panel);
-  border: none;
+  background: var(--panel); /* Applied change */
+  border: none; /* Applied change */
   cursor: pointer;
   font: inherit;
   color: var(--text-strong);
@@ -607,8 +607,8 @@
 }
 
 .product-project-header:hover {
-  background: var(--bg-hover);
-  color: var(--text-strong);
+  background: var(--bg-hover); /* Applied change */
+  color: var(--text-strong); /* Applied change */
 }
 
 .product-project-header:focus-visible {

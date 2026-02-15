@@ -173,9 +173,9 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **`.product-project-header`:**
 
-- [ ] `background`: `var(--panel)`
-- [ ] `border`: `none`
-- [ ] `product-project-header:hover`:
+- [x] `background`: `var(--panel)`
+- [x] `border`: `none`
+- [x] `product-project-header:hover`:
   - `background`: `var(--bg-hover)`
   - `color`: `var(--text-strong)` (убрать акцентный цвет)
 
