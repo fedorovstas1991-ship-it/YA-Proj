@@ -184,6 +184,8 @@ export class OpenClawApp extends LitElement {
   @state() productConfirmDeleteChatOpen: boolean = false;
   @state() productConfirmDeleteChatSessionKey: string | null = null;
   @state() productConfirmDeleteChatDisplayName: string = "";
+  private logoClickCount: number = 0;
+  private lastLogoClickTime: number = 0;
   @state() productSessionsLoading = false;
   @state() productSessionsError: string | null = null;
   @state() productSessionsResult: SessionsListResult | null = null;
@@ -460,6 +462,7 @@ export class OpenClawApp extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     handleConnected(this as unknown as Parameters<typeof handleConnected>[0]);
+    window.addEventListener("keydown", this.handleKeyDown.bind(this)); // Add this line
   }
 
   protected firstUpdated() {
@@ -468,6 +471,7 @@ export class OpenClawApp extends LitElement {
 
   disconnectedCallback() {
     handleDisconnected(this as unknown as Parameters<typeof handleDisconnected>[0]);
+    window.removeEventListener("keydown", this.handleKeyDown.bind(this)); // Add this line
     super.disconnectedCallback();
   }
 
@@ -962,6 +966,30 @@ export class OpenClawApp extends LitElement {
       this.productSessionsLoading = false;
       this.productConfirmDeleteChatSessionKey = null;
       this.productConfirmDeleteChatDisplayName = "";
+    }
+  }
+
+  productHandleLogoClick() {
+    // NEW METHOD
+    const now = Date.now();
+    if (now - this.lastLogoClickTime < 500) {
+      // 500ms for rapid clicks
+      this.logoClickCount++;
+      if (this.logoClickCount >= 5) {
+        this.productDevDrawerOpen = !this.productDevDrawerOpen;
+        this.logoClickCount = 0;
+      }
+    } else {
+      this.logoClickCount = 1;
+    }
+    this.lastLogoClickTime = now;
+  }
+
+  handleKeyDown(event: KeyboardEvent) {
+    // NEW METHOD
+    if (event.ctrlKey && event.shiftKey && event.key === "D") {
+      this.productDevDrawerOpen = !this.productDevDrawerOpen;
+      event.preventDefault(); // Prevent default browser action (e.g., bookmark)
     }
   }
 
