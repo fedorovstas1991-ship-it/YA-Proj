@@ -1799,22 +1799,25 @@
 .exec-approval-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.6); /* Slightly less opaque overlay */
+  backdrop-filter: blur(8px); /* Increased blur for more depth */
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
   z-index: 200;
+  opacity: 0; /* Start hidden for animation */
+  animation: fade-in 0.2s var(--ease-out) forwards;
 }
 
 .exec-approval-card {
-  width: min(580px, 100%); /* Slightly wider modal */
+  width: min(640px, 100%); /* Slightly wider modal for more content */
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 24px; /* Increased padding */
+  padding: 32px; /* More padding for spaciousness */
   animation: scale-in 0.2s var(--ease-out);
+  box-shadow: var(--shadow-xl); /* Stronger shadow for modals */
 }
 
 .exec-approval-header {
@@ -1822,46 +1825,55 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  padding-bottom: 16px; /* Added padding to separate from content */
+  border-bottom: 1px solid var(--border-strong); /* Stronger separator */
+  margin-bottom: 24px; /* Space after header */
 }
 
 .exec-approval-title {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 20px; /* Larger title */
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-strong);
 }
 
 .exec-approval-sub {
   color: var(--muted);
-  font-size: 13px;
-  margin-top: 4px;
+  font-size: 15px; /* Larger subtitle */
+  margin-top: 6px; /* Adjusted margin */
 }
 
 .exec-approval-queue {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--muted);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong); /* Stronger border for visibility */
   border-radius: var(--radius-full);
-  padding: 4px 10px;
+  padding: 6px 12px; /* Adjusted padding */
+  background: var(--bg-accent); /* Subtle background */
 }
 
 .exec-approval-command {
-  margin-top: 12px;
-  padding: 10px 12px;
-  background: var(--secondary);
+  margin-top: 16px; /* Adjusted margin */
+  padding: 16px 20px; /* More padding */
+  background: var(--bg-muted); /* Distinct background for code */
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   word-break: break-word;
   white-space: pre-wrap;
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 14px; /* Slightly larger font */
+  color: var(--text-strong);
 }
 
 .exec-approval-meta {
-  margin-top: 12px;
+  margin-top: 20px; /* Adjusted margin */
   display: grid;
-  gap: 6px;
-  font-size: 13px;
+  gap: 8px; /* Increased gap */
+  font-size: 14px; /* Slightly larger font */
   color: var(--muted);
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
 }
 
 .exec-approval-meta-row {
@@ -1873,19 +1885,135 @@
 .exec-approval-meta-row span:last-child {
   color: var(--text);
   font-family: var(--mono);
+  font-weight: 500;
 }
 
 .exec-approval-error {
-  margin-top: 10px;
-  font-size: 13px;
+  margin-top: 16px; /* Adjusted margin */
+  font-size: 14px; /* Slightly larger font */
   color: var(--danger);
+  font-weight: 500;
 }
 
 .exec-approval-actions {
-  margin-top: 16px;
+  margin-top: 32px; /* More space before actions */
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 12px; /* Increased gap between buttons */
+  justify-content: flex-end; /* Align buttons to the right */
+}
+
+/* ===========================================
+   Tooltips & Popovers
+   =========================================== */
+
+.tooltip,
+.popover {
+  position: absolute;
+  z-index: 100;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  box-shadow: var(--shadow-md);
+  pointer-events: none; /* Allows interaction with elements behind it */
+  opacity: 0;
+  transition:
+    opacity var(--duration-fast) ease-out,
+    transform var(--duration-fast) ease-out;
+}
+
+.tooltip-visible,
+.popover-visible {
+  opacity: 1;
+  transform: translateY(-4px); /* Slight lift for pop-in effect */
+}
+
+.tooltip-arrow,
+.popover-arrow {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--popover);
+  border: 1px solid var(--border-strong);
+  transform: rotate(45deg);
+  z-index: -1;
+}
+
+/* Positioning for arrows (example: top, can expand) */
+.tooltip[data-popper-placement^="top"] > .tooltip-arrow,
+.popover[data-popper-placement^="top"] > .popover-arrow {
+  bottom: -5px;
+  border-top-color: transparent;
+  border-left-color: transparent;
+}
+
+/* ===========================================
+   Context Menus & Dropdowns
+   =========================================== */
+
+.context-menu,
+.dropdown-menu {
+  position: absolute;
+  z-index: 150;
+  min-width: 180px;
+  background: var(--popover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  transform: translateY(10px);
+  animation: slide-up-fade-in 0.15s var(--ease-out) forwards;
+}
+
+@keyframes slide-up-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.context-menu-item,
+.dropdown-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background var(--duration-fast) ease;
+}
+
+.context-menu-item:hover,
+.dropdown-menu-item:hover {
+  background: var(--bg-hover);
+}
+
+.context-menu-item.danger,
+.dropdown-menu-item.danger {
+  color: var(--danger);
+}
+
+.context-menu-item.danger:hover,
+.dropdown-menu-item.danger:hover {
+  background: var(--danger-subtle);
+}
+
+.context-menu-separator,
+.dropdown-menu-separator {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 0;
 }
 
 /* ===========================================
