@@ -37,75 +37,75 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **Переменные для `:root` (светлая тема, Anthropic):**
 
-- [ ] `--bg`: `#FFFFFF` (белый) или очень светло-серый (например, `#F9FAFB`)
-- [ ] `--bg-accent`: `#F3F4F6` (светло-серый)
-- [ ] `--bg-elevated`: `#FFFFFF`
-- [ ] `--bg-hover`: `#F0F0F0`
-- [ ] `--bg-muted`: `#E5E7EB`
-- [ ] `--card`: `#FFFFFF`
-- [ ] `--card-foreground`: `#1F2937` (темно-серый для текста)
-- [ ] `--card-highlight`: `rgba(0, 0, 0, 0.05)`
-- [ ] `--popover`: `#FFFFFF`
-- [ ] `--popover-foreground`: `--card-foreground`
-- [ ] `--panel`: `#FFFFFF`
-- [ ] `--panel-strong`: `#F3F4F6`
-- [ ] `--panel-hover`: `#E5E7EB`
-- [ ] `--chrome`: `rgba(255, 255, 255, 0.9)`
-- [ ] `--chrome-strong`: `rgba(255, 255, 255, 0.95)`
-- [ ] `--text`: `#374151` (темно-серый)
-- [ ] `--text-strong`: `#1F2937`
-- [ ] `--chat-text`: `--text`
-- [ ] `--muted`: `#6B7280` (серый)
-- [ ] `--muted-strong`: `#4B5563`
-- [ ] `--muted-foreground`: `--muted`
-- [ ] `--border`: `#D1D5DB` (светло-серый)
-- [ ] `--border-strong`: `#9CA3AF`
-- [ ] `--border-hover`: `#6B7280`
-- [ ] `--input`: `#F9FAFB`
-- [ ] `--ring`: `#D97757`
-- [ ] `--accent`: `#D97757` (терракот Anthropic)
-- [ ] `--accent-hover`: `#C2684F`
-- [ ] `--accent-muted`: `#D97757`
-- [ ] `--accent-subtle`: `rgba(217, 119, 87, 0.1)` (терракот с прозрачностью)
-- [ ] `--accent-foreground`: `#FFFFFF`
-- [ ] `--accent-glow`: `rgba(217, 119, 87, 0.15)`
-- [ ] `--primary`: `--accent`
-- [ ] `--primary-foreground`: `#FFFFFF`
-- [ ] `--secondary`: `--bg-accent`
-- [ ] `--secondary-foreground`: `--text`
-- [ ] `--accent-2`: `#10B981` (зеленый для вторичного акцента, если нужен)
-- [ ] `--accent-2-muted`: `rgba(16, 185, 129, 0.7)`
-- [ ] `--accent-2-subtle`: `rgba(16, 185, 129, 0.1)`
-- [ ] `--ok`: `#10B981`
-- [ ] `--ok-muted`: `rgba(16, 185, 129, 0.75)`
-- [ ] `--ok-subtle`: `rgba(16, 185, 129, 0.1)`
-- [ ] `--destructive`: `#EF4444`
-- [ ] `--destructive-foreground`: `#FFFFFF`
-- [ ] `--warn`: `#F59E0B`
-- [ ] `--warn-muted`: `rgba(245, 158, 11, 0.75)`
-- [ ] `--warn-subtle`: `rgba(245, 158, 11, 0.1)`
-- [ ] `--danger`: `#EF4444`
-- [ ] `--danger-muted`: `rgba(239, 68, 68, 0.75)`
-- [ ] `--danger-subtle`: `rgba(239, 68, 68, 0.1)`
-- [ ] `--info`: `#3B82F6`
-- [ ] `--focus`: `rgba(217, 119, 87, 0.2)`
-- [ ] `--focus-ring`: `0 0 0 2px var(--bg), 0 0 0 4px var(--ring)`
-- [ ] `--focus-glow`: `0 0 0 2px var(--bg), 0 0 0 4px var(--ring), 0 0 20px var(--accent-glow)`
-- [ ] `--grid-line`: `rgba(0, 0, 0, 0.08)`
-- [ ] `--shadow-sm`: `0 1px 2px rgba(0, 0, 0, 0.05)`
-- [ ] `--shadow-md`: `0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)`
-- [ ] `--shadow-lg`: `0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)`
-- [ ] `--shadow-xl`: `0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)`
-- [ ] `--shadow-glow`: `0 0 24px var(--accent-glow)`
-- [ ] `--radius-sm`: `8px`
-- [ ] `--radius-md`: `10px`
-- [ ] `--radius-lg`: `12px`
-- [ ] `--radius-xl`: `16px`
+- [x] `--bg`: `#FFFFFF` (белый) или очень светло-серый (например, `#F9FAFB`)
+- [x] `--bg-accent`: `#F3F4F6` (светло-серый)
+- [x] `--bg-elevated`: `#FFFFFF`
+- [x] `--bg-hover`: `#F0F0F0`
+- [x] `--bg-muted`: `#E5E7EB`
+- [x] `--card`: `#FFFFFF`
+- [x] `--card-foreground`: `#1F2937` (темно-серый для текста)
+- [x] `--card-highlight`: `rgba(0, 0, 0, 0.05)`
+- [x] `--popover`: `#FFFFFF`
+- [x] `--popover-foreground`: `--card-foreground`
+- [x] `--panel`: `#FFFFFF`
+- [x] `--panel-strong`: `#F3F4F6`
+- [x] `--panel-hover`: `#E5E7EB`
+- [x] `--chrome`: `rgba(255, 255, 255, 0.9)`
+- [x] `--chrome-strong`: `rgba(255, 255, 255, 0.95)`
+- [x] `--text`: `#374151` (темно-серый)
+- [x] `--text-strong`: `#1F2937`
+- [x] `--chat-text`: `--text`
+- [x] `--muted`: `#6B7280` (серый)
+- [x] `--muted-strong`: `#4B5563`
+- [x] `--muted-foreground`: `--muted`
+- [x] `--border`: `#D1D5DB` (светло-серый)
+- [x] `--border-strong`: `#9CA3AF`
+- [x] `--border-hover`: `#6B7280`
+- [x] `--input`: `#F9FAFB`
+- [x] `--ring`: `#D97757`
+- [x] `--accent`: `#D97757` (терракот Anthropic)
+- [x] `--accent-hover`: `#C2684F`
+- [x] `--accent-muted`: `#D97757`
+- [x] `--accent-subtle`: `rgba(217, 119, 87, 0.1)` (терракот с прозрачностью)
+- [x] `--accent-foreground`: `#FFFFFF`
+- [x] `--accent-glow`: `rgba(217, 119, 87, 0.15)`
+- [x] `--primary`: `--accent`
+- [x] `--primary-foreground`: `#FFFFFF`
+- [x] `--secondary`: `--bg-accent`
+- [x] `--secondary-foreground`: `--text`
+- [x] `--accent-2`: `#10B981` (зеленый для вторичного акцента, если нужен)
+- [x] `--accent-2-muted`: `rgba(16, 185, 129, 0.7)`
+- [x] `--accent-2-subtle`: `rgba(16, 185, 129, 0.1)`
+- [x] `--ok`: `#10B981`
+- [x] `--ok-muted`: `rgba(16, 185, 129, 0.75)`
+- [x] `--ok-subtle`: `rgba(16, 185, 129, 0.1)`
+- [x] `--destructive`: `#EF4444`
+- [x] `--destructive-foreground`: `#FFFFFF`
+- [x] `--warn`: `#F59E0B`
+- [x] `--warn-muted`: `rgba(245, 158, 11, 0.75)`
+- [x] `--warn-subtle`: `rgba(245, 158, 11, 0.1)`
+- [x] `--danger`: `#EF4444`
+- [x] `--danger-muted`: `rgba(239, 68, 68, 0.75)`
+- [x] `--danger-subtle`: `rgba(239, 68, 68, 0.1)`
+- [x] `--info`: `#3B82F6`
+- [x] `--focus`: `rgba(217, 119, 87, 0.2)`
+- [x] `--focus-ring`: `0 0 0 2px var(--bg), 0 0 0 4px var(--ring)`
+- [x] `--focus-glow`: `0 0 0 2px var(--bg), 0 0 0 4px var(--ring), 0 0 20px var(--accent-glow)`
+- [x] `--grid-line`: `rgba(0, 0, 0, 0.08)`
+- [x] `--shadow-sm`: `0 1px 2px rgba(0, 0, 0, 0.05)`
+- [x] `--shadow-md`: `0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)`
+- [x] `--shadow-lg`: `0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)`
+- [x] `--shadow-xl`: `0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)`
+- [x] `--shadow-glow`: `0 0 24px var(--accent-glow)`
+- [x] `--radius-sm`: `8px`
+- [x] `--radius-md`: `10px`
+- [x] `--radius-lg`: `12px`
+- [x] `--radius-xl`: `16px`
 
 **Общие стили:**
 
 - [ ] Удалить `background: radial-gradient(...)` из `.product-shell` в `product.css` и `.product-shell` в `base.css` (для светлой и темной темы).
-- [ ] Обновить `color-scheme: dark;` на `color-scheme: light;` в `:root`.
+- [x] Обновить `color-scheme: dark;` на `color-scheme: light;` в `:root`.
 
 ### 1.2. Изменения в `/root/.openclaw/workspace/YA/ui/src/styles/product.css`
 
@@ -354,7 +354,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-render-product.ts`:**
 
-- [ ] **Удалить кнопку:**
+- [x] **Удалить кнопку:**
   - **Текущая строка:**
     ```html
     <button
@@ -373,10 +373,10 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-view-state.ts`:**
 
-- [ ] **Добавить свойство для отслеживания кликов по логотипу:**
+- [x] **Добавить свойство для отслеживания кликов по логотипу:**
   - `private logoClickCount: number = 0;`
   - `private lastLogoClickTime: number = 0;`
-- [ ] **Добавить метод для обработки кликов по лого:**
+- [x] **Добавить метод для обработки кликов по лого:**
   - `productHandleLogoClick()`:
     - **TODO:** При каждом клике проверять `Date.now() - this.lastLogoClickTime < 500` (например, 500мс для быстрого двойного клика).
     - **TODO:** Если клики происходят быстро, увеличивать `logoClickCount`.
@@ -384,7 +384,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
       - `this.productDevDrawerOpen = !this.productDevDrawerOpen;`
       - Сбросить `logoClickCount` и `lastLogoClickTime`.
     - **TODO:** Иначе, сбросить `logoClickCount` и установить `lastLogoClickTime = Date.now()`.
-- [ ] **Добавить обработчик клавиатуры для `Ctrl+Shift+D`:**
+- [x] **Добавить обработчик клавиатуры для `Ctrl+Shift+D`:**
   - **TODO:** Добавить `window.addEventListener('keydown', this.handleKeyDown.bind(this));` в конструктор или `init` метод.
   - **TODO:** Реализовать `handleKeyDown(event: KeyboardEvent)`:
     - Если `event.ctrlKey && event.shiftKey && event.key === 'D'`:
@@ -395,7 +395,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-render-product.ts`:**
 
-- [ ] **Проверить ссылки Legacy UI:**
+- [x] **Проверить ссылки Legacy UI:**
   - **Текущие строки:** `<a class="btn" href=${buildHref("chat", state.basePath)}>Legacy: Chat</a>` и другие.
   - **TODO:** Убедиться, что `buildHref` корректно формирует ссылки.
   - **TODO:** Возможно, лаги связаны с загрузкой большого объема данных или рендерингом устаревших компонентов при переключении. Это может потребовать оптимизации в `app-view-state.ts` (например, отложенная загрузка данных для Legacy UI) или в самих Legacy компонентах.
