@@ -113,7 +113,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 - [x] Удалить градиент:
   - **Текущая строка:** `background: radial-gradient(900px 500px at 20% -10%, rgba(255, 92, 92, 0.12), transparent 60%), radial-gradient(700px 400px at 90% 0%, rgba(20, 184, 166, 0.12), transparent 55%), var(--bg);`
-  - **TODO:** Заменить на `background: var(--bg);`
+  - [x] Заменить на `background: var(--bg);`
 
 **`.product-rail` (левая панель навигации):**
 
