@@ -1,0 +1,124 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --anthropic-light-bg: #fafaf8; /* User specified light bg */
+  --anthropic-dark-bg: #1a1915; /* User specified dark bg */
+  --anthropic-accent: #d97757; /* Terracotta */
+  --anthropic-text: #1a1915; /* Dark text for light theme */
+  --anthropic-border-radius: 12px;
+  --anthropic-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --anthropic-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --anthropic-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --anthropic-muted-text: #6b7280;
+  --anthropic-input-bg: #f9fafb;
+  --anthropic-border: #d1d5db;
+  --anthropic-bg-accent: #f3f4f6;
+
+  /* Dark theme variables - these will be conditionally applied */
+  --anthropic-dark-theme-bg: #1a1915;
+  --anthropic-dark-theme-text: #ffffff;
+  --anthropic-dark-theme-card-bg: #2d2d2d;
+  --anthropic-dark-theme-border: #3f3f3f;
+  --anthropic-dark-theme-input-bg: #1f1f1f;
+  --anthropic-dark-theme-muted-text: #aaaaaa;
+  --anthropic-dark-theme-bg-accent: #252525;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: var(--anthropic-light-bg);
+  color: var(--anthropic-text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark theme styles */
+body.dark-theme {
+  background-color: var(--anthropic-dark-theme-bg);
+  color: var(--anthropic-dark-theme-text);
+}
+
+body.dark-theme .mockup-container,
+body.dark-theme .modal-content,
+body.dark-theme .main-ui-mockup {
+  background-color: var(--anthropic-dark-theme-card-bg);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+  color: var(--anthropic-dark-theme-text);
+}
+
+body.dark-theme .mockup-header,
+body.dark-theme .chat-header,
+body.dark-theme .chat-input-area {
+  border-color: var(--anthropic-dark-theme-border);
+}
+
+body.dark-theme .mockup-header h3,
+body.dark-theme h2,
+body.dark-theme p,
+body.dark-theme .form-group label,
+body.dark-theme .chat-header,
+body.dark-theme .sidebar-header h4,
+body.dark-theme .chat-input {
+  color: var(--anthropic-dark-theme-text);
+}
+
+body.dark-theme .mockup-input,
+body.dark-theme .chat-input {
+  background-color: var(--anthropic-dark-theme-input-bg);
+  border-color: var(--anthropic-dark-theme-border);
+  color: var(--anthropic-dark-theme-text);
+}
+
+body.dark-theme .mockup-input::placeholder,
+body.dark-theme .chat-input::placeholder {
+  color: var(--anthropic-dark-theme-muted-text);
+}
+
+body.dark-theme .mockup-button-group .btn-secondary {
+  color: var(--anthropic-dark-theme-text);
+  border-color: var(--anthropic-dark-theme-border);
+  background-color: var(--anthropic-dark-theme-card-bg);
+}
+
+body.dark-theme .mockup-button-group .btn-secondary:hover {
+  background-color: var(--anthropic-dark-theme-border);
+}
+
+body.dark-theme .sidebar {
+  background-color: var(--anthropic-dark-theme-bg-accent);
+  border-color: var(--anthropic-dark-theme-border);
+}
+
+body.dark-theme .project-item,
+body.dark-theme .chat-item {
+  background-color: var(--anthropic-dark-theme-card-bg);
+  border-color: var(--anthropic-dark-theme-border);
+  color: var(--anthropic-dark-theme-text);
+}
+
+body.dark-theme .project-item:hover,
+body.dark-theme .chat-item:hover {
+  background-color: #3a3a3a; /* Slightly lighter dark card for hover */
+  border-color: var(--anthropic-accent);
+}
+
+body.dark-theme .project-item.active,
+body.dark-theme .chat-item.active {
+  background-color: rgba(217, 119, 87, 0.2); /* accent-subtle for dark */
+  border-color: var(--anthropic-accent);
+}
+
+body.dark-theme .chat-messages {
+  background-color: var(--anthropic-dark-theme-bg);
+}
+
+body.dark-theme .message-bubble.ai .bubble-content {
+  background-color: var(--anthropic-dark-theme-bg-accent);
+  color: var(--anthropic-dark-theme-text);
+}
+
+body.dark-theme .message-bubble.user .bubble-content {
+  background-color: var(--anthropic-accent); /* Accent color remains */
+  color: var(--anthropic-dark-theme-text);
+}
