@@ -3,24 +3,24 @@
    ============================================= */
 
 .chat-thinking {
-  margin-bottom: 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px dashed rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.04);
+  margin-bottom: 12px; /* Increased margin */
+  padding: 12px 16px; /* Increased padding */
+  border-radius: var(--radius-md); /* Use radius variable */
+  border: 1px dashed var(--border-strong); /* Use border-strong */
+  background: var(--bg-accent); /* Use bg-accent */
   color: var(--muted);
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: 13px; /* Slightly larger font */
+  line-height: 1.5;
 }
 
 :root[data-theme="light"] .chat-thinking {
-  border-color: rgba(16, 24, 40, 0.25);
-  background: rgba(16, 24, 40, 0.04);
+  border-color: var(--border-strong);
+  background: var(--bg-accent);
 }
 
 .chat-text {
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 15px; /* Increased font size for readability */
+  line-height: 1.6; /* Increased line-height for readability */
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
@@ -30,7 +30,7 @@
 }
 
 .chat-text :where(p + p, p + ul, p + ol, p + pre, p + blockquote) {
-  margin-top: 0.75em;
+  margin-top: 1em; /* Increased margin */
 }
 
 .chat-text :where(ul, ol) {
@@ -38,7 +38,7 @@
 }
 
 .chat-text :where(li + li) {
-  margin-top: 0.25em;
+  margin-top: 0.5em; /* Increased margin */
 }
 
 .chat-text :where(a) {
@@ -57,16 +57,18 @@
 }
 
 .chat-text :where(:not(pre) > code) {
-  background: rgba(0, 0, 0, 0.15);
-  padding: 0.15em 0.4em;
-  border-radius: 4px;
+  background: var(--secondary); /* Use secondary */
+  padding: 0.2em 0.5em; /* Adjusted padding */
+  border-radius: var(--radius-sm); /* Use radius variable */
+  border: 1px solid var(--border); /* Added border */
 }
 
 .chat-text :where(pre) {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 6px;
-  padding: 10px 12px;
+  background: var(--secondary); /* Use secondary */
+  border-radius: var(--radius-md); /* Use radius variable */
+  padding: 12px 16px; /* Increased padding */
   overflow-x: auto;
+  border: 1px solid var(--border); /* Added border */
 }
 
 .chat-text :where(pre code) {
@@ -76,49 +78,49 @@
 
 .chat-text :where(blockquote) {
   border-left: 3px solid var(--border-strong);
-  padding-left: 12px;
+  padding-left: 16px; /* Increased padding */
   margin-left: 0;
   color: var(--muted);
-  background: rgba(255, 255, 255, 0.02);
-  padding: 8px 12px;
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--bg-accent); /* Use bg-accent */
+  padding: 10px 16px; /* Increased padding */
+  border-radius: var(--radius-md); /* Use radius variable */
 }
 
 .chat-text :where(blockquote blockquote) {
-  margin-top: 8px;
+  margin-top: 10px; /* Increased margin */
   border-left-color: var(--border-hover);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-muted); /* Use bg-muted */
 }
 
 .chat-text :where(blockquote blockquote blockquote) {
   border-left-color: var(--muted-strong);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--bg-muted); /* Use bg-muted */
 }
 
 :root[data-theme="light"] .chat-text :where(blockquote) {
-  background: rgba(0, 0, 0, 0.03);
+  background: var(--bg-accent);
 }
 
 :root[data-theme="light"] .chat-text :where(blockquote blockquote) {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--bg-muted);
 }
 
 :root[data-theme="light"] .chat-text :where(blockquote blockquote blockquote) {
-  background: rgba(0, 0, 0, 0.04);
+  background: var(--bg-muted);
 }
 
 :root[data-theme="light"] .chat-text :where(:not(pre) > code) {
-  background: rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--secondary); /* Use secondary */
+  border: 1px solid var(--border); /* Consistent border */
 }
 
 :root[data-theme="light"] .chat-text :where(pre) {
-  background: rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--secondary); /* Use secondary */
+  border: 1px solid var(--border); /* Consistent border */
 }
 
 .chat-text :where(hr) {
   border: none;
   border-top: 1px solid var(--border);
-  margin: 1em 0;
+  margin: 1.5em 0; /* Increased margin */
 }

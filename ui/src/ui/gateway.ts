@@ -146,7 +146,12 @@ export class GatewayBrowserClient {
     let canFallbackToShared = false;
     let authToken = this.opts.token;
 
-    if (isSecureContext) {
+    if (this.opts.mode === GATEWAY_CLIENT_MODES.LOCAL) {
+      // Add local mode check
+      authToken = undefined; // Bypass authentication
+      deviceIdentity = null; // No device identity needed for local mode
+      // Skip the rest of the authentication logic
+    } else if (isSecureContext) {
       deviceIdentity = await loadOrCreateDeviceIdentity();
       const storedToken = loadDeviceAuthToken({
         deviceId: deviceIdentity.deviceId,
@@ -173,7 +178,8 @@ export class GatewayBrowserClient {
         }
       | undefined;
 
-    if (isSecureContext && deviceIdentity) {
+    // Only proceed with device signing if not in local mode and in a secure context
+    if (this.opts.mode !== GATEWAY_CLIENT_MODES.LOCAL && isSecureContext && deviceIdentity) {
       const signedAtMs = Date.now();
       const nonce = this.connectNonce ?? undefined;
       const payload = buildDeviceAuthPayload({

@@ -81,10 +81,11 @@
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  padding: 0 20px;
+  padding: 0 24px; /* Increased horizontal padding */
   height: var(--shell-topbar-height);
-  border-bottom: 1px solid var(--border);
-  background: var(--bg);
+  border-bottom: 1px solid var(--border-light); /* Softer border */
+  background: var(--bg-elevated); /* Elevated background */
+  box-shadow: var(--shadow-sm); /* Subtle shadow for depth */
 }
 
 .topbar-left {
@@ -198,8 +199,9 @@
   grid-area: nav;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 16px 12px;
-  background: var(--bg);
+  padding: 20px 16px; /* Increased padding */
+  background: var(--bg-elevated); /* Elevated background */
+  border-right: 1px solid var(--border-light); /* Softer border */
   scrollbar-width: none; /* Firefox */
   transition:
     width var(--shell-focus-duration) var(--shell-focus-ease),

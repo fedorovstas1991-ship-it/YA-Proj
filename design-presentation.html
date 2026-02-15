@@ -1,0 +1,873 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YA Product Redesign Pitch Deck (Anthropic Style)</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --anthropic-light-bg: #fafaf8; /* User specified light bg */
+        --anthropic-dark-bg: #1a1915; /* User specified dark bg */
+        --anthropic-accent: #d97757; /* Terracotta */
+        --anthropic-text: #1a1915; /* Dark text for light theme */
+        --anthropic-border-radius: 12px;
+        --anthropic-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+        --anthropic-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        --anthropic-shadow-lg:
+          0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        --anthropic-muted-text: #6b7280; /* From TODO-redesign.md */
+        --anthropic-input-bg: #f9fafb; /* From TODO-redesign.md */
+        --anthropic-border: #d1d5db; /* From TODO-redesign.md */
+        --anthropic-bg-accent: #f3f4f6; /* From TODO-redesign.md */
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        margin: 0;
+        padding: 0;
+        overflow: hidden; /* Hide scrollbars */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background-color: var(--anthropic-light-bg);
+        color: var(--anthropic-text);
+        transition:
+          background-color 0.3s ease,
+          color 0.3s ease;
+      }
+
+      .presentation-container {
+        width: 100vw;
+        height: 100vh;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .slide {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: var(--anthropic-light-bg);
+        color: var(--anthropic-text);
+        opacity: 0;
+        visibility: hidden;
+        transition:
+          opacity 0.6s ease,
+          visibility 0.6s ease,
+          transform 0.6s ease;
+        transform: translateX(100%); /* Start off-screen to the right */
+        box-sizing: border-box;
+        padding: 40px;
+      }
+
+      .slide.active {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(0);
+      }
+
+      /* Slide specific styling */
+      .slide-content {
+        max-width: 900px;
+        width: 100%;
+        text-align: center;
+      }
+
+      .slide h1 {
+        font-size: 3.5em;
+        font-weight: 700;
+        margin-bottom: 20px;
+        color: var(--anthropic-accent);
+      }
+
+      .slide h2 {
+        font-size: 2.5em;
+        font-weight: 600;
+        margin-bottom: 15px;
+      }
+
+      .slide h3 {
+        font-size: 1.8em;
+        font-weight: 500;
+        margin-bottom: 10px;
+        color: var(--anthropic-accent);
+      }
+
+      .slide p {
+        font-size: 1.2em;
+        line-height: 1.6;
+        margin-bottom: 10px;
+      }
+
+      /* Mockup containers */
+      .mockup-container {
+        background-color: white;
+        border-radius: var(--anthropic-border-radius);
+        box-shadow: var(--anthropic-shadow-lg);
+        padding: 20px;
+        margin-top: 30px;
+        width: 100%;
+        max-width: 800px;
+        box-sizing: border-box;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .mockup-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 15px;
+        margin-bottom: 15px;
+        border-bottom: 1px solid var(--anthropic-border);
+      }
+
+      .mockup-header h3 {
+        margin: 0;
+        color: var(--anthropic-text);
+      }
+
+      .mockup-header .btn {
+        background-color: var(--anthropic-accent);
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background-color 0.2s ease;
+      }
+
+      .mockup-header .btn:hover {
+        background-color: #c2684f; /* Darker accent */
+      }
+
+      .mockup-input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid var(--anthropic-border);
+        border-radius: 8px;
+        font-family: "Inter", sans-serif;
+        font-size: 1em;
+        margin-bottom: 15px;
+        box-sizing: border-box;
+        background-color: var(--anthropic-input-bg);
+        color: var(--anthropic-text);
+      }
+      .mockup-input::placeholder {
+        color: var(--anthropic-muted-text);
+      }
+
+      .mockup-button-group {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .mockup-button-group .btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background-color 0.2s ease;
+      }
+
+      .mockup-button-group .btn-secondary {
+        background-color: transparent;
+        color: var(--anthropic-text);
+        border: 1px solid var(--anthropic-border);
+      }
+
+      .mockup-button-group .btn-secondary:hover {
+        background-color: var(--anthropic-bg-accent);
+      }
+
+      .mockup-button-group .btn-primary {
+        background-color: var(--anthropic-accent);
+        color: white;
+        border: none;
+      }
+
+      .mockup-button-group .btn-primary:hover {
+        background-color: #c2684f;
+      }
+
+      /* Slide 4: Main UI */
+      .main-ui-mockup {
+        display: flex;
+        height: 70vh;
+        width: 90vw;
+        max-width: 1200px;
+        background-color: white;
+        border-radius: var(--anthropic-border-radius);
+        box-shadow: var(--anthropic-shadow-lg);
+        overflow: hidden;
+      }
+
+      .sidebar {
+        width: 280px;
+        background-color: var(--anthropic-bg-accent);
+        border-right: 1px solid var(--anthropic-border);
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .sidebar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .sidebar-header h4 {
+        margin: 0;
+        color: var(--anthropic-text);
+        font-size: 1.2em;
+        font-weight: 600;
+      }
+
+      .sidebar-header .btn {
+        background-color: var(--anthropic-accent);
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 0.9em;
+      }
+
+      .project-list {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding-right: 5px; /* For scrollbar */
+      }
+      .project-item,
+      .chat-item {
+        background-color: white;
+        border: 1px solid var(--anthropic-border);
+        border-radius: 8px;
+        padding: 10px 15px;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        transition:
+          background-color 0.2s ease,
+          border-color 0.2s ease;
+      }
+      .project-item:hover,
+      .chat-item:hover {
+        background-color: var(--anthropic-light-bg);
+        border-color: var(--anthropic-accent);
+      }
+      .project-item.active,
+      .chat-item.active {
+        border-color: var(--anthropic-accent);
+        background-color: rgba(217, 119, 87, 0.1); /* accent-subtle */
+      }
+      .project-item span,
+      .chat-item span {
+        font-weight: 500;
+      }
+      .project-item .icon {
+        margin-right: 8px;
+        color: var(--anthropic-muted-text);
+      }
+      .chat-item small {
+        font-size: 0.8em;
+        color: var(--anthropic-muted-text);
+      }
+
+      .chat-area {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .chat-header {
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--anthropic-border);
+        background-color: white;
+        font-weight: 600;
+        font-size: 1.1em;
+      }
+      .chat-messages {
+        flex-grow: 1;
+        padding: 20px;
+        overflow-y: auto;
+        background-color: var(--anthropic-light-bg);
+      }
+      .chat-input-area {
+        padding: 15px 20px;
+        border-top: 1px solid var(--anthropic-border);
+        background-color: white;
+        display: flex;
+        gap: 10px;
+      }
+      .chat-input {
+        flex-grow: 1;
+        padding: 10px 15px;
+        border: 1px solid var(--anthropic-border);
+        border-radius: 8px;
+        font-family: "Inter", sans-serif;
+        font-size: 1em;
+        box-sizing: border-box;
+        background-color: var(--anthropic-input-bg);
+        color: var(--anthropic-text);
+      }
+      .chat-send-btn {
+        background-color: var(--anthropic-accent);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background-color 0.2s ease;
+      }
+      .chat-send-btn:hover {
+        background-color: #c2684f;
+      }
+
+      /* Slide 5: Modal */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.1); /* Softer backdrop */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      .modal-content {
+        background-color: white;
+        border-radius: var(--anthropic-border-radius);
+        box-shadow: var(--anthropic-shadow-lg);
+        padding: 30px;
+        width: 450px;
+        max-width: 90%;
+        text-align: left;
+        position: relative;
+      }
+      .modal-content h3 {
+        margin-top: 0;
+        margin-bottom: 25px;
+        font-size: 1.6em;
+        color: var(--anthropic-text);
+        text-align: center;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: var(--anthropic-text);
+      }
+
+      /* Slide 6: Chat message bubbles */
+      .message-bubble {
+        display: flex;
+        margin-bottom: 15px;
+        align-items: flex-start;
+      }
+      .message-bubble.ai {
+        justify-content: flex-start;
+      }
+      .message-bubble.user {
+        justify-content: flex-end;
+      }
+      .bubble-content {
+        max-width: 70%;
+        padding: 12px 18px;
+        border-radius: var(--anthropic-border-radius);
+        box-shadow: var(--anthropic-shadow-sm);
+        line-height: 1.5;
+        position: relative;
+      }
+      .message-bubble.ai .bubble-content {
+        background-color: var(--anthropic-bg-accent);
+        color: var(--anthropic-text);
+        border-bottom-left-radius: 4px; /* Slight tweak for corner */
+      }
+      .message-bubble.user .bubble-content {
+        background-color: var(--anthropic-accent);
+        color: white;
+        border-bottom-right-radius: 4px; /* Slight tweak for corner */
+      }
+      .message-bubble .sender {
+        font-weight: 600;
+        margin-bottom: 5px;
+        font-size: 0.9em;
+      }
+      .message-bubble.user .sender {
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      /* Dark Theme - Slide 7 */
+      .slide.dark-theme {
+        background-color: var(--anthropic-dark-bg);
+        color: white;
+      }
+      .slide.dark-theme .mockup-container,
+      .slide.dark-theme .modal-content,
+      .slide.dark-theme .main-ui-mockup {
+        background-color: #2d2d2d; /* Darker grey for card-like elements */
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+        color: white;
+      }
+      .slide.dark-theme .mockup-header,
+      .slide.dark-theme .chat-header,
+      .slide.dark-theme .chat-input-area {
+        border-color: #3f3f3f;
+      }
+      .slide.dark-theme .mockup-header h3,
+      .slide.dark-theme h2,
+      .slide.dark-theme p,
+      .slide.dark-theme .form-group label,
+      .slide.dark-theme .chat-header,
+      .slide.dark-theme .sidebar-header h4,
+      .slide.dark-theme .chat-input {
+        color: white;
+      }
+      .slide.dark-theme .mockup-input,
+      .slide.dark-theme .chat-input {
+        background-color: #1f1f1f;
+        border-color: #3f3f3f;
+        color: white;
+      }
+      .slide.dark-theme .mockup-input::placeholder,
+      .slide.dark-theme .chat-input::placeholder {
+        color: #aaaaaa;
+      }
+      .slide.dark-theme .mockup-button-group .btn-secondary {
+        color: white;
+        border-color: #3f3f3f;
+        background-color: #2d2d2d;
+      }
+      .slide.dark-theme .mockup-button-group .btn-secondary:hover {
+        background-color: #3f3f3f;
+      }
+      .slide.dark-theme .sidebar {
+        background-color: #252525;
+        border-color: #3f3f3f;
+      }
+      .slide.dark-theme .project-item,
+      .slide.dark-theme .chat-item {
+        background-color: #2d2d2d;
+        border-color: #3f3f3f;
+        color: white;
+      }
+      .slide.dark-theme .project-item:hover,
+      .slide.dark-theme .chat-item:hover {
+        background-color: #3a3a3a;
+        border-color: var(--anthropic-accent);
+      }
+      .slide.dark-theme .project-item.active,
+      .slide.dark-theme .chat-item.active {
+        background-color: rgba(217, 119, 87, 0.2); /* accent-subtle for dark */
+        border-color: var(--anthropic-accent);
+      }
+      .slide.dark-theme .project-item .icon {
+        color: #aaaaaa;
+      }
+      .slide.dark-theme .chat-messages {
+        background-color: var(--anthropic-dark-bg);
+      }
+      .slide.dark-theme .message-bubble.ai .bubble-content {
+        background-color: #252525;
+        color: white;
+      }
+      .slide.dark-theme .message-bubble.user .bubble-content {
+        background-color: var(--anthropic-accent); /* Accent color remains */
+        color: white;
+      }
+
+      /* Navigation Arrows */
+      .nav-arrow {
+        position: fixed;
+        top: 50%;
+        transform: translateY(-50%);
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+        border: none;
+        padding: 15px 20px;
+        font-size: 2em;
+        cursor: pointer;
+        z-index: 1001;
+        border-radius: 8px;
+        transition:
+          background-color 0.2s ease,
+          opacity 0.2s ease;
+        opacity: 0.7;
+        user-select: none;
+      }
+
+      .nav-arrow:hover {
+        background-color: rgba(0, 0, 0, 0.7);
+        opacity: 1;
+      }
+
+      .nav-arrow.left {
+        left: 20px;
+      }
+
+      .nav-arrow.right {
+        right: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="presentation-container">
+      <!-- Slide 1: Welcome / обложка -->
+      <div class="slide active" id="slide-1">
+        <div class="slide-content">
+          <h1>YA Product Redesign</h1>
+          <p style="font-size: 1.5em; color: var(--anthropic-muted-text)">
+            Элегантность и эффективность в стиле Anthropic/Claude.ai
+          </p>
+        </div>
+      </div>
+
+      <!-- Slide 2: Онбординг — Welcome экран -->
+      <div class="slide" id="slide-2">
+        <div class="slide-content">
+          <h2>1. Онбординг: Добро пожаловать!</h2>
+          <p>Ваш новый помощник AI ждет. Давайте начнем.</p>
+          <div class="mockup-container">
+            <div class="mockup-header">
+              <h3>Добро пожаловать в YA!</h3>
+            </div>
+            <p style="margin-bottom: 20px; color: var(--anthropic-muted-text)">
+              Мы рады видеть вас. Приготовьтесь к новому уровню продуктивности.
+            </p>
+            <div style="text-align: center">
+              <button
+                class="btn"
+                style="
+                  background-color: var(--anthropic-accent);
+                  color: white;
+                  padding: 12px 25px;
+                  border-radius: 8px;
+                  border: none;
+                  font-size: 1.1em;
+                  cursor: pointer;
+                  font-weight: 600;
+                "
+              >
+                Начать
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 3: Онбординг — ввод API ключа -->
+      <div class="slide" id="slide-3">
+        <div class="slide-content">
+          <h2>2. Онбординг: Настройка API</h2>
+          <p>Подключите ваш любимый AI, введя API ключ.</p>
+          <div class="mockup-container">
+            <div class="mockup-header">
+              <h3>Подключите ваш AI</h3>
+            </div>
+            <div class="form-group">
+              <label for="api-key">API Ключ (например, OpenAI, Anthropic)</label>
+              <input
+                type="text"
+                id="api-key"
+                class="mockup-input"
+                placeholder="sk-***************************"
+              />
+            </div>
+            <div class="mockup-button-group">
+              <button class="btn btn-secondary">Пропустить</button>
+              <button class="btn btn-primary">Подключить</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 4: Главный UI — sidebar с проектами + чат -->
+      <div class="slide" id="slide-4">
+        <div class="slide-content" style="max-width: none">
+          <h2>3. Основной интерфейс: Проекты и Чат</h2>
+          <p>Удобное управление проектами и интуитивный чат для взаимодействия.</p>
+          <div class="main-ui-mockup">
+            <div class="sidebar">
+              <div class="sidebar-header">
+                <h4>Мои Проекты</h4>
+                <button class="btn">+</button>
+              </div>
+              <div class="project-list">
+                <div class="project-item active">
+                  <span class="icon">📁</span><span>Проект YA v2</span>
+                </div>
+                <div class="project-item">
+                  <span class="icon">📁</span><span>Marketing Campaign</span>
+                </div>
+                <div class="project-item">
+                  <span class="icon">📁</span><span>Product Launch Q3</span>
+                </div>
+                <div class="project-item">
+                  <span class="icon">📁</span><span>Dev Playground</span>
+                </div>
+              </div>
+            </div>
+            <div class="chat-area">
+              <div class="chat-header">Чат с Project YA v2</div>
+              <div class="chat-messages">
+                <div class="message-bubble ai">
+                  <div class="bubble-content">
+                    <div class="sender">Anthropic AI</div>
+                    Привет! Чем могу помочь с Project YA v2 сегодня?
+                  </div>
+                </div>
+                <div class="message-bubble user">
+                  <div class="bubble-content">
+                    <div class="sender">Вы</div>
+                    Привет! Мне нужно сгенерировать идеи для новой фичи.
+                  </div>
+                </div>
+              </div>
+              <div class="chat-input-area">
+                <input type="text" class="chat-input" placeholder="Напишите сообщение..." />
+                <button class="chat-send-btn">Отправить</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 5: Создание нового проекта (modal) -->
+      <div class="slide" id="slide-5">
+        <div class="slide-content">
+          <h2>4. Создание нового проекта</h2>
+          <p>Быстро создавайте новые рабочие пространства для ваших задач.</p>
+          <div
+            class="modal-overlay"
+            style="
+              position: static;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              height: auto;
+            "
+          >
+            <div class="modal-content">
+              <h3>Новый Проект</h3>
+              <div class="form-group">
+                <label for="project-name">Название проекта</label>
+                <input
+                  type="text"
+                  id="project-name"
+                  class="mockup-input"
+                  placeholder="Например, 'YA Product Redesign'"
+                />
+              </div>
+              <div class="form-group">
+                <label for="project-desc">Описание (необязательно)</label>
+                <textarea
+                  id="project-desc"
+                  class="mockup-input"
+                  rows="3"
+                  placeholder="Краткое описание вашего проекта"
+                ></textarea>
+              </div>
+              <div class="mockup-button-group">
+                <button class="btn btn-secondary">Отмена</button>
+                <button class="btn btn-primary">Создать Проект</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 6: Чат внутри проекта -->
+      <div class="slide" id="slide-6">
+        <div class="slide-content" style="max-width: none">
+          <h2>5. Детальный вид: Чат внутри проекта</h2>
+          <p>Погрузитесь в работу с контекстом проекта, не отвлекаясь.</p>
+          <div class="main-ui-mockup">
+            <div class="sidebar">
+              <div class="sidebar-header">
+                <h4>Проект YA v2</h4>
+                <button
+                  class="btn"
+                  style="
+                    background-color: transparent;
+                    border: 1px solid var(--anthropic-border);
+                    color: var(--anthropic-text);
+                  "
+                >
+                  + Чат
+                </button>
+              </div>
+              <div class="project-list">
+                <div class="chat-item active">
+                  <span>Генерация идей</span><small>5 мин назад</small>
+                </div>
+                <div class="chat-item"><span>Технический план</span><small>1 ч назад</small></div>
+                <div class="chat-item">
+                  <span>Маркетинговая стратегия</span><small>Вчера</small>
+                </div>
+              </div>
+            </div>
+            <div class="chat-area">
+              <div class="chat-header">Генерация идей (Project YA v2)</div>
+              <div class="chat-messages">
+                <div class="message-bubble ai">
+                  <div class="bubble-content">
+                    <div class="sender">Anthropic AI</div>
+                    Отлично! Какие аспекты новой фичи вас интересуют? Функционал, дизайн,
+                    пользовательский опыт?
+                  </div>
+                </div>
+                <div class="message-bubble user">
+                  <div class="bubble-content">
+                    <div class="sender">Вы</div>
+                    Давайте сфокусируемся на функционале. Мне нужны 3-5 ключевых идей, которые
+                    сделают продукт более привлекательным.
+                  </div>
+                </div>
+                <div class="message-bubble ai">
+                  <div class="bubble-content">
+                    <div class="sender">Anthropic AI</div>
+                    Понял. Вот несколько идей:
+                    <br /><br />
+                    1. **Интерактивные шаблоны:** Пользователи могут выбирать из готовых шаблонов
+                    для быстрого старта. 2. **Голосовой ввод:** Возможность диктовать запросы и
+                    получать ответы голосом. 3. **Персонализированная аналитика:** Отчеты о
+                    продуктивности, адаптированные под каждого пользователя.
+                  </div>
+                </div>
+              </div>
+              <div class="chat-input-area">
+                <input type="text" class="chat-input" placeholder="Ответить..." />
+                <button class="chat-send-btn">Отправить</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 7: Тёмная тема -->
+      <div class="slide dark-theme" id="slide-7">
+        <div class="slide-content" style="max-width: none">
+          <h2>6. Темная Тема</h2>
+          <p>Комфортная работа в условиях низкой освещенности.</p>
+          <div class="main-ui-mockup" style="height: 60vh">
+            <div class="sidebar">
+              <div class="sidebar-header">
+                <h4>Мои Проекты</h4>
+                <button class="btn">+</button>
+              </div>
+              <div class="project-list">
+                <div class="project-item active">
+                  <span class="icon">📁</span><span>Проект YA v2</span>
+                </div>
+                <div class="project-item">
+                  <span class="icon">📁</span><span>Marketing Campaign</span>
+                </div>
+              </div>
+            </div>
+            <div class="chat-area">
+              <div class="chat-header">Чат с Project YA v2</div>
+              <div class="chat-messages">
+                <div class="message-bubble ai">
+                  <div class="bubble-content">
+                    <div class="sender">Anthropic AI</div>
+                    В темной теме все выглядит еще лучше, не так ли?
+                  </div>
+                </div>
+                <div class="message-bubble user">
+                  <div class="bubble-content">
+                    <div class="sender">Вы</div>
+                    Определенно! Выглядит очень стильно.
+                  </div>
+                </div>
+              </div>
+              <div class="chat-input-area">
+                <input type="text" class="chat-input" placeholder="Напишите сообщение..." />
+                <button class="chat-send-btn">Отправить</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 8: Финал — "готово к разработке" -->
+      <div class="slide" id="slide-8">
+        <div class="slide-content">
+          <h1>Готовы к разработке!</h1>
+          <p style="font-size: 1.5em; color: var(--anthropic-muted-text)">
+            Новый дизайн YA готов воплотиться в жизнь.
+          </p>
+          <div style="margin-top: 50px">
+            <h3 style="color: var(--anthropic-text)">Спасибо за внимание!</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="nav-arrow left" id="prev-slide">‹</button>
+    <button class="nav-arrow right" id="next-slide">›</button>
+
+    <script>
+      const slides = document.querySelectorAll(".slide");
+      let currentSlideIndex = 0;
+
+      function showSlide(index) {
+        slides.forEach((slide, i) => {
+          slide.classList.remove("active");
+          if (i === index) {
+            slide.classList.add("active");
+          }
+        });
+      }
+
+      function nextSlide() {
+        currentSlideIndex = (currentSlideIndex + 1) % slides.length;
+        showSlide(currentSlideIndex);
+      }
+
+      function prevSlide() {
+        currentSlideIndex = (currentSlideIndex - 1 + slides.length) % slides.length;
+        showSlide(currentSlideIndex);
+      }
+
+      document.getElementById("next-slide").addEventListener("click", nextSlide);
+      document.getElementById("prev-slide").addEventListener("click", prevSlide);
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight") {
+          nextSlide();
+        } else if (e.key === "ArrowLeft") {
+          prevSlide();
+        }
+      });
+
+      // Initial slide display
+      showSlide(currentSlideIndex);
+    </script>
+  </body>
+</html>

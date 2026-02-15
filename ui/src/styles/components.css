@@ -8,26 +8,27 @@
   border: 1px solid var(--border);
   background: var(--card);
   border-radius: var(--radius-lg);
-  padding: 20px;
+  padding: 24px; /* Increased padding for more spacious feel */
   animation: rise 0.35s var(--ease-out) backwards;
   transition:
     border-color var(--duration-normal) var(--ease-out),
     box-shadow var(--duration-normal) var(--ease-out),
     transform var(--duration-normal) var(--ease-out);
   box-shadow:
-    var(--shadow-sm),
+    0 2px 8px rgba(0, 0, 0, 0.04), /* Softer shadow */
     inset 0 1px 0 var(--card-highlight);
 }
 
 .card:hover {
   border-color: var(--border-strong);
   box-shadow:
-    var(--shadow-md),
+    0 4px 12px rgba(0, 0, 0, 0.08), /* More pronounced shadow on hover */
     inset 0 1px 0 var(--card-highlight);
+  transform: translateY(-2px); /* Slight lift on hover */
 }
 
 .card-title {
-  font-size: 15px;
+  font-size: 18px; /* Larger title */
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--text-strong);
@@ -35,9 +36,9 @@
 
 .card-sub {
   color: var(--muted);
-  font-size: 13px;
-  margin-top: 6px;
-  line-height: 1.5;
+  font-size: 15px; /* Larger subtitle */
+  margin-top: 10px; /* Increased margin */
+  line-height: 1.6;
 }
 
 /* ===========================================
@@ -46,8 +47,8 @@
 
 .stat {
   background: var(--card);
-  border-radius: var(--radius-md);
-  padding: 14px 16px;
+  border-radius: var(--radius-lg); /* Larger radius for consistency */
+  padding: 20px 24px; /* Increased padding */
   border: 1px solid var(--border);
   transition:
     border-color var(--duration-normal) var(--ease-out),
@@ -58,23 +59,23 @@
 .stat:hover {
   border-color: var(--border-strong);
   box-shadow:
-    var(--shadow-sm),
+    0 2px 8px rgba(0, 0, 0, 0.04),
     inset 0 1px 0 var(--card-highlight);
 }
 
 .stat-label {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px; /* Slightly larger label */
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em; /* Increased letter spacing */
 }
 
 .stat-value {
-  font-size: 24px;
+  font-size: 32px; /* Larger value for emphasis */
   font-weight: 700;
-  margin-top: 6px;
-  letter-spacing: -0.03em;
+  margin-top: 10px; /* Increased margin */
+  letter-spacing: -0.04em; /* Tighter letter spacing */
   line-height: 1.1;
 }
 
@@ -189,7 +190,7 @@
   align-items: center;
   gap: 6px;
   border: 1px solid var(--border);
-  padding: 6px 12px;
+  padding: 8px 14px; /* Slightly more padding */
   border-radius: var(--radius-full);
   background: var(--secondary);
   font-size: 13px;
@@ -307,12 +308,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px; /* Increased gap */
   border: 1px solid var(--border);
   background: var(--bg-elevated);
-  padding: 9px 16px;
+  padding: 12px 20px; /* More padding, slightly larger overall */
   border-radius: var(--radius-md);
-  font-size: 13px;
+  font-size: 15px; /* Slightly larger font size */
   font-weight: 500;
   letter-spacing: -0.01em;
   cursor: pointer;
@@ -327,7 +328,7 @@
   background: var(--bg-hover);
   border-color: var(--border-strong);
   transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Softer shadow on hover */
 }
 
 .btn:active {
@@ -337,8 +338,8 @@
 }
 
 .btn svg {
-  width: 16px;
-  height: 16px;
+  width: 20px; /* Larger icons */
+  height: 20px;
   stroke: currentColor;
   fill: none;
   stroke-width: 1.5px;
@@ -351,14 +352,14 @@
   border-color: var(--accent);
   background: var(--accent);
   color: var(--primary-foreground);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Initial shadow on primary button */
 }
 
 .btn.primary:hover {
   background: var(--accent-hover);
   border-color: var(--accent-hover);
   box-shadow:
-    var(--shadow-md),
+    0 4px 12px rgba(0, 0, 0, 0.15),
     0 0 20px var(--accent-glow);
 }
 
@@ -367,28 +368,31 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-left: 6px;
-  padding: 2px 5px;
+  margin-left: 10px; /* Increased margin */
+  padding: 4px 7px; /* Adjusted padding */
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12px; /* Slightly larger */
   font-weight: 500;
   line-height: 1;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.15);
-  color: inherit;
-  opacity: 0.8;
+  background: var(--bg-muted); /* Use bg-muted for better contrast */
+  color: var(--muted); /* Use muted text for keyboard shortcut */
+  opacity: 1; /* Make it fully opaque */
 }
 
 .btn.primary .btn-kbd {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.2); /* Keep white background for primary */
+  color: rgba(255, 255, 255, 0.8);
 }
 
 :root[data-theme="light"] .btn-kbd {
   background: rgba(0, 0, 0, 0.08);
+  color: var(--muted);
 }
 
 :root[data-theme="light"] .btn.primary .btn-kbd {
   background: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .btn.active {
@@ -408,8 +412,8 @@
 }
 
 .btn--sm {
-  padding: 6px 10px;
-  font-size: 12px;
+  padding: 8px 12px; /* Adjusted padding */
+  font-size: 13px; /* Adjusted font size */
 }
 
 .btn:disabled {
@@ -432,17 +436,17 @@
 
 .field span {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 15px; /* Slightly larger label */
   font-weight: 500;
 }
 
 .field input,
 .field textarea,
 .field select {
-  border: 1px solid var(--input);
-  background: var(--card);
+  border: 1px solid var(--border); /* Changed from --input to --border */
+  background: var(--bg-elevated); /* Changed from --card to --bg-elevated */
   border-radius: var(--radius-md);
-  padding: 8px 12px;
+  padding: 12px 16px; /* Increased padding */
   outline: none;
   box-shadow: inset 0 1px 0 var(--card-highlight);
   transition:
@@ -500,8 +504,8 @@
 :root[data-theme="light"] .field input,
 :root[data-theme="light"] .field textarea,
 :root[data-theme="light"] .field select {
-  background: var(--card);
-  border-color: var(--input);
+  background: var(--bg-elevated); /* Consistent with default */
+  border-color: var(--border); /* Consistent with default */
 }
 
 :root[data-theme="light"] .btn {
@@ -535,30 +539,30 @@
    =========================================== */
 
 .callout {
-  padding: 14px 16px;
+  padding: 18px 22px; /* Increased padding */
   border-radius: var(--radius-md);
   background: var(--secondary);
   border: 1px solid var(--border);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 15px; /* Slightly larger font size */
+  line-height: 1.6;
   position: relative;
 }
 
 .callout.danger {
-  border-color: rgba(239, 68, 68, 0.25);
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.04) 100%);
+  border-color: var(--danger-subtle);
+  background: var(--danger-subtle);
   color: var(--danger);
 }
 
 .callout.info {
-  border-color: rgba(59, 130, 246, 0.25);
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.04) 100%);
+  border-color: var(--info-subtle); /* Assuming an info-subtle variable will be added to base.css */
+  background: var(--info-subtle);
   color: var(--info);
 }
 
 .callout.success {
-  border-color: rgba(34, 197, 94, 0.25);
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0.04) 100%);
+  border-color: var(--ok-subtle);
+  background: var(--ok-subtle);
   color: var(--ok);
 }
 
@@ -618,10 +622,10 @@
 
 .code-block {
   font-family: var(--mono);
-  font-size: 13px;
-  line-height: 1.5;
-  background: var(--secondary);
-  padding: 12px;
+  font-size: 14px; /* Slightly larger font size */
+  line-height: 1.6;
+  background: var(--bg-muted); /* Changed to bg-muted for consistency */
+  padding: 18px; /* Increased padding */
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
   max-height: 360px;
@@ -633,7 +637,7 @@
 :root[data-theme="light"] .list-item,
 :root[data-theme="light"] .table-row,
 :root[data-theme="light"] .chip {
-  background: var(--bg);
+  background: var(--bg-elevated); /* Consistent with other light backgrounds */
 }
 
 /* ===========================================
@@ -653,9 +657,10 @@
   align-items: start;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 12px;
+  padding: 18px; /* Increased padding */
   background: var(--card);
   transition: border-color var(--duration-fast) ease;
+  box-shadow: inset 0 1px 0 var(--card-highlight); /* Added subtle shadow */
 }
 
 .list-item-clickable {
@@ -664,6 +669,7 @@
 
 .list-item-clickable:hover {
   border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm), inset 0 1px 0 var(--card-highlight); /* Added subtle shadow on hover */
 }
 
 .list-item-selected {
@@ -673,25 +679,26 @@
 
 .list-main {
   display: grid;
-  gap: 4px;
+  gap: 6px; /* Adjusted gap */
   min-width: 0;
 }
 
 .list-title {
   font-weight: 500;
+  font-size: 16px; /* Slightly larger title */
 }
 
 .list-sub {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px; /* Slightly larger subtitle */
 }
 
 .list-meta {
   text-align: right;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px; /* Slightly larger font size */
   display: grid;
-  gap: 4px;
+  gap: 6px; /* Adjusted gap */
   min-width: 200px;
 }
 
@@ -876,13 +883,13 @@
 }
 
 .chip {
-  font-size: 12px;
+  font-size: 13px; /* Slightly larger font size */
   font-weight: 500;
   border: 1px solid var(--border);
   border-radius: var(--radius-full);
-  padding: 5px 12px;
+  padding: 6px 14px; /* Adjusted padding */
   color: var(--muted);
-  background: var(--secondary);
+  background: var(--bg-muted); /* Changed to bg-muted for softer appearance */
   transition:
     border-color var(--duration-fast) var(--ease-out),
     background var(--duration-fast) var(--ease-out),
@@ -900,19 +907,19 @@
 
 .chip-ok {
   color: var(--ok);
-  border-color: rgba(34, 197, 94, 0.3);
+  border-color: var(--ok-subtle);
   background: var(--ok-subtle);
 }
 
 .chip-warn {
   color: var(--warn);
-  border-color: rgba(245, 158, 11, 0.3);
+  border-color: var(--warn-subtle);
   background: var(--warn-subtle);
 }
 
 .chip-danger {
   color: var(--danger);
-  border-color: rgba(239, 68, 68, 0.3);
+  border-color: var(--danger-subtle);
   background: var(--danger-subtle);
 }
 
@@ -984,7 +991,7 @@
 
 .log-stream {
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg); /* Larger radius */
   background: var(--card);
   max-height: 500px;
   overflow: auto;
@@ -996,9 +1003,9 @@
   grid-template-columns: 90px 70px minmax(140px, 200px) minmax(0, 1fr);
   gap: 12px;
   align-items: start;
-  padding: 8px 12px;
+  padding: 12px 18px; /* Increased padding */
   border-bottom: 1px solid var(--border);
-  font-size: 12px;
+  font-size: 14px; /* Slightly larger font */
   transition: background var(--duration-fast) ease;
 }
 
@@ -1624,11 +1631,11 @@
 }
 
 .exec-approval-card {
-  width: min(540px, 100%);
+  width: min(580px, 100%); /* Slightly wider modal */
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 20px;
+  padding: 24px; /* Increased padding */
   animation: scale-in 0.2s var(--ease-out);
 }
 
@@ -1739,9 +1746,10 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--card);
-  padding: 10px 12px;
+  padding: 12px; /* Adjusted padding */
   cursor: pointer;
   transition: border-color var(--duration-fast) ease;
+  box-shadow: inset 0 1px 0 var(--card-highlight); /* Added subtle shadow */
 }
 
 .agent-row:hover {
@@ -1899,9 +1907,10 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--card);
-  padding: 10px 12px;
+  padding: 12px; /* Adjusted padding */
   cursor: pointer;
   transition: border-color var(--duration-fast) ease;
+  box-shadow: inset 0 1px 0 var(--card-highlight); /* Added subtle shadow */
 }
 
 .agent-file-row:hover {
@@ -1994,10 +2003,12 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 6px 8px;
+  padding: 8px 10px; /* Adjusted padding */
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--card);
+  box-shadow: inset 0 1px 0 var(--card-highlight); /* Added subtle shadow */
+}
 }
 
 .agent-tool-title {

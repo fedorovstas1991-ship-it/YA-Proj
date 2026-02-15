@@ -115,6 +115,31 @@ function applySessionDefaults(host: GatewayHost, defaults?: SessionDefaultsSnaps
   }
 }
 
+function getTokenFromUrl(): string | undefined {
+  if (!window.location.search) {
+    return undefined;
+  }
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get("token");
+  if (!raw) {
+    return undefined;
+  }
+  return raw.trim();
+}
+
+function resolveDevMode(): boolean {
+  if (!window.location.search) {
+    return false;
+  }
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get("dev");
+  if (!raw) {
+    return false;
+  }
+  const normalized = raw.trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
+}
+
 export function connectGateway(host: GatewayHost) {
   host.lastError = null;
   host.hello = null;
@@ -123,9 +148,22 @@ export function connectGateway(host: GatewayHost) {
   host.execApprovalError = null;
 
   host.client?.stop();
+
+  const urlToken = getTokenFromUrl();
+  const isDevMode = resolveDevMode();
+
+  let finalToken: string | undefined;
+  if (isDevMode) {
+    finalToken = undefined;
+  } else if (urlToken) {
+    finalToken = urlToken;
+  } else {
+    finalToken = host.settings.token.trim() ? host.settings.token : undefined;
+  }
+
   host.client = new GatewayBrowserClient({
     url: host.settings.gatewayUrl,
-    token: host.settings.token.trim() ? host.settings.token : undefined,
+    token: finalToken,
     password: host.password.trim() ? host.password : undefined,
     clientName: "openclaw-control-ui",
     mode: "webchat",

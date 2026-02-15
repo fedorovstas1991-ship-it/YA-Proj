@@ -27,6 +27,7 @@ export const GATEWAY_CLIENT_MODES = {
   NODE: "node",
   PROBE: "probe",
   TEST: "test",
+  LOCAL: "local",
 } as const;
 
 export type GatewayClientMode = (typeof GATEWAY_CLIENT_MODES)[keyof typeof GATEWAY_CLIENT_MODES];
