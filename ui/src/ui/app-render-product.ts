@@ -719,6 +719,16 @@ export function renderProductApp(state: AppViewState) {
           ${icons.link}
         </button>
         <div style="flex:1"></div>
+        <button
+          class="product-rail__btn"
+          data-active=${state.productPanel === "settings"}
+          title="Настройки"
+          aria-label="Настройки"
+          aria-pressed=${state.productPanel === "settings"}
+          @click=${() => (state.productPanel = "settings")}
+        >
+          ${icons.settings}
+        </button>
       </aside>
 
       <aside class="product-sidebar" role="complementary" aria-label="Sidebar with projects and chats">
