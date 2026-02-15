@@ -207,7 +207,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 - [x] Обновить `background` в `.wizard-container` на `background: var(--bg);`
 - [x] Обновить `background` в `.wizard-card::before` на более мягкий градиент или сплошной цвет `var(--wizard-primary)`.
 - [x] Обновить `box-shadow` в `.wizard-card` на `var(--shadow-lg)`.
-- [ ] Обновить стили для `[data-theme="dark"]` в Wizard-компонентах.
+- [x] Обновить стили для `[data-theme="dark"]` в Wizard-компонентах.
 
 ### 1.3. Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-render-product.ts`
 

@@ -397,8 +397,7 @@
     pointer-events: none;
     transition:
       transform 0.3s var(--ease-out),
-      opacity 0.3s var(--ease-out),
-      visibility 0.3s var(--ease-out);
+      opacity 0.3s var(--ease-out);
     visibility: hidden;
   }
 
@@ -694,24 +693,24 @@
 
 /* Color Variables for Wizard */
 :root {
-  --wizard-primary: #6c5ce7; /* Soft purple */
-  --wizard-primary-hover: #5a4bcf; /* Slightly darker */
-  --wizard-primary-light: rgba(108, 92, 231, 0.1); /* Lighter tint */
-  --wizard-secondary: #f8f8f8; /* Very light grey */
-  --wizard-border: #e0e0e0; /* Soft grey border */
-  --wizard-text: #2c2c2c; /* Dark charcoal */
-  --wizard-text-light: #6a6a6a; /* Muted grey */
-  --wizard-success: #28a745; /* Green */
-  --wizard-info: #007bff; /* Blue */
-  --wizard-warning: #ffc107; /* Yellow */
-  --wizard-danger: #dc3545; /* Red */
+  --wizard-primary: #d97757; /* Anthropic terracotta */
+  --wizard-primary-hover: #c2684f; /* Slightly darker */
+  --wizard-primary-light: rgba(217, 119, 87, 0.1); /* Lighter tint */
+  --wizard-secondary: var(--bg-accent); /* Use Anthropic bg-accent */
+  --wizard-border: var(--border); /* Use Anthropic border */
+  --wizard-text: var(--text); /* Use Anthropic text */
+  --wizard-text-light: var(--muted); /* Use Anthropic muted text */
+  --wizard-success: var(--ok); /* Use Anthropic ok */
+  --wizard-info: var(--info); /* Use Anthropic info */
+  --wizard-warning: var(--warn); /* Use Anthropic warn */
+  --wizard-danger: var(--danger); /* Use Anthropic danger */
 }
 
 [data-theme="dark"] {
-  --wizard-secondary: #333333; /* Dark muted grey */
-  --wizard-border: #444444; /* Darker grey border */
-  --wizard-text: #e0e0e0; /* Light grey text */
-  --wizard-text-light: #aaaaaa; /* Lighter muted grey */
+  --wizard-secondary: var(--bg-accent); /* Use Anthropic dark bg-accent */
+  --wizard-border: var(--border); /* Use Anthropic dark border */
+  --wizard-text: var(--text); /* Use Anthropic dark text */
+  --wizard-text-light: var(--muted); /* Use Anthropic dark muted text */
 }
 
 /* Wizard Container */
@@ -721,22 +720,22 @@
   align-items: center;
   min-height: 100%;
   padding: 20px;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.03), rgba(59, 130, 246, 0.03));
+  background: var(--bg); /* Use Anthropic bg */
 }
 
 .wizard-card {
   width: 100%;
   max-width: 480px;
-  background: white;
+  background: var(--card); /* Use Anthropic card */
   border-radius: 12px; /* Softer corners */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Lighter shadow */
+  box-shadow: var(--shadow-lg); /* Use Anthropic shadow-lg */
   overflow: hidden;
   animation: step-enter 0.4s ease-out;
 }
 
 [data-theme="dark"] .wizard-card {
-  background: #2b2b2b; /* Slightly lighter dark background */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Lighter dark shadow */
+  background: var(--card); /* Use Anthropic dark card */
+  box-shadow: var(--shadow-lg); /* Use Anthropic dark shadow-lg */
 }
 
 /* Gradient Top Bar */
@@ -744,12 +743,7 @@
   content: "";
   display: block;
   height: 2px; /* Thinner accent line */
-  background: linear-gradient(
-    90deg,
-    var(--wizard-primary),
-    var(--wizard-info) /* Simpler gradient */
-  );
-  background-size: 200% 100%;
+  background: var(--wizard-primary); /* Use Anthropic wizard-primary */
 }
 
 /* Progress Bar Section */
@@ -790,7 +784,7 @@
 
 .wizard-segment[data-state="current"] {
   background: var(--wizard-primary);
-  box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.2); /* Adjusted shadow for current segment */
+  box-shadow: 0 0 0 2px var(--accent-subtle); /* Use Anthropic accent-subtle */
 }
 
 .wizard-segment[data-state="upcoming"] {
@@ -799,7 +793,7 @@
 
 /* Typography adjustments */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-body); /* Use Anthropic font-body */
   line-height: 1.6;
   letter-spacing: -0.01em;
 }
@@ -848,25 +842,25 @@ body {
 }
 
 [data-theme="dark"] .wizard-input {
-  background: #3a3a3a; /* Darker background for dark mode */
-  border-color: #555555;
-  color: var(--wizard-text);
+  background: var(--input); /* Use Anthropic dark input */
+  border-color: var(--border-strong); /* Use Anthropic dark border-strong */
+  color: var(--text); /* Use Anthropic dark text */
 }
 
 .wizard-input::placeholder {
-  color: var(--wizard-text-light);
+  color: var(--muted); /* Use Anthropic muted */
 }
 
 .wizard-input:focus {
   outline: none;
   border-color: var(--wizard-primary);
-  box-shadow: 0 0 0 3px var(--wizard-primary-light);
-  background: white; /* White background on focus for contrast */
+  box-shadow: 0 0 0 3px var(--accent-subtle); /* Use Anthropic accent-subtle */
+  background: var(--bg); /* Use Anthropic bg on focus */
 }
 
 [data-theme="dark"] .wizard-input:focus {
-  background: #2c2c2c; /* Darker background on focus for dark mode */
-  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+  background: var(--bg); /* Use Anthropic dark bg on focus */
+  box-shadow: 0 0 0 3px var(--accent-subtle); /* Use Anthropic dark accent-subtle */
 }
 
 /* Button Styles */
@@ -888,7 +882,7 @@ body {
 /* Primary Button */
 .wizard-button.primary {
   background: var(--wizard-primary);
-  color: white;
+  color: var(--primary-foreground); /* Use Anthropic primary-foreground */
   border-color: var(--wizard-primary);
 }
 
@@ -912,13 +906,13 @@ body {
 }
 
 [data-theme="dark"] .wizard-button.secondary {
-  background: #3a3a3a;
-  color: var(--wizard-text);
-  border-color: #555555;
+  background: var(--secondary); /* Use Anthropic dark secondary */
+  color: var(--secondary-foreground); /* Use Anthropic dark secondary-foreground */
+  border-color: var(--border); /* Use Anthropic dark border */
 }
 
 .wizard-button.secondary:hover:not(:disabled) {
-  background: var(--wizard-primary-light);
+  background: var(--accent-subtle); /* Use Anthropic accent-subtle */
   border-color: var(--wizard-primary);
   color: var(--wizard-primary);
 }
@@ -980,9 +974,9 @@ body {
 }
 
 [data-theme="dark"] .wizard-option {
-  background: #3a3a3a;
-  border-color: #555555;
-  color: var(--wizard-text);
+  background: var(--secondary); /* Use Anthropic dark secondary */
+  border-color: var(--border); /* Use Anthropic dark border */
+  color: var(--text); /* Use Anthropic dark text */
 }
 
 .wizard-option:hover {
@@ -1015,7 +1009,7 @@ body {
 }
 
 [data-theme="dark"] .wizard-option-checkmark {
-  background: #2b2b2b;
+  background: var(--bg-accent); /* Use Anthropic dark bg-accent */
 }
 
 .wizard-option.selected .wizard-option-checkmark {
@@ -1054,9 +1048,9 @@ body {
 }
 
 [data-theme="dark"] .wizard-multiselect-item {
-  background: #3a3a3a;
-  border-color: #555555;
-  color: var(--wizard-text);
+  background: var(--secondary); /* Use Anthropic dark secondary */
+  border-color: var(--border); /* Use Anthropic dark border */
+  color: var(--text); /* Use Anthropic dark text */
 }
 
 .wizard-multiselect-item:hover {
@@ -1092,8 +1086,8 @@ body {
 }
 
 [data-theme="dark"] .wizard-checkbox {
-  background: #4b5563;
-  border-color: #6b7280;
+  background: var(--bg-accent); /* Use Anthropic dark bg-accent */
+  border-color: var(--border); /* Use Anthropic dark border */
 }
 
 .wizard-multiselect-item.selected .wizard-checkbox {
@@ -1131,7 +1125,7 @@ body {
   padding: 16px; /* Increased padding */
   border-left: 4px solid; /* Thicker border */
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.02);
+  background: var(--bg-muted); /* Use Anthropic bg-muted */
   display: flex;
   gap: 14px; /* Increased gap */
   margin-top: 16px; /* Increased margin */
@@ -1139,7 +1133,7 @@ body {
 
 [data-theme="dark"] .wizard-note,
 [data-theme="dark"] .wizard-action {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-muted); /* Use Anthropic dark bg-muted */
 }
 
 .wizard-note {
