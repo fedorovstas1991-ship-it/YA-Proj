@@ -298,7 +298,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-render-product.ts`:**
 
-- [ ] **Добавить UI для удаления чата:**
+- [x] **Добавить UI для удаления чата:**
   - **TODO:** В `product-item` для каждого чата (как в проекте, так и без проекта) добавить кнопку "Удалить" (например, при наведении).
   - **Пример UI:**
     ```html
@@ -310,21 +310,21 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
       </button>
     </button>
     ```
-  - [ ] **Добавить модальное окно подтверждения удаления:** Создать новую функцию `renderConfirmDeleteChatModal(state: AppViewState)`.
+  - [x] **Добавить модальное окно подтверждения удаления:** Создать новую функцию `renderConfirmDeleteChatModal(state: AppViewState)`.
     - **Поля:** `productConfirmDeleteChatSessionKey`, `productConfirmDeleteChatDisplayName`.
     - **Кнопки:** "Отмена", "Удалить".
 
 **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-view-state.ts`:**
 
-- [ ] **Добавить новые свойства состояния:**
+- [x] **Добавить новые свойства состояния:**
   - `productConfirmDeleteChatOpen: boolean = false;`
   - `productConfirmDeleteChatSessionKey: string | null = null;`
   - `productConfirmDeleteChatDisplayName: string = "";`
-- [ ] **Метод `productConfirmDeleteChat(sessionKey: string)`:**
-  - **TODO:** Устанавливает `productConfirmDeleteChatSessionKey`, `productConfirmDeleteChatDisplayName` и `productConfirmDeleteChatOpen = true;`.
-- [ ] **Метод `productDeleteChat(sessionKey: string)`:**
-  - **TODO:** Выполняет вызов `gateway.sessions.delete(sessionKey)`.
-  - **TODO:** После успешного удаления:
+- [x] **Метод `productConfirmDeleteChat(sessionKey: string)`:**
+  - [x] Устанавливает `productConfirmDeleteChatSessionKey`, `productConfirmDeleteChatDisplayName` и `productConfirmDeleteChatOpen = true;`.
+- [x] **Метод `productDeleteChat(sessionKey: string)`:**
+  - [x] Выполняет вызов `gateway.sessions.delete(sessionKey)`.
+  - [x] После успешного удаления:
     - Закрыть модальное окно: `this.productConfirmDeleteChatOpen = false;`
     - Если удаленный чат был активным, переключиться на другой чат или на `null` (очистить `this.sessionKey`).
     - Обновить список сессий: `await this.productLoadSessions();`
