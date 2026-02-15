@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "mcporter": {
+      "version": "1.0.0",
+      "installedAt": 1771019440587
+    },
+    "youtube-transcript": {
+      "version": "1.0.1",
+      "installedAt": 1771107158469
+    },
+    "youtube-summarizer": {
+      "version": "1.0.0",
+      "installedAt": 1771107190577
+    }
+  }
+}
