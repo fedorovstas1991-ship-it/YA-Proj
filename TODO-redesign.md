@@ -230,10 +230,10 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-view-state.ts`:**
 
-- [ ] **Метод `productCreateProject()`:**
-  - **Текущая логика:** Проверить существующую реализацию.
-  - **TODO:** Убедиться, что `productCreateProjectName` и `productCreateProjectDesc` используются для создания нового агента (проекта) через `gateway.agents.create()` или аналогичный вызов.
-  - **TODO:** После успешного создания:
+- [x] **Метод `productCreateProject()`:**
+  - [x] **Текущая логика:** Проверить существующую реализацию.
+  - [x] Убедиться, что `productCreateProjectName` и `productCreateProjectDesc` используются для создания нового агента (проекта) через `gateway.agents.create()` или аналогичный вызов.
+  - [x] После успешного создания:
     - Закрыть модальное окно: `this.productCreateProjectOpen = false;`
     - Очистить поля ввода: `this.productCreateProjectName = ""; this.productCreateProjectDesc = "";`
     - Обновить список проектов: `await this.productLoadProjects();`

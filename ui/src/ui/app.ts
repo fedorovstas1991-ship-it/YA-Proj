@@ -810,6 +810,7 @@ export class OpenClawApp extends LitElement {
       // ignore
     }
     await loadAgents(this);
+    this.productLoadProjects(); // Add this line
     this.productCreateProjectOpen = false;
     this.productCreateProjectName = "";
     this.productCreateProjectDesc = "";
