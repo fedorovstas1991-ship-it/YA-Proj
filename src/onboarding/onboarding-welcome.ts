@@ -17,7 +17,7 @@ export class OnboardingWelcome extends LitElement {
     }
 
     .mockup-container {
-      background-color: var(--card);
+      background-color: white; /* Изменено с var(--card) на white */
       border-radius: var(--anthropic-border-radius);
       box-shadow: var(--anthropic-shadow-lg);
       padding: 30px;

@@ -17,7 +17,7 @@ export class OnboardingApiKey extends LitElement {
     }
 
     .mockup-container {
-      background-color: var(--card);
+      background-color: white; /* Изменено с var(--card) на white */
       border-radius: var(--anthropic-border-radius);
       box-shadow: var(--anthropic-shadow-lg);
       padding: 30px;
@@ -74,7 +74,7 @@ export class OnboardingApiKey extends LitElement {
     .mockup-input:focus {
       outline: none;
       border-color: var(--anthropic-accent);
-      box-shadow: 0 0 0 2px rgba(var(--anthropic-accent-rgb), 0.2);
+      box-shadow: 0 0 0 2px rgba(var(--anthropic-accent-rgb), 0.2); /* Обновлено */
     }
 
     .mockup-button-group {
