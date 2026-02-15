@@ -800,6 +800,24 @@ export type SkillStatusEntry = {
   install: SkillInstallOption[];
 };
 
+export type SkillGetResult = {
+  skillId: string;
+  name: string;
+  description: string;
+  code: string; // The content of the skill's script/file
+  // Add other properties that 'skills.get' might return
+};
+
+export type SkillUpdateParams = {
+  skillId: string;
+  name?: string;
+  description?: string;
+  code?: string;
+  enabled?: boolean;
+  apiKey?: string;
+  // Add other properties that 'skills.update' might accept
+};
+
 export type SkillStatusReport = {
   workspaceDir: string;
   managedSkillsDir: string;

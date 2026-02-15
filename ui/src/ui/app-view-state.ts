@@ -25,6 +25,8 @@ import {
   WizardStep,
   LogLevel,
   AgentGetResult, // Import AgentGetResult
+  SkillGetResult, // Import SkillGetResult
+  SkillUpdateParams, // Import SkillUpdateParams
 } from "./types.ts";
 import { PresenceEntry } from "./types.ts";
 import { ChatAttachment, ChatQueueItem, CronFormState } from "./ui-types.ts";
@@ -268,6 +270,13 @@ export type AppViewState = {
   client: GatewayBrowserClient | null = null;
   refreshSessionsAfterChat: Set<string> = new Set();
   
+  // Skill editing state
+  productEditingSkillOpen: boolean = false;
+  productEditingSkillId: string | null = null;
+  productEditingSkillName: string = "";
+  productEditingSkillDescription: string = "";
+  productEditingSkillCode: string = "";
+
   // Dev Drawer activation
   private logoClickCount: number = 0;
   private lastLogoClickTime: number = 0;
@@ -302,6 +311,13 @@ export type AppViewState = {
     this.productCreateSkillName = "";
     this.productCreateSkillDescription = "";
     this.productCreateSkillFileContent = "";
+
+    // Initialize skill editing state
+    this.productEditingSkillOpen = false;
+    this.productEditingSkillId = null;
+    this.productEditingSkillName = "";
+    this.productEditingSkillDescription = "";
+    this.productEditingSkillCode = "";
 
 
     const savedProjects = localStorage.getItem("productProjects");
@@ -889,7 +905,10 @@ export type AppViewState = {
       this.onboardingWizardStep = null;
       sendAppEvent({ type: "info", message: "Онбординг отменен." });
     } catch (e) {
-      sendAppEvent({ type: "error", message: `Ошибка отмены онбординга: ${e}` });
+      sendAppEvent({
+        type: "error",
+        message: `Ошибка отмены онбординга: ${e}`,
+      });
     }
   };
 
@@ -1043,9 +1062,6 @@ export type AppViewState = {
   };
 
   // --- Logs
-  logsMaxBytes = 100 * 1024;
-  logsAtBottom = true;
-
   logsLimit = 1000;
   logsCursor: number | null = null;
   logsLastFetchAt: number | null = null;
@@ -1199,13 +1215,76 @@ export type AppViewState = {
     }
   };
 
+  productOpenEditSkill = async (skillId: string) => {
+    if (!this.client) {
+      return;
+    }
+    this.skillsBusyKey = skillId;
+    this.skillsError = null;
+    try {
+      const skillDetails = await this.client.request<SkillGetResult>("skills.get", { skillId });
+      this.productEditingSkillId = skillDetails.skillId;
+      this.productEditingSkillName = skillDetails.name;
+      this.productEditingSkillDescription = skillDetails.description;
+      this.productEditingSkillCode = skillDetails.code;
+      this.productEditingSkillOpen = true;
+    } catch (e) {
+      this.skillsError = String(e);
+      sendAppEvent({
+        type: "error",
+        message: `Ошибка загрузки скилла "${skillId}" для редактирования: ${e}`,
+      });
+    } finally {
+      this.skillsBusyKey = null;
+    }
+  };
+
+  productSaveEditedSkill = async () => {
+    if (!this.client || !this.productEditingSkillId) {
+      return;
+    }
+    this.skillsBusyKey = this.productEditingSkillId;
+    this.skillsError = null;
+    try {
+      const updateParams: SkillUpdateParams = {
+        skillId: this.productEditingSkillId,
+        name: this.productEditingSkillName,
+        description: this.productEditingSkillDescription,
+        code: this.productEditingSkillCode,
+      };
+      await this.client.request("skills.update", updateParams);
+      sendAppEvent({
+        type: "success",
+        message: `Скилл "${this.productEditingSkillName}" обновлен.`,
+      });
+      this.productEditingSkillOpen = false;
+      this.productEditingSkillId = null;
+      this.productEditingSkillName = "";
+      this.productEditingSkillDescription = "";
+      this.productEditingSkillCode = "";
+      await this.productLoadSkills();
+    } catch (e) {
+      this.skillsError = String(e);
+      sendAppEvent({
+        type: "error",
+        message: `Ошибка сохранения скилла "${this.productEditingSkillName}": ${e}`,
+      });
+    } finally {
+      this.skillsBusyKey = null;
+    }
+  };
+
+  productCancelEditSkill = () => {
+    this.productEditingSkillOpen = false;
+    this.productEditingSkillId = null;
+    this.productEditingSkillName = "";
+    this.productEditingSkillDescription = "";
+    this.productEditingSkillCode = "";
+  };
+
+
   productEditSkill = (skillId: string) => {
-    // TODO: Implement actual editing functionality, e.g., open a modal with skill details
-    console.log(`Editing skill: ${skillId}`);
-    sendAppEvent({
-      type: "info",
-      message: `Функционал редактирования скиллов пока не реализован.`,
-    });
+    this.productOpenEditSkill(skillId);
   };
 
   productCreateSkill = () => {
