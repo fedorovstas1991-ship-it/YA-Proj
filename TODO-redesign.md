@@ -270,7 +270,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-render-product.ts`:**
 
 - [x] **Добавить кнопку "Новый чат" в `product-project-group`:**
-  - **TODO:** Внутри `product-project-header` или рядом с названием проекта добавить кнопку "+", которая будет вызывать `state.productNewChatInProject(project.id)`.
+  - [x] Внутри `product-project-header` или рядом с названием проекта добавить кнопку "+", которая будет вызывать `state.productNewChatInProject(project.id)`.
   - **Пример UI:**
     ```html
     <button class="product-project-header" ...>
