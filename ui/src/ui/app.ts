@@ -1,4 +1,4 @@
-import { LitElement } from "lit";
+import { LitElement, html } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import type { EventLogEntry } from "./app-events.ts";
 import type { AppViewState } from "./app-view-state.ts";
@@ -84,11 +84,13 @@ import { loadConfig as loadConfigInternal } from "./controllers/config.ts";
 import {
   advanceOnboardingWizard as advanceOnboardingWizardInternal,
   cancelOnboardingWizard as cancelOnboardingWizardInternal,
-  setOnboardingWizardDone as setOnboardingWizardDoneInternal,
+  // setOnboardingWizardDone as setOnboardingWizardDoneInternal, // Removed
   startOnboardingWizard as startOnboardingWizardInternal,
 } from "./controllers/onboarding.ts";
 import { loadSettings, type UiSettings } from "./storage.ts";
 import { type ChatAttachment, type ChatQueueItem, type CronFormState } from "./ui-types.ts";
+
+import "./onboarding/onboarding-wizard.js"; // Import the onboarding wizard component
 
 declare global {
   interface Window {
@@ -1065,10 +1067,10 @@ export class OpenClawApp extends LitElement {
     await this.startOnboardingWizard();
   }
 
-  setOnboardingWizardDone() {
-    setOnboardingWizardDoneInternal(this);
-    this.setSimpleOnboardingDone(true);
-  }
+  // setOnboardingWizardDone() { // Removed
+  //   setOnboardingWizardDoneInternal(this);
+  //   this.setSimpleOnboardingDone(true);
+  // }
 
   setSimpleOnboardingDone(next: boolean) {
     this.simpleOnboardingDone = next;
@@ -1190,6 +1192,17 @@ export class OpenClawApp extends LitElement {
   }
 
   render() {
+    // Conditional rendering of the onboarding wizard
+    if (this.onboarding && !this.simpleOnboardingDone) {
+      return html`<onboarding-wizard @onboarding-complete=${this._handleOnboardingComplete}></onboarding-wizard>`;
+    }
     return renderApp(this as unknown as AppViewState);
+  }
+
+  private _handleOnboardingComplete() {
+    this.onboarding = false;
+    this.setSimpleOnboardingDone(true);
+    // Potentially trigger a reload of other app state or navigate to main view
+    console.log("Onboarding process completed. Proceeding to main app.");
   }
 }
