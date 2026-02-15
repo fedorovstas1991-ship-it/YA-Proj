@@ -244,7 +244,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-render-product.ts`:**
 
 - [x] **Добавить UI для удаления проекта:**
-  - **TODO:** В `renderProjectsPanel`, для каждого `product-project-group` (проекта), добавить кнопку "Удалить" (например, рядом с названием проекта или при наведении).
+  - [x] В `renderProjectsPanel`, для каждого `product-project-group` (проекта), добавить кнопку "Удалить" (например, рядом с названием проекта или при наведении).
   - [x] **Добавить модальное окно подтверждения удаления:** Создать новую функцию `renderConfirmDeleteProjectModal(state: AppViewState)` аналогично `renderCreateProjectModal`.
     - **Поля:** `productConfirmDeleteProjectId`, `productConfirmDeleteProjectName`.
     - **Кнопки:** "Отмена", "Удалить".
