@@ -39,7 +39,7 @@ rm -rf "$STATE_DIR"
 mkdir -p "$STATE_DIR" "$LOG_DIR"
 printf "%s\n" "$TOKEN" > "$TOKEN_FILE"
 
-URL_UI="http://127.0.0.1:${PORT}/?simple=1&onboarding=1#token=${TOKEN}&gatewayUrl=ws://127.0.0.1:${PORT}"
+URL_UI="http://127.0.0.1:${PORT}/?simple=1&onboarding=1&clearLocalStorage=1#token=${TOKEN}&gatewayUrl=ws://127.0.0.1:${PORT}"
 
 # Start the gateway in the background.
 # run-node.mjs will build dist if needed, then run openclaw.mjs.

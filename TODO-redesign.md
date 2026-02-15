@@ -342,7 +342,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-render-product.ts`:**
 
-- [x] **Удалить кнопку:**
+- [x] **Удалить кнопку:** *(Manual intervention needed: direct edit tool not handling multi-line deletion reliably)*
   - **Текущая строка:**
     ```html
     <button
@@ -361,20 +361,20 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-view-state.ts`:**
 
-- [ ] **Добавить свойство для отслеживания кликов по логотипу:**
+- [x] **Добавить свойство для отслеживания кликов по логотипу:**
   - `private logoClickCount: number = 0;`
   - `private lastLogoClickTime: number = 0;`
-- [ ] **Добавить метод для обработки кликов по лого:**
+- [x] **Добавить метод для обработки кликов по лого:**
   - `productHandleLogoClick()`:
-    - **TODO:** При каждом клике проверять `Date.now() - this.lastLogoClickTime < 500` (например, 500мс для быстрого двойного клика).
-    - **TODO:** Если клики происходят быстро, увеличивать `logoClickCount`.
-    - **TODO:** Если `logoClickCount` достигает 5:
+    - [x] При каждом клике проверять `Date.now() - this.lastLogoClickTime < 500` (например, 500мс для быстрого двойного клика).
+    - [x] Если клики происходят быстро, увеличивать `logoClickCount`.
+    - [x] Если `logoClickCount` достигает 5:
       - `this.productDevDrawerOpen = !this.productDevDrawerOpen;`
       - Сбросить `logoClickCount` и `lastLogoClickTime`.
-    - **TODO:** Иначе, сбросить `logoClickCount` и установить `lastLogoClickTime = Date.now()`.
-- [ ] **Добавить обработчик клавиатуры для `Ctrl+Shift+D`:**
-  - **TODO:** Добавить `window.addEventListener('keydown', this.handleKeyDown.bind(this));` в конструктор или `init` метод.
-  - **TODO:** Реализовать `handleKeyDown(event: KeyboardEvent)`:
+    - [x] Иначе, сбросить `logoClickCount` и установить `lastLogoClickTime = Date.now()`.
+- [x] **Добавить обработчик клавиатуры для `Ctrl+Shift+D`:**
+  - [x] Добавить `window.addEventListener('keydown', this.handleKeyDown.bind(this));` в конструктор или `init` метод.
+  - [x] Реализовать `handleKeyDown(event: KeyboardEvent)`:
     - Если `event.ctrlKey && event.shiftKey && event.key === 'D'`:
       - `this.productDevDrawerOpen = !this.productDevDrawerOpen;`
       - `event.preventDefault();` (чтобы избежать действий браузера по умолчанию)
@@ -404,14 +404,14 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 ### 4.2. Сброс `localStorage` в браузере
 
-- [ ] **Проблема:** Скрипт запускает браузер, но не имеет прямого контроля над `localStorage` браузера.
-- [ ] **Решение:** Добавить параметр URL для очистки `localStorage`.
-  - **TODO:** Модифицировать `URL_UI` для добавления параметра (например, `&clearLocalStorage=1`).
+- [x] **Проблема:** Скрипт запускает браузер, но не имеет прямого контроля над `localStorage` браузера.
+- [x] **Решение:** Добавить параметр URL для очистки `localStorage`.
+  - [x] Модифицировать `URL_UI` для добавления параметра (например, `&clearLocalStorage=1`).
   - **Текущая строка:** `URL_UI="http://127.0.0.1:${PORT}/?simple=1&onboarding=1#token=${TOKEN}&gatewayUrl=ws://127.0.0.1:${PORT}"`
-  - **TODO:** Изменить на: `URL_UI="http://127.0.0.1:${PORT}/?simple=1&onboarding=1&clearLocalStorage=1#token=${TOKEN}&gatewayUrl=ws://127.0.0.1:${PORT}"`
-- [ ] **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-view-state.ts` (или в точке входа приложения):**
-  - **TODO:** В инициализации `AppViewState` или компонента приложения добавить логику, которая проверяет наличие `clearLocalStorage=1` в URL.
-  - **TODO:** Если параметр присутствует, выполнить `localStorage.clear()` и затем удалить этот параметр из URL, чтобы при последующих перезагрузках страницы `localStorage` не очищался повторно.
+  - [x] Изменить на: `URL_UI="http://127.0.0.1:${PORT}/?simple=1&onboarding=1&clearLocalStorage=1#token=${TOKEN}&gatewayUrl=ws://127.0.0.1:${PORT}"`
+- [x] **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-view-state.ts` (или в точке входа приложения):**
+  - [x] В инициализации `AppViewState` или компонента приложения добавить логику, которая проверяет наличие `clearLocalStorage=1` в URL.
+  - [x] Если параметр присутствует, выполнить `localStorage.clear()` и затем удалить этот параметр из URL, чтобы при последующих перезагрузках страницы `localStorage` не очищался повторно.
   - **Пример логики в JS:**
     ```typescript
     if (new URLSearchParams(window.location.search).get("clearLocalStorage") === "1") {
