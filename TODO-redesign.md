@@ -151,14 +151,14 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **`.product-dev-drawer` (панель разработчика):**
 
-- [ ] `border-radius`: `12px`
-- [ ] `box-shadow`: `var(--shadow-md)`
-- [ ] `background`: `var(--card)`
+- [x] `border-radius`: `12px`
+- [x] `box-shadow`: `var(--shadow-md)`
+- [x] `background`: `var(--card)`
 
 **`.product-modal-backdrop` и `.product-modal`:**
 
-- [ ] `product-modal-backdrop.open`: `background: rgba(0, 0, 0, 0.2)` (менее темный оверлей)
-- [ ] `product-modal`:
+- [x] `product-modal-backdrop.open`: `background: rgba(0, 0, 0, 0.2)` (менее темный оверлей)
+- [x] `product-modal`:
   - `border-radius`: `12px`
   - `background`: `var(--card)`
   - `box-shadow`: `var(--shadow-lg)`

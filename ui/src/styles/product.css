@@ -120,7 +120,7 @@
 
 .product-item {
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: 8px; /* Changed from var(--radius-sm) to 8px */
   background: var(--panel-strong);
   padding: 10px 12px;
   text-align: left;
@@ -223,7 +223,7 @@
   width: 280px;
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: 12px;
   box-shadow: var(--shadow-md);
   z-index: 80;
   opacity: 0;
@@ -285,6 +285,7 @@
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
+  background: rgba(0, 0, 0, 0.2); /* menos oscuro */
 }
 
 .product-modal {
@@ -296,7 +297,7 @@
   width: min(420px, 92vw);
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: 12px;
   padding: 16px;
   box-shadow: var(--shadow-lg);
 }
@@ -578,14 +579,15 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
+  border-radius: 8px; /* Applied change */
+  border: 1px solid var(--border); /* Applied change */
   overflow: hidden;
+  box-shadow: none; /* Applied change */
   transition: box-shadow var(--duration-fast) var(--ease-out);
 }
 
 .product-project-group:hover {
-  box-shadow: none;
+  box-shadow: var(--shadow-sm); /* Applied change */
 }
 
 .product-project-header {
