@@ -259,7 +259,6 @@ export type MSTeamsStatus = {
   running: boolean;
   lastStartAt?: number | null;
   lastStopAt?: number | null;
-  lastError?: string | null;
   port?: number | null;
   probe?: MSTeamsProbe | null;
   lastProbeAt?: number | null;
@@ -340,6 +339,19 @@ export type AgentsListResult = {
   mainKey: string;
   scope: string;
   agents: GatewayAgentRow[];
+};
+
+export type AgentConfig = {
+  skills?: string[];
+  // Add other potential agent config properties here as needed
+};
+
+export type AgentGetResult = {
+  id: string;
+  name?: string;
+  description?: string;
+  config?: AgentConfig;
+  // Add other properties that 'agents.get' might return
 };
 
 export type AgentIdentityResult = {

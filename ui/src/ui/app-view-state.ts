@@ -24,6 +24,7 @@ import {
   AgentsFilesListResult,
   WizardStep,
   LogLevel,
+  AgentGetResult, // Import AgentGetResult
 } from "./types.ts";
 import { PresenceEntry } from "./types.ts";
 import { ChatAttachment, ChatQueueItem, CronFormState } from "./ui-types.ts";
@@ -44,7 +45,7 @@ export type AppViewState = {
   productMode: boolean;
   simpleOnboardingDone: boolean;
   simpleDevToolsOpen: boolean;
-  productPanel: "chat" | "projects" | "telegram";
+  productPanel: "chat" | "projects" | "telegram" | "skills" | "settings";
   productDevDrawerOpen: boolean;
   productAgentId: string | null;
   productCreateProjectOpen: boolean;
@@ -237,6 +238,11 @@ export type AppViewState = {
   skillEdits: Record<string, string>;
   skillMessages: Record<string, SkillMessage>;
   skillsBusyKey: string | null;
+  productCreateSkillOpen: boolean;
+  productCreateSkillId: string;
+  productCreateSkillName: string;
+  productCreateSkillDescription: string;
+  productCreateSkillFileContent: string;
   debugLoading: boolean;
   debugStatus: StatusSummary | null;
   debugHealth: HealthSnapshot | null;
@@ -289,6 +295,14 @@ export type AppViewState = {
 
     const storedOnboardingDone = localStorage.getItem("simpleOnboardingDone");
     this.simpleOnboardingDone = storedOnboardingDone === "true";
+
+    // Initialize skill creation state
+    this.productCreateSkillOpen = false;
+    this.productCreateSkillId = "";
+    this.productCreateSkillName = "";
+    this.productCreateSkillDescription = "";
+    this.productCreateSkillFileContent = "";
+
 
     const savedProjects = localStorage.getItem("productProjects");
     if (savedProjects) {
@@ -352,6 +366,7 @@ export type AppViewState = {
       this.loadAgents();
       this.productLoadProjects(); // Ensure projects are loaded on connect
       this.productLoadSessions();
+      this.productLoadSkills(); // Load skills on connect
     };
     this.client.onConnectionError = (error) => {
       this.connected = false;
@@ -913,17 +928,335 @@ export type AppViewState = {
     this.lastLogoClickTime = now;
   };
 
-  handleKeyDown = (event: KeyboardEvent) => {
-    if (event.ctrlKey && event.shiftKey && event.key === "D") {
-      this.productDevDrawerOpen = !this.productDevDrawerOpen;
-      event.preventDefault(); // Prevent default browser action
+  handleSendChat = async () => {
+    if (!this.client || (!this.chatMessage.trim() && this.chatAttachments.length === 0)) {
+      return;
+    }
+    this.chatSending = true;
+    this.lastError = null;
+
+    try {
+      const chatContent: Array<{ type: string; text?: string; image_url?: { url: string } }> = [];
+
+      // Add text message if present
+      if (this.chatMessage.trim()) {
+        chatContent.push({ type: "text", text: this.chatMessage.trim() });
+      }
+
+      // Process attachments
+      for (const attachment of this.chatAttachments) {
+        if (attachment.kind === "image" && attachment.dataUrl) {
+          chatContent.push({
+            type: "image_url",
+            image_url: { url: attachment.dataUrl },
+          });
+        } else if (attachment.kind === "file") {
+          if (attachment.textContent) {
+            // For text files, add content directly as text
+            chatContent.push({
+              type: "text",
+              text: `File: ${attachment.fileName} (Type: ${attachment.mimeType})\n\`\`\`\n${attachment.textContent}\n\`\`\``,
+            });
+          } else if (attachment.base64 && attachment.fileName) {
+            // For other binary files, fallback to base64 representation (as before)
+            chatContent.push({
+              type: "text",
+              text: `Attached file: ${attachment.fileName} (Type: ${attachment.mimeType}, Size: ${attachment.sizeBytes} bytes). Content: data:${attachment.mimeType};base64,${attachment.base64}`,
+            });
+          }
+        }
+      }
+
+      const messagePayload = {
+        sessionKey: this.sessionKey,
+        message: {
+          role: "user",
+          content: chatContent,
+        },
+      };
+
+      await this.client.sessions.send(messagePayload);
+
+      this.chatMessage = "";
+      this.chatAttachments = []; // Clear attachments after sending
+      await loadChatHistory(this as unknown as ChatState);
+      this.scrollToBottom({ smooth: true });
+    } catch (e) {
+      this.lastError = String(e);
       sendAppEvent({
-        type: "info",
-        message: `Dev Drawer toggled: ${this.productDevDrawerOpen ? "on" : "off"}`,
+        type: "error",
+        message: `Failed to send chat message: ${e}`,
+      });
+    } finally {
+      this.chatSending = false;
+    }
+  };
+
+  handleAbortChat = async () => {
+    if (!this.client || !this.chatRunId) {
+      return;
+    }
+    try {
+      await this.client.sessions.abort(this.sessionKey, this.chatRunId);
+      this.chatRunId = null;
+      sendAppEvent({ type: "info", message: "Chat run aborted." });
+    } catch (e) {
+      sendAppEvent({ type: "error", message: `Failed to abort chat: ${e}` });
+    }
+  };
+
+  removeQueuedMessage = (id: string) => {
+    this.chatQueue = this.chatQueue.filter((item) => item.id !== id);
+  };
+
+  handleChatScroll = (event: Event) => {
+    const target = event.target as HTMLDivElement;
+    // Determine if user has scrolled up to view older messages
+    const isAtBottom = target.scrollHeight - target.scrollTop === target.clientHeight;
+    this.chatNewMessagesBelow = !isAtBottom;
+  };
+
+  scrollToBottom = (opts?: { smooth?: boolean }) => {
+    const chatThread = document.querySelector(".chat-thread");
+    if (chatThread) {
+      chatThread.scrollTo({
+        top: chatThread.scrollHeight,
+        behavior: opts?.smooth ? "smooth" : "auto",
       });
     }
   };
 
-  // --- Actions / Methods ---
-  // ... (rest of the class methods) ...
+  handleOpenSidebar = (content: string) => {
+    this.sidebarContent = content;
+    this.sidebarError = null;
+    this.sidebarOpen = true;
+  };
+
+  handleCloseSidebar = () => {
+    this.sidebarOpen = false;
+    this.sidebarContent = null;
+    this.sidebarError = null;
+  };
+
+  handleSplitRatioChange = (ratio: number) => {
+    this.splitRatio = ratio;
+  };
+
+  // --- Logs
+  logsMaxBytes = 100 * 1024;
+  logsAtBottom = true;
+
+  logsLimit = 1000;
+  logsCursor: number | null = null;
+  logsLastFetchAt: number | null = null;
+  logsEntries: LogEntry[] = [];
+  logsError: string | null = null;
+  logsLoading = false;
+  logsFilterText = "";
+  logsLevelFilters: Record<LogLevel, boolean> = {
+    [LogLevel.Debug]: true,
+    [LogLevel.Info]: true,
+    [LogLevel.Warn]: true,
+    [LogLevel.Error]: true,
+    [LogLevel.Fatal]: true,
+  };
+  logsAutoFollow = true;
+  logsTruncated = false;
+  logsFile: string | null = null;
+
+  productCreateSkillOpen: boolean;
+  productCreateSkillId: string;
+  productCreateSkillName: string;
+  productCreateSkillDescription: string;
+  productCreateSkillFileContent: string;
+
+  private logsScrollListener?: () => void;
+  private logsObserver?: MutationObserver;
+
+  // --- Skill Management ---
+  productLoadSkills = async () => {
+    if (!this.client) {
+      return;
+    }
+    this.skillsLoading = true;
+    this.skillsError = null;
+    try {
+      this.skillsReport = await this.client.skills.status();
+    } catch (e) {
+      this.skillsError = String(e);
+      sendAppEvent({
+        type: "error",
+        message: `Failed to load skills: ${e}`,
+      });
+    } finally {
+      this.skillsLoading = false;
+    }
+  };
+
+  productActivateSkill = async (skillId: string) => {
+    if (!this.client) {
+      return;
+    }
+    this.skillsBusyKey = skillId;
+    this.skillsError = null;
+    try {
+      await this.client.skills.activate(skillId);
+      sendAppEvent({
+        type: "success",
+        message: `Скилл "${skillId}" активирован.`,
+      });
+      await this.productLoadSkills();
+    } catch (e) {
+      this.skillsError = String(e);
+      sendAppEvent({
+        type: "error",
+        message: `Ошибка активации скилла "${skillId}": ${e}`,
+      });
+    } finally {
+      this.skillsBusyKey = null;
+    }
+  };
+
+  productDeactivateSkill = async (skillId: string) => {
+    if (!this.client) {
+      return;
+    }
+    this.skillsBusyKey = skillId;
+    this.skillsError = null;
+    try {
+      await this.client.skills.deactivate(skillId);
+      sendAppEvent({
+        type: "success",
+        message: `Скилл "${skillId}" деактивирован.`,
+      });
+      await this.productLoadSkills();
+    } catch (e) {
+      this.skillsError = String(e);
+      sendAppEvent({
+        type: "error",
+        message: `Ошибка деактивации скилла "${skillId}": ${e}`,
+      });
+    } finally {
+      this.skillsBusyKey = null;
+    }
+  };
+
+  productBulkAssignSkillToAllAgents = async (skillId: string) => {
+    if (!this.client) {
+      return;
+    }
+
+    const confirmMessage = `Вы уверены, что хотите добавить скилл "${skillId}" всем существующим агентам?`;
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    this.skillsBusyKey = `bulk-assign-${skillId}`;
+    this.skillsError = null;
+    try {
+      const agentsList = await this.client.agents.list();
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const agent of agentsList.agents) {
+        try {
+          const agentGetResult = await this.client.request<AgentGetResult>("agents.get", { agentId: agent.id });
+          const currentSkills = agentGetResult.config?.skills || [];
+          
+          if (!currentSkills.includes(skillId)) {
+            const updatedSkills = [...currentSkills, skillId];
+            await this.client.request("agents.update", {
+              agentId: agent.id,
+              config: { skills: updatedSkills },
+            });
+            successCount++;
+          } else {
+            // Skill already assigned, count as success for this agent
+            successCount++; 
+          }
+        } catch (e) {
+          console.error(`Failed to assign skill ${skillId} to agent ${agent.id}: ${e}`);
+          errorCount++;
+        }
+      }
+
+      let message = `Скилл "${skillId}" добавлен ${successCount} агентам.`;
+      if (errorCount > 0) {
+        message += ` Ошибка при добавлении к ${errorCount} агентам.`;
+        sendAppEvent({ type: "warn", message });
+      } else {
+        sendAppEvent({ type: "success", message });
+      }
+      await this.productLoadProjects(); // Refresh projects to potentially show skill association (if UI supports it)
+    } catch (e) {
+      this.skillsError = String(e);
+      sendAppEvent({
+        type: "error",
+        message: `Ошибка массового добавления скилла: ${e}`,
+      });
+    } finally {
+      this.skillsBusyKey = null;
+    }
+  };
+
+  productEditSkill = (skillId: string) => {
+    // TODO: Implement actual editing functionality, e.g., open a modal with skill details
+    console.log(`Editing skill: ${skillId}`);
+    sendAppEvent({
+      type: "info",
+      message: `Функционал редактирования скиллов пока не реализован.`,
+    });
+  };
+
+  productCreateSkill = () => {
+    this.productCreateSkillOpen = true;
+    this.productCreateSkillId = "";
+    this.productCreateSkillName = "";
+    this.productCreateSkillDescription = "";
+    this.productCreateSkillFileContent = `// Скилл ${this.productCreateSkillId || "нового скилла"}
+// Описание: ${this.productCreateSkillDescription || "Описание скилла"}
+
+// Пример простого скилла
+export async function run(ctx: any, args: any) {
+  ctx.log.info("Hello from new skill!");
+  return \`Выполнил новый скилл с аргументами: \${JSON.stringify(args)}\`;
 }
+`;
+  };
+
+  productSaveSkill = async () => {
+    if (!this.client || !this.productCreateSkillId || !this.productCreateSkillFileContent) {
+      return;
+    }
+    this.skillsBusyKey = "create-skill";
+    this.skillsError = null;
+    try {
+      await this.client.skills.install({
+        skillId: this.productCreateSkillId,
+        skillName: this.productCreateSkillName,
+        description: this.productCreateSkillDescription,
+        code: this.productCreateSkillFileContent,
+      });
+      sendAppEvent({
+        type: "success",
+        message: `Скилл "${this.productCreateSkillId}" создан и установлен.`,
+      });
+      this.productCreateSkillOpen = false;
+      this.productCreateSkillId = "";
+      this.productCreateSkillName = "";
+      this.productCreateSkillDescription = "";
+      this.productCreateSkillFileContent = "";
+      await this.productLoadSkills();
+    } catch (e) {
+      this.skillsError = String(e);
+      sendAppEvent({
+        type: "error",
+        message: `Ошибка создания скилла "${this.productCreateSkillId}": ${e}`,
+      });
+    } finally {
+      this.skillsBusyKey = null;
+    }
+  };
+
+  handleSendChat = async () => {
+

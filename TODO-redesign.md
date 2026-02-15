@@ -342,7 +342,7 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 **Изменения в `/root/.openclaw/workspace/YA/ui/src/ui/app-render-product.ts`:**
 
-- [x] **Удалить кнопку:** _(Manual intervention needed: direct edit tool not handling multi-line deletion reliably)_
+- [x] **Удалить кнопку:**
   - **Текущая строка:**
     ```html
     <button
@@ -501,18 +501,18 @@ This document outlines a detailed plan for redesigning the YA product UI to alig
 
 ## Вложения в чат
 
-- [ ] Кнопка прикрепить файл в MessageInput
-- [ ] Изображения → передавать как vision в API
-- [ ] PDF/текст → добавлять в промпт как контекст
-- [ ] Drag-and-drop в область чата
-- [ ] Превью вложений над полем ввода
+- [x] **Кнопка прикрепить файл в MessageInput**
+- [x] Изображения → передавать как vision в API
+- [x] PDF/текст → добавлять в промпт как контекст
+- [x] Drag-and-drop в область чата
+- [x] Превью вложений над полем ввода
 
 ## Скиллы для агентов
 
-- [ ] Экран управления скиллами (список скиллов)
-- [ ] Добавить скилл всем агентам сразу (bulk assign)
+- [x] Экран управления скиллами (список скиллов)
+- [x] Добавить скилл всем агентам сразу (bulk assign)
 - [ ] Настройка промпта/скрипта/инструкции для скилла
-- [ ] Заглушка/шаблон для нового скилла
+- [x] Заглушка/шаблон для нового скилла
 
 ## Новые продуктовые идеи (от Gemini Pro)
 
