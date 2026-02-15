@@ -54,9 +54,13 @@ export type AppViewState = {
   productConfirmDeleteProjectOpen: boolean;
   productConfirmDeleteProjectId: string | null;
   productConfirmDeleteProjectName: string;
+  productConfirmDeleteChatOpen: boolean;
   productConfirmDeleteChatSessionKey: string | null;
   productConfirmDeleteChatDisplayName: string;
-  productSessionsLoading: boolean;
+  productConfirmDeleteChatOpen: boolean = false;
+  productConfirmDeleteChatSessionKey: string | null = null;
+  productConfirmDeleteChatDisplayName: string = "";
+  productSessionsLoading: boolean = false;
   productSessionsError: string | null;
   productSessionsResult: SessionsListResult | null;
   productTelegramToken: string;
