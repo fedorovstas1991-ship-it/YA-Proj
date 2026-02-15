@@ -125,6 +125,11 @@ function renderProjectsPanel(state: AppViewState) {
                   >
                     <span class="product-project-icon">${state.productCollapsedProjects.has(project.id) ? "▶" : "▼"}</span>
                     <span class="product-project-name">📁 ${project.name}</span>
+                    <button class="btn btn--sm" title="Новый чат в проекте" @click=${(e: Event) => {
+                      e.stopPropagation();
+                      void state.productNewChatInProject(project.id);
+                    }}>+
+                    </button>
                     <button class="btn btn--sm danger" title="Удалить проект" @click=${(
                       e: Event,
                     ) => {
