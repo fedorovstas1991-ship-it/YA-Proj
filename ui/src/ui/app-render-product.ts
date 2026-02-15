@@ -81,6 +81,27 @@ function renderCreateProjectModal(state: AppViewState) {
   `;
 }
 
+function renderConfirmDeleteProjectModal(state: AppViewState) {
+  if (!state.productConfirmDeleteProjectOpen) {
+    return nothing;
+  }
+  return html`
+    <div class="product-modal-backdrop ${state.productConfirmDeleteProjectOpen ? "open" : ""}" role="presentation" @click=${() => (state.productConfirmDeleteProjectOpen = false)}>
+      <div class="product-modal" role="dialog" aria-labelledby="confirm-delete-project-title" aria-modal="true" @click=${(e: Event) => e.stopPropagation()}>
+        <div class="product-modal__title" id="confirm-delete-project-title">Удалить проект "${state.productConfirmDeleteProjectName}"?</div>
+        <div class="product-modal__body">
+          <p>Выверены, что хотите удалить проект "${state.productConfirmDeleteProjectName}"?</p>
+          <p>Это действие необратимо и удалит все связанные чаты.</p>
+        </div>
+        <div class="row" style="margin-top:12px; justify-content:flex-end;">
+          <button class="btn" aria-label="Отменить удаление" @click=${() => (state.productConfirmDeleteProjectOpen = false)}>Отмена</button>
+          <button class="btn danger" aria-label="Подтвердить удаление проекта" @click=${() => void state.productDeleteProject(state.productConfirmDeleteProjectId!)}>Удалить</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderProjectsPanel(state: AppViewState) {
   const sessions = state.productSessionsResult?.sessions ?? [];
   const projects = state.productProjects ?? [];
@@ -104,6 +125,14 @@ function renderProjectsPanel(state: AppViewState) {
                   >
                     <span class="product-project-icon">${state.productCollapsedProjects.has(project.id) ? "▶" : "▼"}</span>
                     <span class="product-project-name">📁 ${project.name}</span>
+                    <button class="btn btn--sm danger" title="Удалить проект" @click=${(
+                      e: Event,
+                    ) => {
+                      e.stopPropagation();
+                      state.productConfirmDeleteProject(project.id);
+                    }}>
+                      ${icons.trash}
+                    </button>
                   </button>
                   ${
                     !state.productCollapsedProjects.has(project.id)
@@ -516,7 +545,11 @@ export function renderProductApp(state: AppViewState) {
                                     ${state.onboardingWizardStep.type === "action" ? "⚙️" : "ℹ️"}
                                   </div>
                                   <div class="wizard-note-content">
-                                    ${state.onboardingWizardStep.message}
+                                    ${
+                                      state.onboardingWizardStep.type === "action"
+                                        ? state.onboardingWizardStep.message
+                                        : html`<p>${state.onboardingWizardStep.message}</p>`
+                                    }
                                   </div>
                                 </div>
                                 <button
@@ -699,5 +732,6 @@ export function renderProductApp(state: AppViewState) {
     </div>
     ${renderDevDrawer(state)}
     ${renderCreateProjectModal(state)}
+    ${renderConfirmDeleteProjectModal(state)}
   `;
 }

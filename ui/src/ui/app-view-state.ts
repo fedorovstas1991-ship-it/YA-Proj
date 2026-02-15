@@ -51,6 +51,9 @@ export type AppViewState = {
   productCreateProjectOpen: boolean;
   productCreateProjectName: string;
   productCreateProjectDesc: string;
+  productConfirmDeleteProjectOpen: boolean;
+  productConfirmDeleteProjectId: string | null;
+  productConfirmDeleteProjectName: string;
   productSessionsLoading: boolean;
   productSessionsError: string | null;
   productSessionsResult: SessionsListResult | null;
@@ -290,6 +293,8 @@ export type AppViewState = {
   cancelOnboardingWizard: () => Promise<void>;
   setOnboardingWizardDone: () => void;
   setSimpleOnboardingDone: (next: boolean) => void;
+  productConfirmDeleteProject: (projectId: string) => Promise<void>;
+  productDeleteProject: (projectId: string) => Promise<void>;
   productSelectAgent: (agentId: string) => Promise<void>;
   productLoadSessions: () => Promise<void>;
   productNewChat: () => Promise<void>;
