@@ -206,6 +206,8 @@ export type TimeSeriesPoint = {
   cumulativeCost: number;
 };
 
+export type SessionUsageTimeSeries = { points: TimeSeriesPoint[] };
+
 export type UsageProps = {
   loading: boolean;
   error: string | null;
@@ -223,7 +225,7 @@ export type UsageProps = {
   dailyChartMode: "total" | "by-type";
   timeSeriesMode: "cumulative" | "per-turn";
   timeSeriesBreakdownMode: "total" | "by-type";
-  timeSeries: { points: TimeSeriesPoint[] } | null;
+  timeSeries: SessionUsageTimeSeries | null;
   timeSeriesLoading: boolean;
   sessionLogs: SessionLogEntry[] | null;
   sessionLogsLoading: boolean;

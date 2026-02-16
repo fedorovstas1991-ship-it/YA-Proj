@@ -138,8 +138,8 @@ export function applyExtraParamsToAgent(
   const override =
     extraParamsOverride && Object.keys(extraParamsOverride).length > 0
       ? Object.fromEntries(
-          Object.entries(extraParamsOverride).filter(([, value]) => value !== undefined),
-        )
+        Object.entries(extraParamsOverride).filter(([, value]) => value !== undefined),
+      )
       : undefined;
   const merged = Object.assign({}, extraParams, override);
   const wrappedStreamFn = createStreamFnWithExtraParams(agent.streamFn, merged, provider);

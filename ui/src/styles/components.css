@@ -96,44 +96,106 @@
   border: 1px solid var(--anthropic-border);
   border-radius: var(--anthropic-border-radius);
   font-family: "Inter", sans-serif;
-  font-size: 1em;\n  box-sizing: border-box;\n  background-color: var(--anthropic-input-bg);\n  color: var(--anthropic-text);\n  transition: border-color 0.2s ease, box-shadow 0.2s ease;\n}
+  font-size: 1em;
+  box-sizing: border-box;
+  background-color: var(--anthropic-input-bg);
+  color: var(--anthropic-text);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
 
 .onboarding-input::placeholder {
   color: var(--anthropic-muted-text);
 }
 
 .onboarding-input:focus {
-  outline: none;\n  border-color: var(--anthropic-accent);\n  box-shadow: 0 0 0 2px rgba(var(--anthropic-accent-rgb), 0.2);\n}
+  outline: none;
+  border-color: var(--anthropic-accent);
+  box-shadow: 0 0 0 2px rgba(var(--anthropic-accent-rgb), 0.2);
+}
 
 .onboarding-button-group {
-  display: flex;\n  justify-content: flex-end;\n  gap: 10px;\n  width: 100%;\n  margin-top: 20px;\n}
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  width: 100%;
+  margin-top: 20px;
+}
 
-.onboarding-steps {\n  display: flex;\n  justify-content: center;\n  gap: 16px;\n  margin-bottom: 40px;\n  padding: 0; /* Ensure no default padding from ul/ol */\n  list-style: none; /* Remove bullet points */\n}
+.onboarding-steps {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 40px;
+  padding: 0; /* Ensure no default padding from ul/ol */
+  list-style: none; /* Remove bullet points */
+}
 
-.onboarding-step {\n  color: var(--anthropic-muted-text);\n  font-size: 1.1em;\n  font-weight: 500;\n  position: relative;\n  padding-bottom: 8px;\n}
+.onboarding-step {
+  color: var(--anthropic-muted-text);
+  font-size: 1.1em;
+  font-weight: 500;
+  position: relative;
+  padding-bottom: 8px;
+}
 
-.onboarding-step.active {\n  color: var(--anthropic-text);\n}
+.onboarding-step.active {
+  color: var(--anthropic-text);
+}
 
-.onboarding-step.active::after {\n  content: "";\n  position: absolute;\n  bottom: 0;\n  left: 0;\n  width: 100%;\n  height: 3px;\n  background: var(--anthropic-accent);\n  border-radius: 1px;\n}
+.onboarding-step.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--anthropic-accent);
+  border-radius: 1px;
+}
 
 /* Dark theme overrides for onboarding */
-body.dark-theme .onboarding-container {\n  background-color: var(--anthropic-dark-theme-bg);\n  color: var(--anthropic-dark-theme-text);\n}
+body.dark-theme .onboarding-container {
+  background-color: var(--anthropic-dark-theme-bg);
+  color: var(--anthropic-dark-theme-text);
+}
 
-body.dark-theme .onboarding-wizard-card {\n  background-color: var(--anthropic-dark-theme-card-bg);\n  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);\n  color: var(--anthropic-dark-theme-text);\n}
+body.dark-theme .onboarding-wizard-card {
+  background-color: var(--anthropic-dark-theme-card-bg);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+  color: var(--anthropic-dark-theme-text);
+}
 
-body.dark-theme .onboarding-header h3 {\n  color: var(--anthropic-dark-theme-text);\n}
+body.dark-theme .onboarding-header h3 {
+  color: var(--anthropic-dark-theme-text);
+}
 
-body.dark-theme .onboarding-text {\n  color: var(--anthropic-dark-theme-muted-text);\n}
+body.dark-theme .onboarding-text {
+  color: var(--anthropic-dark-theme-muted-text);
+}
 
-body.dark-theme .onboarding-button-secondary {\n  color: var(--anthropic-dark-theme-text);\n  border-color: var(--anthropic-dark-theme-border);\n  background-color: var(--anthropic-dark-theme-card-bg);\n}
+body.dark-theme .onboarding-button-secondary {
+  color: var(--anthropic-dark-theme-text);
+  border-color: var(--anthropic-dark-theme-border);
+  background-color: var(--anthropic-dark-theme-card-bg);
+}
 
-body.dark-theme .onboarding-button-secondary:hover {\n  background-color: var(--anthropic-dark-theme-border);\n}
+body.dark-theme .onboarding-button-secondary:hover {
+  background-color: var(--anthropic-dark-theme-border);
+}
 
-body.dark-theme .onboarding-input {\n  background-color: var(--anthropic-dark-theme-input-bg);\n  border-color: var(--anthropic-dark-theme-border);\n  color: var(--anthropic-dark-theme-text);\n}
+body.dark-theme .onboarding-input {
+  background-color: var(--anthropic-dark-theme-input-bg);
+  border-color: var(--anthropic-dark-theme-border);
+  color: var(--anthropic-dark-theme-text);
+}
 
-body.dark-theme .onboarding-input::placeholder {\n  color: var(--anthropic-dark-theme-muted-text);\n}
+body.dark-theme .onboarding-input::placeholder {
+  color: var(--anthropic-dark-theme-muted-text);
+}
 
-body.dark-theme .onboarding-step.active {\n  color: var(--anthropic-dark-theme-text);\n}
+body.dark-theme .onboarding-step.active {
+  color: var(--anthropic-dark-theme-text);
+}
 
 /* ===========================================
    Cards - Refined with depth

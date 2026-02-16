@@ -1,15 +1,16 @@
-import { produce } from "immer";
 import { AppEvent, sendAppEvent } from "./app-events.ts";
 import { getSessionAgentId, getSessionDisplayName } from "./app-util.ts";
 import { ChatState, loadChatHistory, watchChatStream } from "./controllers/chat.ts";
-import { GatewayBrowserClient } from "./gateway.ts";
-import { parseLocation, Tab } from "./navigation.ts";
-import { updateUiSettings } from "./storage.ts";
-import { DEFAULT_UI_SETTINGS, UiSettings } from "./storage.ts";
+import { watchGatewayLog } from "./controllers/logs.ts";
+import { GatewayBrowserClient, GatewayHelloOk } from "./gateway.ts";
+import { parseLocation, Tab, pathForTab } from "./navigation.ts";
+import { DEFAULT_UI_SETTINGS, updateUiSettings, UiSettings } from "./storage.ts";
 import { detectTheme, ThemeMode, transitionTheme } from "./theme.ts";
+import { type CompactionStatus } from "./app-tool-stream.ts";
+import { type SkillMessage } from "./controllers/skills.ts";
 import {
-  GatewayHelloOk,
   AgentsListResult,
+  AgentGetResult,
   SessionsListResult,
   ConfigSnapshot,
   ConfigUiHints,
@@ -22,268 +23,273 @@ import {
   StatusSummary,
   HealthSnapshot,
   AgentsFilesListResult,
+  SkillGetResult,
+  SkillUpdateParams,
   WizardStep,
   LogLevel,
-  AgentGetResult, // Import AgentGetResult
-  SkillGetResult, // Import SkillGetResult
-  SkillUpdateParams, // Import SkillUpdateParams
+  LogEntry,
 } from "./types.ts";
 import { PresenceEntry } from "./types.ts";
 import { ChatAttachment, ChatQueueItem, CronFormState } from "./ui-types.ts";
 import { NostrProfileFormState } from "./views/channels.nostr-profile-form.ts";
 import {
-  CostUsageSummary,
+  UsageTotals as CostUsageSummary,
   SessionLogEntry,
+  UsageAggregates as SessionsUsageResult,
   SessionUsageTimeSeries,
-  SessionsUsageResult,
-} from "./views/usage.ts";
+} from "./views/usageTypes.ts";
+import { ExecApprovalsSnapshot, ExecApprovalsFile } from "./controllers/exec-approvals.ts";
+import { ExecApprovalRequest } from "./controllers/exec-approval.ts";
 
-export type AppViewState = {
-  settings: UiSettings;
-  password: string;
-  tab: Tab;
-  onboarding: boolean;
-  simpleMode: boolean;
-  productMode: boolean;
-  simpleOnboardingDone: boolean;
-  simpleDevToolsOpen: boolean;
-  productPanel: "chat" | "projects" | "telegram" | "skills" | "settings";
-  productDevDrawerOpen: boolean;
-  productAgentId: string | null;
-  productCreateProjectOpen: boolean;
-  productCreateProjectName: string;
-  productCreateProjectDesc: string;
-  productConfirmDeleteProjectOpen: boolean;
-  productConfirmDeleteProjectId: string | null;
-  productConfirmDeleteProjectName: string;
-  productConfirmDeleteChatOpen: boolean;
-  productConfirmDeleteChatSessionKey: string | null;
-  productConfirmDeleteChatDisplayName: string;
-  productSessionsLoading: boolean;
-  productSessionsError: string | null;
-  productSessionsResult: SessionsListResult | null;
-  productTelegramToken: string;
-  productTelegramAllowFrom: string;
-  productTelegramBusy: boolean;
-  productTelegramError: string | null;
-  productTelegramSuccess: string | null;
-  productProjects: Array<{ id: string; name: string; expanded?: boolean; sessionKeys?: string[] }>;
-  productProjectsLoading: boolean;
-  productProjectsError: string | null;
-  productEditingProjectId: string | null;
-  productCollapsedProjects: Set<string>;
-  basePath: string;
-  connected: boolean;
-  theme: ThemeMode;
-  themeResolved: "light" | "dark";
-  hello: GatewayHelloOk | null;
-  lastError: string | null;
-  eventLog: AppEvent[];
-  assistantName: string;
-  assistantAvatar: string | null;
-  assistantAgentId: string | null;
-  sessionKey: string;
-  chatLoading: boolean;
-  chatSending: boolean;
-  chatMessage: string;
-  chatAttachments: ChatAttachment[];
-  chatMessages: unknown[];
-  chatToolMessages: unknown[];
-  chatStream: string | null;
-  chatStreamStartedAt: number | null;
-  chatRunId: string | null;
-  compactionStatus: CompactionStatus | null;
-  chatAvatarUrl: string | null;
-  chatThinkingLevel: string | null;
-  chatQueue: ChatQueueItem[];
-  chatManualRefreshInFlight: boolean;
-  onboardingWizardSessionId: string | null;
-  onboardingWizardStatus: "idle" | "running" | "done" | "cancelled" | "error";
-  onboardingWizardStep: WizardStep | null;
-  onboardingWizardError: string | null;
-  onboardingWizardBusy: boolean;
-  onboardingWizardMode: "local" | "remote";
+export class AppViewState {
+  settings: UiSettings = DEFAULT_UI_SETTINGS;
+  password = "";
+  tab: Tab = "chat";
+  onboarding = false;
+  simpleMode = false;
+  productMode = true;
+  simpleOnboardingDone = false;
+  simpleDevToolsOpen = false;
+  productPanel: "chat" | "projects" | "telegram" | "skills" | "settings" = "chat";
+  productDevDrawerOpen = false;
+  productAgentId: string | null = null;
+  productCreateProjectOpen = false;
+  productCreateProjectName = "";
+  productCreateProjectDesc = "";
+  productConfirmDeleteProjectOpen = false;
+  productConfirmDeleteProjectId: string | null = null;
+  productConfirmDeleteProjectName = "";
+  productConfirmDeleteChatOpen = false;
+  productConfirmDeleteChatSessionKey: string | null = null;
+  productConfirmDeleteChatDisplayName = "";
+  productSessionsLoading = false;
+  productSessionsError: string | null = null;
+  productSessionsResult: SessionsListResult | null = null;
+  productTelegramToken = "";
+  productTelegramAllowFrom = "";
+  productTelegramBusy = false;
+  productTelegramError: string | null = null;
+  productTelegramSuccess: string | null = null;
+  productProjects: Array<{ id: string; name: string; expanded?: boolean; sessionKeys?: string[] }> = [];
+  productProjectsLoading = false;
+  productProjectsError: string | null = null;
+  productEditingProjectId: string | null = null;
+  productCollapsedProjects = new Set<string>();
+  basePath = "";
+  connected = false;
+  theme: ThemeMode = "system";
+  themeResolved: "light" | "dark" = "dark";
+  hello: GatewayHelloOk | null = null;
+  lastError: string | null = null;
+  eventLog: AppEvent[] = [];
+  assistantName = "OpenClaw";
+  assistantAvatar: string | null = null;
+  assistantAgentId: string | null = null;
+  productEditingAgentModel: string = "";
+  productEditingAgentPrompt: string = "";
+  productEditingAgentApiKey: string = "";
+  sessionKey = "main";
+  chatLoading = false;
+  chatSending = false;
+  chatMessage = "";
+  chatAttachments: ChatAttachment[] = [];
+  chatMessages: unknown[] = [];
+  chatToolMessages: unknown[] = [];
+  chatStream: string | null = null;
+  chatStreamStartedAt: number | null = null;
+  chatRunId: string | null = null;
+  compactionStatus: CompactionStatus | null = null;
+  chatAvatarUrl: string | null = null;
+  chatThinkingLevel: string | null = null;
+  chatQueue: ChatQueueItem[] = [];
+  chatManualRefreshInFlight: boolean = false;
+  onboardingWizardSessionId: string | null = null;
+  onboardingWizardStatus: "idle" | "running" | "done" | "cancelled" | "error" = "idle";
+  onboardingWizardStep: WizardStep | null = null;
+  onboardingWizardError: string | null = null;
+  onboardingWizardBusy: boolean = false;
+  onboardingWizardMode: "local" | "remote" = "local";
   onboardingWizardFlow?: string;
-  onboardingWizardWorkspace: string;
-  onboardingWizardResetConfig: boolean;
-  onboardingWizardTextAnswer: string;
-  onboardingWizardMultiAnswers: number[];
-  onboardingWizardCurrentStep: number;
-  onboardingWizardTotalSteps: number;
-  nodesLoading: boolean;
+  onboardingWizardWorkspace: string = "";
+  onboardingWizardResetConfig: boolean = false;
+  onboardingWizardTextAnswer: string = "";
+  onboardingWizardMultiAnswers: number[] = [];
+  onboardingWizardCurrentStep: number = 0;
+  onboardingWizardTotalSteps: number = 0;
+  nodesLoading: boolean = false;
   // NOTE: This property and related imports like fetchDevices, DevicePairingList, GatewayDevice were removed due to being unused.
-  chatNewMessagesBelow: boolean;
-  sidebarOpen: boolean;
-  sidebarContent: string | null;
-  sidebarError: string | null;
-  splitRatio: number;
-  scrollToBottom: (opts?: { smooth?: boolean }) => void;
+  chatNewMessagesBelow: boolean = false;
+  sidebarOpen: boolean = false;
+  sidebarContent: string | null = null;
+  sidebarError: string | null = null;
+  splitRatio: number = 0.5;
   // NOTE: These properties and related imports were removed due to being unused.
-  execApprovalsLoading: boolean;
-  execApprovalsSaving: boolean;
-  execApprovalsDirty: boolean;
-  execApprovalsSnapshot: ExecApprovalsSnapshot | null;
-  execApprovalsForm: ExecApprovalsFile | null;
-  execApprovalsSelectedAgent: string | null;
-  execApprovalsTarget: "gateway" | "node";
-  execApprovalsTargetNodeId: string | null;
-  execApprovalQueue: ExecApprovalRequest[];
-  execApprovalBusy: boolean;
-  execApprovalError: string | null;
-  pendingGatewayUrl: string | null;
-  configLoading: boolean;
-  configRaw: string;
-  configRawOriginal: string;
-  configValid: boolean | null;
-  configIssues: unknown[];
-  configSaving: boolean;
-  configApplying: boolean;
-  updateRunning: boolean;
-  applySessionKey: string;
-  configSnapshot: ConfigSnapshot | null;
-  configSchema: unknown;
-  configSchemaVersion: string | null;
-  configSchemaLoading: boolean;
-  configUiHints: ConfigUiHints;
-  configForm: Record<string, unknown> | null;
-  configFormOriginal: Record<string, unknown> | null;
-  configFormMode: "form" | "raw";
-  configSearchQuery: string;
-  configActiveSection: string | null;
-  configActiveSubsection: string | null;
-  channelsLoading: boolean;
-  channelsSnapshot: ChannelsStatusSnapshot | null;
-  channelsError: string | null;
-  channelsLastSuccess: number | null;
-  whatsappLoginMessage: string | null;
-  whatsappLoginQrDataUrl: string | null;
-  whatsappLoginConnected: boolean | null;
-  whatsappBusy: boolean;
-  nostrProfileFormState: NostrProfileFormState | null;
-  nostrProfileAccountId: string | null;
-  configFormDirty: boolean;
-  presenceLoading: boolean;
-  presenceEntries: PresenceEntry[];
-  presenceError: string | null;
-  presenceStatus: string | null;
-  agentsLoading: boolean;
-  agentsList: AgentsListResult | null;
-  agentsError: string | null;
-  agentsSelectedId: string | null;
-  agentsPanel: "overview" | "files" | "tools" | "skills" | "channels" | "cron";
-  agentFilesLoading: boolean;
-  agentFilesError: string | null;
-  agentFilesList: AgentsFilesListResult | null;
-  agentFileContents: Record<string, string>;
-  agentFileDrafts: Record<string, string>;
-  agentFileActive: string | null;
-  agentFileSaving: boolean;
-  agentIdentityLoading: boolean;
-  agentIdentityError: string | null;
-  agentIdentityById: Record<string, AgentIdentityResult>;
-  agentSkillsLoading: boolean;
-  agentSkillsError: string | null;
-  agentSkillsReport: SkillStatusReport | null;
-  agentSkillsAgentId: string | null;
-  sessionsLoading: boolean;
-  sessionsResult: SessionsListResult | null;
-  sessionsError: string | null;
-  sessionsFilterActive: string;
-  sessionsFilterLimit: string;
-  sessionsIncludeGlobal: boolean;
-  sessionsIncludeUnknown: boolean;
-  usageLoading: boolean;
-  usageResult: SessionsUsageResult | null;
-  usageCostSummary: CostUsageSummary | null;
-  usageError: string | null;
-  usageStartDate: string;
-  usageEndDate: string;
-  usageSelectedSessions: string[];
-  usageSelectedDays: string[];
-  usageSelectedHours: number[];
-  usageChartMode: "tokens" | "cost";
-  usageDailyChartMode: "total" | "by-type";
-  usageTimeSeriesMode: "cumulative" | "per-turn";
-  usageTimeSeriesBreakdownMode: "total" | "by-type";
-  usageTimeSeries: SessionUsageTimeSeries | null;
-  usageTimeSeriesLoading: boolean;
-  usageSessionLogs: SessionLogEntry[] | null;
-  usageSessionLogsLoading: boolean;
-  usageSessionLogsExpanded: boolean;
-  usageQuery: string;
-  usageQueryDraft: string;
-  usageQueryDebounceTimer: number | null;
-  usageSessionSort: "tokens" | "cost" | "recent" | "messages" | "errors";
-  usageSessionSortDir: "asc" | "desc";
-  usageRecentSessions: string[];
-  usageTimeZone: "local" | "utc";
-  usageContextExpanded: boolean;
-  usageHeaderPinned: boolean;
-  usageSessionsTab: "all" | "recent";
-  usageVisibleColumns: string[];
-  usageLogFilterRoles: import("./views/usage.js").SessionLogRole[];
-  usageLogFilterTools: string[];
-  usageLogFilterHasTools: boolean;
-  usageLogFilterQuery: string;
-  cronLoading: boolean;
-  cronJobs: CronJob[];
-  cronStatus: CronStatus | null;
-  cronError: string | null;
-  cronForm: CronFormState;
-  cronRunsJobId: string | null;
-  cronRuns: CronRunLogEntry[];
-  cronBusy: boolean;
-  skillsLoading: boolean;
-  skillsReport: SkillStatusReport | null;
-  skillsError: string | null;
-  skillsFilter: string;
-  skillEdits: Record<string, string>;
-  skillMessages: Record<string, SkillMessage>;
-  skillsBusyKey: string | null;
-  productCreateSkillOpen: boolean;
-  productCreateSkillId: string;
-  productCreateSkillName: string;
-  productCreateSkillDescription: string;
-  productCreateSkillFileContent: string;
-  debugLoading: boolean;
-  debugStatus: StatusSummary | null;
-  debugHealth: HealthSnapshot | null;
-  debugModels: unknown[];
-  debugHeartbeat: unknown;
-  debugCallMethod: string;
-  debugCallParams: string;
-  debugCallResult: string | null;
-  debugCallError: string | null;
-  logsLoading: boolean;
-  logsError: string | null;
-  logsFile: string | null;
-  logsEntries: LogEntry[];
-  logsFilterText: string;
-  logsLevelFilters: Record<LogLevel, boolean>;
-  logsAutoFollow: boolean;
-  logsTruncated: boolean;
-  logsCursor: number | null;
-  logsLastFetchAt: number | null;
-  logsLimit: number;
-  logsAtBottom: boolean;
-  client: GatewayBrowserClient | null;
-  refreshSessionsAfterChat: Set<string>;
-  
+  execApprovalsLoading: boolean = false;
+  execApprovalsSaving: boolean = false;
+  execApprovalsDirty: boolean = false;
+  execApprovalsSnapshot: ExecApprovalsSnapshot | null = null;
+  execApprovalsForm: ExecApprovalsFile | null = null;
+  execApprovalsSelectedAgent: string | null = null;
+  execApprovalsTarget: "gateway" | "node" = "node";
+  execApprovalsTargetNodeId: string | null = null;
+  execApprovalQueue: ExecApprovalRequest[] = [];
+  execApprovalBusy: boolean = false;
+  execApprovalError: string | null = null;
+  pendingGatewayUrl: string | null = null;
+  configLoading: boolean = false;
+  configRaw: string = "";
+  configRawOriginal: string = "";
+  configValid: boolean | null = null;
+  configIssues: unknown[] = [];
+  configSaving: boolean = false;
+  configApplying: boolean = false;
+  logsMaxBytes: number = 5 * 1024 * 1024;
+  updateRunning: boolean = false;
+  applySessionKey: string = "";
+  configSnapshot: ConfigSnapshot | null = null;
+  configSchema: unknown = null;
+  configSchemaVersion: string | null = null;
+  configSchemaLoading: boolean = false;
+  configUiHints: ConfigUiHints = {};
+  configForm: Record<string, unknown> | null = null;
+  configFormOriginal: Record<string, unknown> | null = null;
+  configFormMode: "form" | "raw" = "form";
+  configSearchQuery: string = "";
+  configActiveSection: string | null = null;
+  configActiveSubsection: string | null = null;
+  channelsLoading: boolean = false;
+  channelsSnapshot: ChannelsStatusSnapshot | null = null;
+  channelsError: string | null = null;
+  channelsLastSuccess: number | null = null;
+  whatsappLoginMessage: string | null = null;
+  whatsappLoginQrDataUrl: string | null = null;
+  whatsappLoginConnected: boolean | null = null;
+  whatsappBusy: boolean = false;
+  nostrProfileFormState: NostrProfileFormState | null = null;
+  nostrProfileAccountId: string | null = null;
+  configFormDirty: boolean = false;
+  presenceLoading: boolean = false;
+  presenceEntries: PresenceEntry[] = [];
+  presenceError: string | null = null;
+  presenceStatus: string | null = null;
+  agentsLoading: boolean = false;
+  agentsList: AgentsListResult | null = null;
+  agentsError: string | null = null;
+  agentsSelectedId: string | null = null;
+  agentsPanel: "overview" | "files" | "tools" | "skills" | "channels" | "cron" = "overview";
+  agentFilesLoading: boolean = false;
+  agentFilesError: string | null = null;
+  agentFilesList: AgentsFilesListResult | null = null;
+  agentFileContents: Record<string, string> = {};
+  agentFileDrafts: Record<string, string> = {};
+  agentFileActive: string | null = null;
+  agentFileSaving: boolean = false;
+  agentIdentityLoading: boolean = false;
+  agentIdentityError: string | null = null;
+  agentIdentityById: Record<string, AgentIdentityResult> = {};
+  agentSkillsLoading: boolean = false;
+  agentSkillsError: string | null = null;
+  agentSkillsReport: SkillStatusReport | null = null;
+  agentSkillsAgentId: string | null = null;
+  sessionsLoading: boolean = false;
+  sessionsResult: SessionsListResult | null = null;
+  sessionsError: string | null = null;
+  sessionsFilterActive: string = "all";
+  sessionsFilterLimit: string = "50";
+  sessionsIncludeGlobal: boolean = true;
+  sessionsIncludeUnknown: boolean = true;
+  usageLoading: boolean = false;
+  usageResult: SessionsUsageResult | null = null;
+  usageCostSummary: CostUsageSummary | null = null;
+  usageError: string | null = null;
+  usageStartDate: string = "";
+  usageEndDate: string = "";
+  usageSelectedSessions: string[] = [];
+  usageSelectedDays: string[] = [];
+  usageSelectedHours: number[] = [];
+  usageChartMode: "tokens" | "cost" = "tokens";
+  usageDailyChartMode: "total" | "by-type" = "total";
+  usageTimeSeriesMode: "cumulative" | "per-turn" = "cumulative";
+  usageTimeSeriesBreakdownMode: "total" | "by-type" = "total";
+  usageTimeSeries: SessionUsageTimeSeries | null = null;
+  usageTimeSeriesLoading: boolean = false;
+  usageSessionLogs: SessionLogEntry[] | null = null;
+  usageSessionLogsLoading: boolean = false;
+  usageSessionLogsExpanded: boolean = false;
+  usageQuery: string = "";
+  usageQueryDraft: string = "";
+  usageQueryDebounceTimer: number | null = null;
+  usageSessionSort: "tokens" | "cost" | "recent" | "messages" | "errors" = "recent";
+  usageSessionSortDir: "asc" | "desc" = "desc";
+  usageRecentSessions: string[] = [];
+  usageTimeZone: "local" | "utc" = "local";
+  usageContextExpanded: boolean = false;
+  usageHeaderPinned: boolean = false;
+  usageSessionsTab: "all" | "recent" = "all";
+  usageVisibleColumns: string[] = [];
+  usageLogFilterRoles: any[] = [];
+  usageLogFilterTools: string[] = [];
+  usageLogFilterHasTools: boolean = false;
+  usageLogFilterQuery: string = "";
+  cronLoading: boolean = false;
+  cronJobs: CronJob[] = [];
+  cronStatus: CronStatus | null = null;
+  cronError: string | null = null;
+  cronForm: CronFormState = {} as CronFormState;
+  cronRunsJobId: string | null = null;
+  cronRuns: CronRunLogEntry[] = [];
+  cronBusy: boolean = false;
+  skillsLoading: boolean = false;
+  skillsReport: SkillStatusReport | null = null;
+  skillsError: string | null = null;
+  skillsFilter: string = "";
+  skillEdits: Record<string, string> = {};
+  skillMessages: Record<string, SkillMessage> = {};
+  skillsBusyKey: string | null = null;
+  productCreateSkillOpen: boolean = false;
+  productCreateSkillId: string = "";
+  productCreateSkillName: string = "";
+  productCreateSkillDescription: string = "";
+  productCreateSkillFileContent: string = "";
+  debugLoading: boolean = false;
+  debugStatus: StatusSummary | null = null;
+  debugHealth: HealthSnapshot | null = null;
+  debugModels: unknown[] = [];
+  debugHeartbeat: unknown = null;
+  debugCallMethod: string = "";
+  debugCallParams: string = "{}";
+  debugCallResult: string | null = null;
+  debugCallError: string | null = null;
+  logsLoading: boolean = false;
+  logsError: string | null = null;
+  logsFile: string | null = null;
+  logsEntries: LogEntry[] = [];
+  logsFilterText: string = "";
+  logsLevelFilters: Record<LogLevel, boolean> = {} as any;
+  logsAutoFollow: boolean = true;
+  logsTruncated: boolean = false;
+  logsCursor: number | null = null;
+  logsLastFetchAt: number | null = null;
+  logsLimit: number = 200;
+  logsAtBottom: boolean = true;
+  client: GatewayBrowserClient | null = null;
+  refreshSessionsAfterChat: Set<string> = new Set();
+
   // Skill editing state
-  productEditingSkillOpen: boolean;
-  productEditingSkillId: string | null;
-  productEditingSkillName: string;
-  productEditingSkillDescription: string;
-  productEditingSkillCode: string;
+  productEditingSkillOpen: boolean = false;
+  productEditingSkillId: string | null = null;
+  productEditingSkillName: string = "";
+  productEditingSkillDescription: string = "";
+  productEditingSkillCode: string = "";
 
   // Agent Persona editing state
-  productEditingAgentOpen: boolean;
-  productEditingAgentId: string | null;
-  productEditingAgentName: string;
-  productEditingAgentDescription: string;
-  productEditingAgentTemperament: string;
-  productEditingAgentCommunicationStyle: string;
-  productEditingAgentKnowledgeBaseSource: string; // New property
+  productEditingAgentOpen: boolean = false;
+  productEditingAgentId: string | null = null;
+  productEditingAgentName: string = "";
+  productEditingAgentDescription: string = "";
+  productEditingAgentTemperament: string = "";
+  productEditingAgentCommunicationStyle: string = "";
+  productEditingAgentKnowledgeBaseSource: string = "";
 
 
   // Dev Drawer activation
@@ -291,7 +297,11 @@ export type AppViewState = {
   private lastLogoClickTime: number = 0;
 
   constructor() {
-    const { tab, simple, onboarding, product } = parseLocation();
+    const { tab, sessionKey } = parseLocation(window.location.pathname, window.location.search);
+    const params = new URLSearchParams(window.location.search);
+    const simple = params.has("simple") || params.get("mode") === "simple";
+    const product = !simple;
+    const onboarding = params.has("onboarding");
 
     this.simpleMode = simple;
     this.productMode = product;
@@ -373,7 +383,12 @@ export type AppViewState = {
     }
 
     window.addEventListener("popstate", () => {
-      const { tab, simple, onboarding, product } = parseLocation();
+      const { tab, sessionKey } = parseLocation(window.location.pathname, window.location.search);
+      const params = new URLSearchParams(window.location.search);
+      const simple = params.has("simple") || params.get("mode") === "simple";
+      const product = !simple;
+      const onboarding = params.has("onboarding");
+
       this.tab = tab;
       this.simpleMode = simple;
       this.onboarding = onboarding;
@@ -478,12 +493,13 @@ export type AppViewState = {
     this.lastError = null;
     this.client.onHello = (hello) => {
       this.hello = hello;
-      this.assistantName = hello.assistantName ?? "OpenClaw";
-      this.assistantAvatar = hello.assistantAvatarUrl ?? null;
-      if (hello.welcomeMessage) {
+      const snapshot = hello.snapshot as any;
+      this.assistantName = snapshot?.assistantName ?? "OpenClaw";
+      this.assistantAvatar = snapshot?.assistantAvatarUrl ?? null;
+      if (snapshot?.welcomeMessage) {
         sendAppEvent({
           type: "info",
-          message: hello.welcomeMessage,
+          message: snapshot.welcomeMessage,
         });
       }
       this.loadOverview();
@@ -530,7 +546,8 @@ export type AppViewState = {
       transitionTheme(document.documentElement);
     }
     document.documentElement.dataset.theme = this.themeResolved;
-    updateUiSettings(produce(this.settings, (draft) => void (draft.theme = theme)));
+    this.settings = { ...this.settings, theme };
+    updateUiSettings(this.settings);
   };
 
   applySettings = (next: UiSettings) => {
@@ -572,9 +589,10 @@ export type AppViewState = {
         this.agentIdentityLoading = true;
         this.agentIdentityError = null;
         const identity = await this.client.agents.getIdentity(this.assistantAgentId);
-        this.agentIdentityById = produce(this.agentIdentityById, (draft) => {
-          draft[this.assistantAgentId!] = identity;
-        });
+        this.agentIdentityById = {
+          ...this.agentIdentityById,
+          [this.assistantAgentId!]: identity,
+        };
       }
     } catch (e) {
       this.agentIdentityError = String(e);
@@ -690,9 +708,10 @@ export type AppViewState = {
         name: this.productCreateProjectName,
         description: this.productCreateProjectDesc,
       });
-      this.productProjects = produce(this.productProjects, (draft) => {
-        draft.push({ id: newAgent.id, name: newAgent.name || newAgent.id, sessionKeys: [] });
-      });
+      this.productProjects = [
+        ...this.productProjects,
+        { id: newAgent.id, name: newAgent.name || newAgent.id, sessionKeys: [] }
+      ];
       this.productSaveProjects();
       this.productCreateProjectOpen = false;
       this.productCreateProjectName = "";
@@ -761,13 +780,12 @@ export type AppViewState = {
       this.productSessionsResult = sessions;
 
       // Assign sessions to projects based on agentId
-      this.productProjects = produce(this.productProjects, (draft) => {
-        for (const project of draft) {
-          project.sessionKeys = sessions.sessions
-            .filter((s) => getSessionAgentId(s) === project.id)
-            .map((s) => s.key);
-        }
-      });
+      this.productProjects = this.productProjects.map((project) => ({
+        ...project,
+        sessionKeys: sessions.sessions
+          .filter((s) => getSessionAgentId(s.key) === project.id)
+          .map((s) => s.key)
+      }));
       this.productSaveProjects();
     } catch (e) {
       this.productSessionsError = String(e);
@@ -1181,33 +1199,6 @@ export type AppViewState = {
     this.splitRatio = ratio;
   };
 
-  // --- Logs
-  logsLimit = 1000;
-  logsCursor: number | null = null;
-  logsLastFetchAt: number | null = null;
-  logsEntries: LogEntry[] = [];
-  logsError: string | null = null;
-  logsLoading = false;
-  logsFilterText = "";
-  logsLevelFilters: Record<LogLevel, boolean> = {
-    [LogLevel.Debug]: true,
-    [LogLevel.Info]: true,
-    [LogLevel.Warn]: true,
-    [LogLevel.Error]: true,
-    [LogLevel.Fatal]: true,
-  };
-  logsAutoFollow = true;
-  logsTruncated = false;
-  logsFile: string | null = null;
-
-  productCreateSkillOpen: boolean;
-  productCreateSkillId: string;
-  productCreateSkillName: string;
-  productCreateSkillDescription: string;
-  productCreateSkillFileContent: string;
-
-  private logsScrollListener?: () => void;
-  private logsObserver?: MutationObserver;
 
   // --- Skill Management ---
   productLoadSkills = async () => {
@@ -1298,7 +1289,7 @@ export type AppViewState = {
         try {
           const agentGetResult = await this.client.request<AgentGetResult>("agents.get", { agentId: agent.id });
           const currentSkills = agentGetResult.config?.skills || [];
-          
+
           if (!currentSkills.includes(skillId)) {
             const updatedSkills = [...currentSkills, skillId];
             await this.client.request("agents.update", {
@@ -1308,7 +1299,7 @@ export type AppViewState = {
             successCount++;
           } else {
             // Skill already assigned, count as success for this agent
-            successCount++; 
+            successCount++;
           }
         } catch (e) {
           console.error(`Failed to assign skill ${skillId} to agent ${agent.id}: ${e}`);
@@ -1457,5 +1448,38 @@ export async function run(ctx: any, args: any) {
     }
   };
 
-  handleSendChat = async () => {
 
+  productSaveAgentSettings = async (agentId: string) => {
+    if (!this.client) return;
+    try {
+      this.agentsLoading = true;
+      await this.client.request("agents.update", {
+        agentId,
+        config: {
+          model: this.productEditingAgentModel,
+          systemPrompt: this.productEditingAgentPrompt,
+          anthropicApiKey: this.productEditingAgentApiKey,
+        },
+      });
+      sendAppEvent({ type: "success", message: "Настройки агента сохранены." });
+      await this.productLoadProjects();
+    } catch (e) {
+      sendAppEvent({ type: "error", message: `Ошибка сохранения настроек: ${e}` });
+    } finally {
+      this.agentsLoading = false;
+    }
+  };
+
+  loadLogs = async () => {
+    // Already implemented as productLoadLogs?
+    if ((this as any).productLoadLogs) {
+      return (this as any).productLoadLogs();
+    }
+  };
+
+  loadAgents = async () => {
+    if ((this as any).productLoadAgents) {
+      return (this as any).productLoadAgents();
+    }
+  };
+}

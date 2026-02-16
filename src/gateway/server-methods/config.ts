@@ -125,10 +125,10 @@ export const configHandlers: GatewayRequestHandlers = {
       config: cfg,
       workspaceDir,
       logger: {
-        info: () => {},
-        warn: () => {},
-        error: () => {},
-        debug: () => {},
+        info: () => { },
+        warn: () => { },
+        error: () => { },
+        debug: () => { },
       },
     });
     const schema = buildConfigSchema({

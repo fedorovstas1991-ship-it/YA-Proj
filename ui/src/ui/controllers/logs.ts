@@ -1,6 +1,18 @@
 import type { GatewayBrowserClient } from "../gateway.ts";
 import type { LogEntry, LogLevel } from "../types.ts";
 
+export function watchGatewayLog(state: LogsState, client: GatewayBrowserClient | null) {
+  if (!client) return;
+  // Poll for logs if no event exists, or set up a listener if it does.
+  // For now, we'll assume it's polling since handleGatewayEvent in app-gateway.ts doesn't show a log event.
+  const timer = setInterval(() => {
+    if (state.connected) {
+      void loadLogs(state, { quiet: true });
+    }
+  }, 5000);
+  return () => clearInterval(timer);
+}
+
 export type LogsState = {
   client: GatewayBrowserClient | null;
   connected: boolean;

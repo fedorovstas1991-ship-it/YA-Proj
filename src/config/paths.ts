@@ -220,10 +220,17 @@ export const DEFAULT_GATEWAY_PORT = 18789;
  * Default: os.tmpdir()/openclaw-<uid> (uid suffix when available).
  */
 export function resolveGatewayLockDir(tmpdir: () => string = os.tmpdir): string {
-  const base = tmpdir();
-  const uid = typeof process.getuid === "function" ? process.getuid() : undefined;
-  const suffix = uid != null ? `openclaw-${uid}` : "openclaw";
-  return path.join(base, suffix);
+  // Use a runtime directory within the state directory to ensure write access
+  // and avoid system temp permission issues (especially on macOS app sandboxing).
+  try {
+    const stateDir = resolveStateDir();
+    return path.join(stateDir, "run");
+  } catch {
+    const base = tmpdir();
+    const uid = typeof process.getuid === "function" ? process.getuid() : undefined;
+    const suffix = uid != null ? `openclaw-${uid}` : "openclaw";
+    return path.join(base, suffix);
+  }
 }
 
 const OAUTH_FILENAME = "oauth.json";

@@ -1,5 +1,12 @@
 import type { IconName } from "./icons.js";
 
+export function parseLocation(pathname: string, search: string, basePath = ""): { tab: Tab; sessionKey: string | null } {
+  const tab = tabFromPath(pathname, basePath) || "chat";
+  const params = new URLSearchParams(search);
+  const sessionKey = params.get("sessionKey") || params.get("session") || null;
+  return { tab, sessionKey };
+}
+
 export const TAB_GROUPS = [
   { label: "Chat", tabs: ["chat"] },
   {

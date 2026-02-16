@@ -90,7 +90,7 @@ import {
 import { loadSettings, type UiSettings } from "./storage.ts";
 import { type ChatAttachment, type ChatQueueItem, type CronFormState } from "./ui-types.ts";
 
-import "./onboarding/onboarding-wizard.js"; // Import the onboarding wizard component
+import "../../../src/onboarding/onboarding-wizard.js"; // Import the onboarding wizard component
 
 declare global {
   interface Window {

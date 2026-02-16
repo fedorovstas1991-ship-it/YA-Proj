@@ -14,3 +14,9 @@ export function resolveTheme(mode: ThemeMode): ResolvedTheme {
   }
   return mode;
 }
+
+export function detectTheme(): ResolvedTheme {
+  return getSystemTheme();
+}
+
+export { startThemeTransition as transitionTheme } from "./theme-transition.ts";

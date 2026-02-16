@@ -1,5 +1,19 @@
 import type { GatewayBrowserClient } from "../gateway.ts";
 import type { ChatAttachment } from "../ui-types.ts";
+
+export type ChatStreamCallback = (payload: ChatEventPayload) => void;
+const chatStreamListeners = new Set<ChatStreamCallback>();
+
+export function watchChatStream(state: any, callback: ChatStreamCallback) {
+  chatStreamListeners.add(callback);
+  return () => chatStreamListeners.delete(callback);
+}
+
+export function notifyChatStreamListeners(payload: ChatEventPayload) {
+  for (const listener of chatStreamListeners) {
+    listener(payload);
+  }
+}
 import { extractText } from "../chat/message-extract.ts";
 import { generateUUID } from "../uuid.ts";
 
@@ -103,11 +117,11 @@ export async function sendChatMessage(
   // Convert attachments to API format (gateway expects base64 without data URL prefix).
   const apiAttachments = hasAttachments
     ? attachments.map((att) => ({
-        type: att.kind,
-        mimeType: att.mimeType,
-        fileName: att.fileName,
-        content: att.base64,
-      }))
+      type: att.kind,
+      mimeType: att.mimeType,
+      fileName: att.fileName,
+      content: att.base64,
+    }))
     : undefined;
 
   try {

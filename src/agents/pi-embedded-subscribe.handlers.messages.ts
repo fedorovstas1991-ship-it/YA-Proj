@@ -198,6 +198,7 @@ export function handleMessageEnd(
   }
 
   const assistantMessage = msg;
+  ctx.log.warn(`[DEBUG message_end] assistantMessage: ${JSON.stringify(assistantMessage, null, 2)}`);
   ctx.recordAssistantUsage((assistantMessage as { usage?: unknown }).usage);
   promoteThinkingTagsToBlocks(assistantMessage);
 

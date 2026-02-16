@@ -127,16 +127,16 @@ export class OnboardingApiKey extends LitElement {
     return html`
       <div class="mockup-container">
         <div class="mockup-header">
-          <h3>Подключите ваш AI</h3>
+          <h3>Введите Элиза Токен</h3>
         </div>
-        <p>Подключите ваш любимый AI, введя API ключ.</p>
+        <p>Токен нужен для подключения к Claude Sonnet 4.5</p>
         <div class="form-group">
-          <label for="api-key">API Ключ (например, OpenAI, Anthropic)</label>
+          <label for="api-key">Ваш рабочий Элиза Токен</label>
           <input
             type="text"
             id="api-key"
             class="mockup-input"
-            placeholder="sk-***************************"
+            placeholder="sk-ant-***************************"
             .value=${this.apiKey}
             @input=${this._handleInputChange}
           />

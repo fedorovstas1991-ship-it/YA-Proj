@@ -318,6 +318,7 @@ export const chatHandlers: GatewayRequestHandlers = {
     });
   },
   "chat.send": async ({ params, respond, context, client }) => {
+    console.error("[DEBUG chat.send] received params:", JSON.stringify(params, null, 2));
     if (!validateChatSendParams(params)) {
       respond(
         false,
@@ -355,10 +356,10 @@ export const chatHandlers: GatewayRequestHandlers = {
               ? a.content
               : ArrayBuffer.isView(a?.content)
                 ? Buffer.from(
-                    a.content.buffer,
-                    a.content.byteOffset,
-                    a.content.byteLength,
-                  ).toString("base64")
+                  a.content.buffer,
+                  a.content.byteOffset,
+                  a.content.byteLength,
+                ).toString("base64")
                 : undefined,
         }))
         .filter((a) => a.content) ?? [];
@@ -504,6 +505,7 @@ export const chatHandlers: GatewayRequestHandlers = {
       const dispatcher = createReplyDispatcher({
         ...prefixOptions,
         onError: (err) => {
+          console.error(`[DEBUG chat.send] webchat dispatch inner error: ${formatForLog(err)}`);
           context.logGateway.warn(`webchat dispatch failed: ${formatForLog(err)}`);
         },
         deliver: async (payload, info) => {
@@ -601,6 +603,7 @@ export const chatHandlers: GatewayRequestHandlers = {
           });
         })
         .catch((err) => {
+          console.error(`[DEBUG chat.send] dispatch promise caught: ${err}`);
           const error = errorShape(ErrorCodes.UNAVAILABLE, String(err));
           context.dedupe.set(`chat:${clientRunId}`, {
             ts: Date.now(),
@@ -623,6 +626,7 @@ export const chatHandlers: GatewayRequestHandlers = {
           context.chatAbortControllers.delete(clientRunId);
         });
     } catch (err) {
+      console.error(`[DEBUG chat.send] top-level catch: ${err}`);
       const error = errorShape(ErrorCodes.UNAVAILABLE, String(err));
       const payload = {
         runId: clientRunId,

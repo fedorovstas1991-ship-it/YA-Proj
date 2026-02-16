@@ -1,10 +1,59 @@
-import { html, nothing } from "lit";
+import { html, nothing, type TemplateResult } from "lit";
 import type { AppViewState } from "./app-view-state.ts";
 import { refreshChatAvatar } from "./app-chat.ts";
 import { loadChatHistory, type ChatState } from "./controllers/chat.ts";
 import { icons } from "./icons.ts";
 import { normalizeBasePath, pathForTab } from "./navigation.ts";
 import { renderChat } from "./views/chat.ts";
+
+
+function renderSettingsPanel(state: AppViewState) {
+  const agentId = state.productAgentId ?? state.agentsList?.defaultId ?? "main";
+  const agent = state.agentsList?.agents?.find(a => a.id === agentId);
+
+  return html`
+    <div class="product-sidebar__section">
+      <div class="product-sidebar__title">Настройки агента</div>
+      <div class="product-sidebar__item">
+        <label class="field">
+          <span>Модель</span>
+          <input 
+            .value=${state.productEditingAgentModel || agent?.config?.model || ""} 
+            @input=${(e: Event) => (state.productEditingAgentModel = (e.target as HTMLInputElement).value)}
+            placeholder="claude-3-5-sonnet-20241022" 
+          />
+        </label>
+      </div>
+      <div class="product-sidebar__item">
+        <label class="field">
+          <span>Системный промпт</span>
+          <textarea 
+            style="min-height: 120px;"
+            .value=${state.productEditingAgentPrompt || agent?.config?.systemPrompt || ""} 
+            @input=${(e: Event) => (state.productEditingAgentPrompt = (e.target as HTMLTextAreaElement).value)}
+            placeholder="Ты - полезный ассистент..."
+          ></textarea>
+        </div>
+      </div>
+      <div class="product-sidebar__item">
+        <label class="field">
+          <span>Anthropic API Key</span>
+          <input 
+            type="password"
+            .value=${state.productEditingAgentApiKey || ""} 
+            @input=${(e: Event) => (state.productEditingAgentApiKey = (e.target as HTMLInputElement).value)}
+            placeholder="sk-ant-..." 
+          />
+        </label>
+      </div>
+      <div class="row" style="margin-top: 12px;">
+        <button class="btn primary" style="width: 100%" @click=${() => void state.productSaveAgentSettings(agentId)}>
+          Сохранить настройки
+        </button>
+      </div>
+    </div>
+  `;
+}
 
 function buildHref(tab: string, basePath: string): string {
   const base = normalizeBasePath(basePath ?? "");
@@ -134,11 +183,10 @@ function renderProjectsPanel(state: AppViewState) {
 
   return html`
     <div class="product-projects-panel">
-      ${
-        projects.length > 0
-          ? html`
+      ${projects.length > 0
+      ? html`
             ${projects.map(
-              (project) => html`
+        (project) => html`
                 <div class="product-project-group">
                   <button
                     class="product-project-header"
@@ -147,108 +195,91 @@ function renderProjectsPanel(state: AppViewState) {
                     <span class="product-project-icon">${state.productCollapsedProjects.has(project.id) ? "▶" : "▼"}</span>
                     <span class="product-project-name">📁 ${project.name}</span>
                     <button class="btn btn--sm" title="Новый чат в проекте" @click=${(e: Event) => {
-                      e.stopPropagation();
-                      void state.productNewChatInProject(project.id);
-                    }}>+
+            e.stopPropagation();
+            void state.productNewChatInProject(project.id);
+          }}>+
                     </button>
-                    <button class="btn btn--sm danger" title="Удалить проект" @click=${(
-                      e: Event,
-                    ) => {
-                      e.stopPropagation();
-                      state.productConfirmDeleteProject(project.id);
-                    }}>
-                      ${icons.trash}
-                    </button>
-                    <button class="btn btn--sm danger" title="Удалить проект" @click=${(
-                      e: Event,
-                    ) => {
-                      e.stopPropagation();
-                      state.productConfirmDeleteProject(project.id);
-                    }}>
-                      ${icons.trash}
-                    </button>
+
                   </button>
-                  ${
-                    !state.productCollapsedProjects.has(project.id)
-                      ? html`
+                  ${!state.productCollapsedProjects.has(project.id)
+            ? html`
                         <div class="product-project-chats">
                           ${(project.sessionKeys ?? [])
-                            .map((key) => sessions.find((s) => s.key === key))
-                            .filter(Boolean)
-                            .map(
-                              (s) => html`
+                .map((key) => sessions.find((s) => s.key === key))
+                .filter((s): s is NonNullable<typeof s> => !!s)
+                .map(
+                  (s) => html`
                                 <button
                                   class="product-item product-item--nested ${s?.key === state.sessionKey ? "active" : ""}"
                                   ?disabled=${!chatReady}
                                 >
                                   <div class="product-item__title" @click=${() => {
-                                    if (s?.key) {
-                                      void state.productOpenSession(s.key);
-                                    }
-                                  }}>└ ${s?.displayName ?? s?.label ?? s?.key}</div>
+                      if (s?.key) {
+                        void state.productOpenSession(s.key);
+                      }
+                    }}>└ ${s?.displayName ?? s?.label ?? s?.key}</div>
                                   <div class="product-item__sub" @click=${() => {
-                                    if (s?.key) {
-                                      void state.productOpenSession(s.key);
-                                    }
-                                  }}>${s?.lastMessage?.text ?? ""}</div>
+                      if (s?.key) {
+                        void state.productOpenSession(s.key);
+                      }
+                    }}>${s?.lastMessage?.text ?? ""}</div>
                                   <button class="btn btn--sm danger" title="Удалить чат" @click=${(
-                                    e: Event,
-                                  ) => {
-                                    e.stopPropagation();
-                                    state.productConfirmDeleteChat(s.key!);
-                                  }}>
+                      e: Event,
+                    ) => {
+                      e.stopPropagation();
+                      state.productConfirmDeleteChat(s.key!);
+                    }}>
                                     ${icons.trash}
                                   </button>
                                 </button>
                               `,
-                            )}
+                )}
                         </div>
                       `
-                      : nothing
-                  }
+            : nothing
+          }
                 </div>
               `,
-            )}
+      )}
           `
-          : nothing
-      }
+      : nothing
+    }
 
-      ${
-        ungroupedSessions.length > 0
-          ? html`
+      ${ungroupedSessions.length > 0
+      ? html`
             <div class="product-project-group">
               <div class="product-project-header product-project-header--ungrouped">
                 <span class="product-project-name">Без проекта</span>
               </div>
               <div class="product-project-chats">
                 ${ungroupedSessions.map(
-                  (s) => html`
+        (s) => html`
                     <button
                       class="product-item product-item--nested ${s.key === state.sessionKey ? "active" : ""}"
                       ?disabled=${!chatReady}
                     >
                       <div class="product-item__title" @click=${() => {
-                        void state.productOpenSession(s.key);
-                      }}>└ ${s.displayName ?? s.label ?? s.key}</div>
+            void state.productOpenSession(s.key);
+          }}>└ ${s.displayName ?? s.label ?? s.key}</div>
                       <div class="product-item__sub" @click=${() => {
-                        void state.productOpenSession(s.key);
-                      }}>${s.lastMessage?.text ?? ""}</div>
+            void state.productOpenSession(s.key);
+          }}>${s.lastMessage?.text ?? ""}</div>
                       <button class="btn btn--sm danger" title="Удалить чат" @click=${(
-                        e: Event,
-                      ) => {
-                        e.stopPropagation();
-                        state.productConfirmDeleteChat(s.key);
-                      }}>
+            e: Event,
+          ) => {
+            e.stopPropagation();
+            state.productConfirmDeleteChat(s.key);
+          }}>
                         ${icons.trash}
                       </button>
                     </button>
                   `,
-                )}
+      )}
               </div>
             </div>
           `
-          : nothing
-      }
+      : nothing
+    }
     </div>
   `;
 }
@@ -296,57 +327,54 @@ function renderSkillsPanel(state: AppViewState) {
       <div class="card-title">Управление скиллами</div>
       <div class="card-sub">Список доступных скиллов и их конфигурация.</div>
       <div class="product-skills-list">
-        ${
-          state.skillsReport?.skills && state.skillsReport.skills.length > 0
-            ? state.skillsReport.skills.map(
-                (skill) => html`
+        ${state.skillsReport?.skills && state.skillsReport.skills.length > 0
+      ? state.skillsReport.skills.map(
+        (skill) => html`
                 <div class="product-skill-item">
                   <div class="product-skill-item__header">
-                    <span class="product-skill-item__name">${skill.id}</span>
-                    ${
-                      skill.status === "active"
-                        ? html`
+                    <span class="product-skill-item__name">${skill.skillKey}</span>
+                    ${!skill.disabled
+            ? html`
                             <span class="badge ok">Активен</span>
                           `
-                        : html`
+            : html`
                             <span class="badge warn">Неактивен</span>
                           `
-                    }
+          }
                   </div>
                   <div class="product-skill-item__description">${skill.description}</div>
                   <div class="product-skill-item__actions">
-                    <button class="btn btn--sm" @click=${() => state.productEditSkill(skill.id)}>
+                    <button class="btn btn--sm" @click=${() => state.productEditSkill(skill.skillKey)}>
                       ${icons.edit} Редактировать
                     </button>
-                    ${
-                      skill.status === "active"
-                        ? html`
+                    ${!skill.disabled
+            ? html`
                           <button
                             class="btn btn--sm danger"
-                            @click=${() => state.productDeactivateSkill(skill.id)}
-                            ?disabled=${state.skillsBusyKey === skill.id}
+                            @click=${() => state.productDeactivateSkill(skill.skillKey)}
+                            ?disabled=${state.skillsBusyKey === skill.skillKey}
                           >
-                            ${state.skillsBusyKey === skill.id ? "Отключаю..." : "Отключить"}
+                            ${state.skillsBusyKey === skill.skillKey ? "Отключаю..." : "Отключить"}
                           </button>
                         `
-                        : html`
+            : html`
                           <button
                             class="btn btn--sm primary"
-                            @click=${() => state.productActivateSkill(skill.id)}
-                            ?disabled=${state.skillsBusyKey === skill.id}
+                            @click=${() => state.productActivateSkill(skill.skillKey)}
+                            ?disabled=${state.skillsBusyKey === skill.skillKey}
                           >
-                            ${state.skillsBusyKey === skill.id ? "Включаю..." : "Включить"}
+                            ${state.skillsBusyKey === skill.skillKey ? "Включаю..." : "Включить"}
                           </button>
                         `
-                    }
+          }
                   </div>
                 </div>
               `,
-              )
-            : html`
+      )
+      : html`
                 <p>Нет доступных скиллов.</p>
               `
-        }
+    }
       </div>
       <button class="btn primary" @click=${() => state.productCreateSkill()}>Добавить новый скилл</button>
       ${state.skillsError ? html`<div class="callout danger" style="margin-top:12px;">${state.skillsError}</div>` : nothing}
@@ -468,31 +496,29 @@ export function renderProductApp(state: AppViewState) {
           <section class="card">
             <div class="card-title">Настройка</div>
             <div class="card-sub">Нужно только ввести Eliza API key (сохраняется локально на gateway).</div>
-            ${
-              state.onboardingWizardStatus !== "running"
-                ? html`
+            ${state.onboardingWizardStatus !== "running"
+          ? html`
                     <div class="row">
                       <button
                         class="btn primary"
                         ?disabled=${state.onboardingWizardBusy}
                         @click=${() => {
-                          state.onboardingWizardFlow = "eliza";
-                          state.onboardingWizardMode = "local";
-                          state.onboardingWizardWorkspace = "";
-                          state.onboardingWizardResetConfig = false;
-                          void state.startOnboardingWizard();
-                        }}
+              state.onboardingWizardFlow = "eliza";
+              state.onboardingWizardMode = "local";
+              state.onboardingWizardWorkspace = "";
+              state.onboardingWizardResetConfig = false;
+              void state.startOnboardingWizard();
+            }}
                       >
                         ${state.onboardingWizardBusy ? "Запуск..." : "Старт"}
                       </button>
                     </div>
                   `
-                : nothing
-            }
+          : nothing
+        }
             ${state.onboardingWizardError ? html`<div class="callout danger" style="margin-top:12px;">${state.onboardingWizardError}</div>` : nothing}
-            ${
-              state.onboardingWizardStatus === "running" && state.onboardingWizardStep
-                ? html`
+            ${state.onboardingWizardStatus === "running" && state.onboardingWizardStep
+          ? html`
                     <div class="wizard-container" style="margin: -20px -24px -16px; padding: 20px 24px 16px;">
                       <div class="wizard-card">
                         <!-- Progress Bar -->
@@ -502,54 +528,50 @@ export function renderProductApp(state: AppViewState) {
                           </span>
                           <div class="wizard-progress-bar">
                             ${Array.from({ length: state.onboardingWizardTotalSteps ?? 1 }).map(
-                              (_, i) => html`
+            (_, i) => html`
                                 <div
                                   class="wizard-segment"
-                                  data-state=${
-                                    i < (state.onboardingWizardCurrentStep ?? 0)
-                                      ? "completed"
-                                      : i === (state.onboardingWizardCurrentStep ?? 0)
-                                        ? "current"
-                                        : "upcoming"
-                                  }
+                                  data-state=${i < (state.onboardingWizardCurrentStep ?? 0)
+                ? "completed"
+                : i === (state.onboardingWizardCurrentStep ?? 0)
+                  ? "current"
+                  : "upcoming"
+              }
                                 ></div>
                               `,
-                            )}
+          )}
                           </div>
                         </div>
 
                         <!-- Step Content -->
                         <div class="wizard-step-content">
-                          ${
-                            state.onboardingWizardStep.title
-                              ? html`<h2 class="wizard-title">${state.onboardingWizardStep.title}</h2>`
-                              : nothing
-                          }
-                          ${
-                            state.onboardingWizardStep.message
-                              ? html`<p class="wizard-description">${state.onboardingWizardStep.message}</p>`
-                              : nothing
-                          }
+                          ${state.onboardingWizardStep.title
+              ? html`<h2 class="wizard-title">${state.onboardingWizardStep.title}</h2>`
+              : nothing
+            }
+                          ${state.onboardingWizardStep.message
+              ? html`<p class="wizard-description">${state.onboardingWizardStep.message}</p>`
+              : nothing
+            }
 
                           <!-- Text Input -->
-                          ${
-                            state.onboardingWizardStep.type === "text"
-                              ? html`
+                          ${state.onboardingWizardStep.type === "text"
+              ? html`
                                 <input
                                   type="text"
                                   class="wizard-input"
                                   .value=${state.onboardingWizardTextAnswer}
                                   @input=${(e: Event) =>
-                                    (state.onboardingWizardTextAnswer = (
-                                      e.target as HTMLInputElement
-                                    ).value)}
+                (state.onboardingWizardTextAnswer = (
+                  e.target as HTMLInputElement
+                ).value)}
                                   placeholder=${state.onboardingWizardStep.placeholder ?? "Введите значение"}
                                   ?disabled=${state.onboardingWizardBusy}
                                   @keydown=${(e: KeyboardEvent) => {
-                                    if (e.key === "Enter") {
-                                      void state.advanceOnboardingWizard();
-                                    }
-                                  }}
+                  if (e.key === "Enter") {
+                    void state.advanceOnboardingWizard();
+                  }
+                }}
                                   aria-label="Text input"
                                 />
                                 <button
@@ -560,28 +582,27 @@ export function renderProductApp(state: AppViewState) {
                                   ${state.onboardingWizardBusy ? "⏳ Сохраняю…" : "Продолжить"}
                                 </button>
                               `
-                              : nothing
-                          }
+              : nothing
+            }
 
                           <!-- Password Input -->
-                          ${
-                            state.onboardingWizardStep.type === "password"
-                              ? html`
+                          ${state.onboardingWizardStep.type === "password"
+              ? html`
                                 <input
                                   type="password"
                                   class="wizard-input"
                                   .value=${state.onboardingWizardTextAnswer}
                                   @input=${(e: Event) =>
-                                    (state.onboardingWizardTextAnswer = (
-                                      e.target as HTMLInputElement
-                                    ).value)}
+                (state.onboardingWizardTextAnswer = (
+                  e.target as HTMLInputElement
+                ).value)}
                                   placeholder=${state.onboardingWizardStep.placeholder ?? "Введите пароль"}
                                   ?disabled=${state.onboardingWizardBusy}
                                   @keydown=${(e: KeyboardEvent) => {
-                                    if (e.key === "Enter") {
-                                      void state.advanceOnboardingWizard();
-                                    }
-                                  }}
+                  if (e.key === "Enter") {
+                    void state.advanceOnboardingWizard();
+                  }
+                }}
                                   aria-label="Password input"
                                 />
                                 <button
@@ -592,13 +613,12 @@ export function renderProductApp(state: AppViewState) {
                                   ${state.onboardingWizardBusy ? "⏳ Сохраняю…" : "Продолжить"}
                                 </button>
                               `
-                              : nothing
-                          }
+              : nothing
+            }
 
                           <!-- Confirm Buttons -->
-                          ${
-                            state.onboardingWizardStep.type === "confirm"
-                              ? html`
+                          ${state.onboardingWizardStep.type === "confirm"
+              ? html`
                                 <div class="wizard-confirm-buttons">
                                   <button
                                     class="wizard-button secondary"
@@ -618,18 +638,16 @@ export function renderProductApp(state: AppViewState) {
                                   </button>
                                 </div>
                               `
-                              : nothing
-                          }
+              : nothing
+            }
 
                           <!-- Select Options -->
-                          ${
-                            state.onboardingWizardStep.type === "select"
-                              ? html`
+                          ${state.onboardingWizardStep.type === "select"
+              ? html`
                                 <div class="wizard-select-options">
-                                  ${
-                                    (state.onboardingWizardStep.options ?? []).length > 0
-                                      ? (state.onboardingWizardStep.options ?? []).map(
-                                          (opt) => html`
+                                  ${(state.onboardingWizardStep.options ?? []).length > 0
+                  ? (state.onboardingWizardStep.options ?? []).map(
+                    (opt) => html`
                                             <button
                                               class="wizard-option"
                                               ?disabled=${state.onboardingWizardBusy}
@@ -642,61 +660,58 @@ export function renderProductApp(state: AppViewState) {
                                               <div class="wizard-option-checkmark"></div>
                                             </button>
                                           `,
-                                        )
-                                      : html`
+                  )
+                  : html`
                                           <div style="opacity: 0.6; font-style: italic">Нет доступных опций</div>
                                         `
-                                  }
+                }
                                 </div>
                               `
-                              : nothing
-                          }
+              : nothing
+            }
 
                           <!-- Multiselect Options -->
-                          ${
-                            state.onboardingWizardStep.type === "multiselect"
-                              ? html`
+                          ${state.onboardingWizardStep.type === "multiselect"
+              ? html`
                                 <div class="wizard-multiselect-options">
-                                  ${
-                                    (state.onboardingWizardStep.options ?? []).length > 0
-                                      ? (state.onboardingWizardStep.options ?? []).map(
-                                          (opt, idx) => html`
+                                  ${(state.onboardingWizardStep.options ?? []).length > 0
+                  ? (state.onboardingWizardStep.options ?? []).map(
+                    (opt, idx) => html`
                                             <button
                                               class="wizard-multiselect-item ${state.onboardingWizardMultiAnswers.includes(idx) ? "selected" : ""}"
                                               ?disabled=${state.onboardingWizardBusy}
                                               @click=${() => {
-                                                const checked =
-                                                  state.onboardingWizardMultiAnswers.includes(idx);
-                                                if (checked) {
-                                                  state.onboardingWizardMultiAnswers =
-                                                    state.onboardingWizardMultiAnswers.filter(
-                                                      (i) => i !== idx,
-                                                    );
-                                                } else {
-                                                  state.onboardingWizardMultiAnswers = [
-                                                    ...state.onboardingWizardMultiAnswers,
-                                                    idx,
-                                                  ].toSorted((a, b) => a - b);
-                                                }
-                                              }}
+                        const checked =
+                          state.onboardingWizardMultiAnswers.includes(idx);
+                        if (checked) {
+                          state.onboardingWizardMultiAnswers =
+                            state.onboardingWizardMultiAnswers.filter(
+                              (i) => i !== idx,
+                            );
+                        } else {
+                          state.onboardingWizardMultiAnswers = [
+                            ...state.onboardingWizardMultiAnswers,
+                            idx,
+                          ].toSorted((a, b) => a - b);
+                        }
+                      }}
                                               aria-label="Select: ${opt.label}"
                                             >
                                               <div class="wizard-checkbox"></div>
                                               <div class="wizard-multiselect-label">
                                                 <div class="wizard-multiselect-text">${opt.label}</div>
-                                                ${
-                                                  opt.hint
-                                                    ? html`<div class="wizard-multiselect-hint">${opt.hint}</div>`
-                                                    : nothing
-                                                }
+                                                ${opt.hint
+                        ? html`<div class="wizard-multiselect-hint">${opt.hint}</div>`
+                        : nothing
+                      }
                                               </div>
                                             </button>
                                           `,
-                                        )
-                                      : html`
+                  )
+                  : html`
                                           <div style="opacity: 0.6; font-style: italic">Нет доступных опций</div>
                                         `
-                                  }
+                }
                                 </div>
                                 <button
                                   class="wizard-button primary"
@@ -707,14 +722,13 @@ export function renderProductApp(state: AppViewState) {
                                   ${state.onboardingWizardBusy ? "⏳ Продолжаю…" : "Продолжить"}
                                 </button>
                               `
-                              : nothing
-                          }
+              : nothing
+            }
 
                           <!-- Note and Action Messages -->
-                          ${
-                            state.onboardingWizardStep.type === "note" ||
-                            state.onboardingWizardStep.type === "action"
-                              ? html`
+                          ${state.onboardingWizardStep.type === "note" ||
+              state.onboardingWizardStep.type === "action"
+              ? html`
                                 <div
                                   class="wizard-${state.onboardingWizardStep.type}"
                                   style="margin-top: 16px;"
@@ -723,11 +737,10 @@ export function renderProductApp(state: AppViewState) {
                                     ${state.onboardingWizardStep.type === "action" ? "⚙️" : "ℹ️"}
                                   </div>
                                   <div class="wizard-note-content">
-                                    ${
-                                      state.onboardingWizardStep.type === "action"
-                                        ? state.onboardingWizardStep.message
-                                        : html`<p>${state.onboardingWizardStep.message}</p>`
-                                    }
+                                    ${state.onboardingWizardStep.type === "action"
+                  ? state.onboardingWizardStep.message
+                  : html`<p>${state.onboardingWizardStep.message}</p>`
+                }
                                   </div>
                                 </div>
                                 <button
@@ -739,26 +752,25 @@ export function renderProductApp(state: AppViewState) {
                                   ${state.onboardingWizardBusy ? "⏳ Обработка…" : "OK"}
                                 </button>
                               `
-                              : nothing
-                          }
+              : nothing
+            }
 
                           <!-- Progress Spinner -->
-                          ${
-                            state.onboardingWizardStep.type === "progress"
-                              ? html`
+                          ${state.onboardingWizardStep.type === "progress"
+              ? html`
                                   <div class="wizard-progress-spinner">
                                     <div class="spinner"></div>
                                     <span class="spinner-text">Обработка…</span>
                                   </div>
                                 `
-                              : nothing
-                          }
+              : nothing
+            }
                         </div>
                       </div>
                     </div>
                   `
-                : nothing
-            }
+          : nothing
+        }
           </section>
         `
       : state.productPanel === "projects"
@@ -876,23 +888,16 @@ export function renderProductApp(state: AppViewState) {
       </aside>
 
       <aside class="product-sidebar" role="complementary" aria-label="Sidebar navigation">
-        ${
-          state.productPanel === "projects"
-            ? renderProjectsPanel(state)
-            : state.productPanel === "telegram"
-              ? renderTelegramPanel(state)
-              : state.productPanel === "skills"
-                ? renderSkillsPanel(state)
-                : html`
-                    <div class="product-sidebar__header">
-                      <div class="product-title">OpenClaw</div>
-                      <div class="product-sub">Настройки</div>
-                    </div>
-                    <div class="product-sidebar__section">
-                      <p>Настройки будут здесь.</p>
-                    </div>
-                  ` // Placeholder for settings panel
-        }
+        ${state.productPanel === "projects"
+      ? renderProjectsPanel(state)
+      : state.productPanel === "telegram"
+        ? renderTelegramPanel(state)
+        : state.productPanel === "skills"
+          ? renderSkillsPanel(state)
+          : state.productPanel === "settings"
+            ? renderSettingsPanel(state)
+            : nothing
+    }
       </aside>
 
       <main class="product-main">

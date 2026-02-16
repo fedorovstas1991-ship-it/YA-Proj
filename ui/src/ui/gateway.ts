@@ -8,6 +8,25 @@ import {
 import { clearDeviceAuthToken, loadDeviceAuthToken, storeDeviceAuthToken } from "./device-auth.ts";
 import { loadOrCreateDeviceIdentity, signDevicePayload } from "./device-identity.ts";
 import { generateUUID } from "./uuid.ts";
+import type {
+  AgentsListResult,
+  AgentGetResult,
+  AgentIdentityResult,
+  AgentsFilesListResult,
+  SessionsListResult,
+  ConfigSnapshot,
+  SkillStatusReport,
+  SkillStatusEntry,
+  SkillGetResult,
+  SkillUpdateParams,
+  StatusSummary,
+  HealthSnapshot,
+  WizardStartResult,
+  WizardNextResult,
+  GatewaySessionRow,
+  WizardStep,
+  ChannelsStatusSnapshot,
+} from "./types.ts";
 
 export type GatewayEventFrame = {
   type: "event";
@@ -72,11 +91,83 @@ export class GatewayBrowserClient {
   private connectTimer: number | null = null;
   private backoffMs = 800;
 
-  constructor(private opts: GatewayBrowserClientOptions) {}
+  public get url() {
+    return this.opts.url;
+  }
+  public get token() {
+    return this.opts.token;
+  }
+
+  // Controllers
+  public readonly agents = {
+    list: () => this.request<AgentsListResult>("agents.list"),
+    get: (id: string) => this.request<AgentGetResult>("agents.get", { id }),
+    getIdentity: (id: string) => this.request<AgentIdentityResult>("agents.getIdentity", { id }),
+    files: (id: string) => this.request<AgentsFilesListResult>("agents.files", { id }),
+    create: (params: any) => this.request<AgentGetResult>("agents.create", params),
+    delete: (id: string) => this.request("agents.delete", { id }),
+  };
+
+  public readonly sessions = {
+    list: (params: any) => this.request<SessionsListResult>("sessions.list", params),
+    create: (params: any) => this.request<GatewaySessionRow>("sessions.create", params),
+    delete: (key: string) => this.request("sessions.delete", { key }),
+    reset: (key: string) => this.request("sessions.reset", { key }),
+    send: (params: { sessionKey: string | null; message: any }) => this.request("sessions.send", params),
+    abort: (sessionKey: string | null, runId: string) => this.request("sessions.abort", { sessionKey, runId }),
+  };
+
+  public readonly config = {
+    get: () => this.request<ConfigSnapshot>("config.get"),
+    set: (config: any) => this.request("config.set", { config }),
+    reload: () => this.request("config.reload"),
+  };
+
+  public readonly skills = {
+    list: () => this.request<SkillStatusReport>("skills.status"),
+    status: () => this.request<SkillStatusReport>("skills.status"),
+    get: (id: string) => this.request<SkillGetResult>("skills.get", { id }),
+    update: (params: SkillUpdateParams) => this.request("skills.update", params),
+    activate: (id: string) => this.request("skills.activate", { id }),
+    deactivate: (id: string) => this.request("skills.deactivate", { id }),
+    install: (params: { skillId: string; skillName?: string; description?: string; code: string }) =>
+      this.request("skills.install", params),
+  };
+
+  public readonly gateway = {
+    status: () => this.request<StatusSummary>("gateway.status"),
+    health: () => this.request<HealthSnapshot>("gateway.health"),
+    resetAll: () => this.request("gateway.resetAll"),
+    startOnboarding: (params: any) => this.request<WizardStartResult>("gateway.startOnboarding", params),
+    advanceOnboarding: (sessionId: string, data: any) =>
+      this.request<WizardNextResult>("gateway.advanceOnboarding", { sessionId, data }),
+    cancelOnboarding: (sessionId: string) => this.request("gateway.cancelOnboarding", { sessionId }),
+  };
+
+  public readonly channels = {
+    status: () => this.request<ChannelsStatusSnapshot>("channels.status"),
+    configureTelegram: (params: any) => this.request("channels.configureTelegram", params),
+  };
+
+  public onHello?: (hello: GatewayHelloOk) => void;
+  public onEvent?: (evt: GatewayEventFrame) => void;
+  public onClose?: (info: { code: number; reason: string }) => void;
+  public onDisconnect?: () => void;
+  public onConnectionError?: (err: Error) => void;
+
+  constructor(private opts: GatewayBrowserClientOptions) {
+    this.onHello = opts.onHello;
+    this.onEvent = opts.onEvent;
+    this.onClose = opts.onClose;
+  }
 
   start() {
     this.closed = false;
-    this.connect();
+    try {
+      this.connect();
+    } catch (e) {
+      this.onConnectionError?.(e as Error);
+    }
   }
 
   stop() {
@@ -84,6 +175,10 @@ export class GatewayBrowserClient {
     this.ws?.close();
     this.ws = null;
     this.flushPending(new Error("gateway client stopped"));
+  }
+
+  disconnect() {
+    this.stop();
   }
 
   get connected() {
@@ -163,19 +258,19 @@ export class GatewayBrowserClient {
     const auth =
       authToken || this.opts.password
         ? {
-            token: authToken,
-            password: this.opts.password,
-          }
+          token: authToken,
+          password: this.opts.password,
+        }
         : undefined;
 
     let device:
       | {
-          id: string;
-          publicKey: string;
-          signature: string;
-          signedAt: number;
-          nonce: string | undefined;
-        }
+        id: string;
+        publicKey: string;
+        signature: string;
+        signedAt: number;
+        nonce: string | undefined;
+      }
       | undefined;
 
     // Only proceed with device signing if not in local mode and in a secure context

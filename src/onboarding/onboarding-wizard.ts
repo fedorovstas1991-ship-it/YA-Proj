@@ -80,28 +80,28 @@ export class OnboardingWizard extends LitElement {
   private _currentStep: number = 0;
 
   @property({ type: Array })
-  steps: string[] = ['Welcome', 'API Key'];
+  steps: string[] = ['Добро пожаловать', 'Элиза Токен'];
 
   @property({ attribute: false })
-  client: GatewayBrowserClient | null = null; // Добавлено свойство client
+  client: GatewayBrowserClient | null = null;
 
   render() {
     return html`
       <div class="wizard-container">
         <ul class="wizard-steps">
           ${this.steps.map(
-            (step, index) => html`
+      (step, index) => html`
               <li class="wizard-step ${this._currentStep === index ? 'active' : ''}">
                 ${step}
               </li>
             `
-          )}
+    )}
         </ul>
 
         <div class="wizard-content">
           ${this._currentStep === 0
-            ? html`<onboarding-welcome @next-step=${this._nextStep}></onboarding-welcome>`
-            : html`<onboarding-api-key
+        ? html`<onboarding-welcome @next-step=${this._nextStep}></onboarding-welcome>`
+        : html`<onboarding-api-key
                 @connect-api-key=${this._handleConnectApiKey}
                 @skip-onboarding=${this._handleSkipOnboarding}
               ></onboarding-api-key>`}
@@ -120,38 +120,56 @@ export class OnboardingWizard extends LitElement {
     const apiKey = event.detail.apiKey;
     if (!this.client) {
       console.error('Gateway client not available.');
-      // Здесь можно было бы отправить событие для отображения ошибки в OpenClawApp
       return;
     }
 
     try {
+      // Step 1: Get current config to obtain baseHash
+      const configSnapshot = await this.client.request<{ hash?: string }>('config.get', {});
+      const baseHash = (configSnapshot as { hash?: string })?.hash ?? undefined;
+
+      // Step 2: Build the patch
       const patch = {
-        env: {
-          OPENROUTER_API_KEY: apiKey,
+        models: {
+          mode: "replace",
+          providers: {
+            anthropic: {
+              baseUrl: "https://api.eliza.yandex.net/raw/anthropic",
+              apiKey: apiKey,
+              api: "anthropic-messages",
+              models: [
+                {
+                  id: "claude-sonnet-4-5",
+                  name: "Claude Sonnet 4.5",
+                },
+              ],
+            },
+          },
         },
         agents: {
           defaults: {
             model: {
-              primary: "openrouter/moonshotai/kimi-k2.5",
+              primary: "anthropic/claude-sonnet-4-5",
             },
-            models: {
-              "openrouter/moonshotai/kimi-k2.5": {},
-            },
+          },
+        },
+        plugins: {
+          slots: {
+            memory: "none",
           },
         },
       };
 
+      // Step 3: Patch with baseHash
       await this.client.request('config.patch', {
         raw: JSON.stringify(patch),
-        reason: 'Onboarding API Key setup',
+        ...(baseHash ? { baseHash } : {}),
       });
 
-      console.log('API Key Connected and config patched:', apiKey);
+      console.log('Элиза Токен подключён, конфиг обновлён');
       this.dispatchEvent(new CustomEvent('onboarding-complete', { bubbles: true, composed: true }));
     } catch (error) {
-      console.error('Failed to connect API Key:', error);
-      // Здесь можно было бы отправить событие для отображения ошибки в OpenClawApp
-      // event.detail.error = error; // Передача ошибки обратно в event.detail
+      console.error('Failed to connect:', error);
     }
   }
 

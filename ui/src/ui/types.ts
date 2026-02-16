@@ -332,6 +332,7 @@ export type GatewayAgentRow = {
     avatar?: string;
     avatarUrl?: string;
   };
+  config?: AgentConfig;
 };
 
 export type AgentsListResult = {
@@ -346,6 +347,9 @@ export type AgentConfig = {
   temperament?: string;
   communicationStyle?: string;
   knowledgeBaseSource?: string;
+  model?: string;
+  systemPrompt?: string;
+  anthropicApiKey?: string;
   // Add other potential agent config properties here as needed
 };
 
@@ -458,6 +462,8 @@ export type WizardStep = {
   placeholder?: string;
   sensitive?: boolean;
   executor?: "gateway" | "client";
+  stepNum?: number;
+  totalSteps?: number;
 };
 
 export type WizardStartResult = {
@@ -703,11 +709,11 @@ export type CronWakeMode = "next-heartbeat" | "now";
 export type CronPayload =
   | { kind: "systemEvent"; text: string }
   | {
-      kind: "agentTurn";
-      message: string;
-      thinking?: string;
-      timeoutSeconds?: number;
-    };
+    kind: "agentTurn";
+    message: string;
+    thinking?: string;
+    timeoutSeconds?: number;
+  };
 
 export type CronDelivery = {
   mode: "none" | "announce";
