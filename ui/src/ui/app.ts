@@ -1,5 +1,6 @@
 import { LitElement, html } from "lit";
 import { customElement, state } from "lit/decorators.js";
+import { installCodeCopyHandler } from "./markdown.ts";
 import type { EventLogEntry } from "./app-events.ts";
 import type { AppViewState } from "./app-view-state.ts";
 import type { DevicePairingList } from "./controllers/devices.ts";
@@ -30,7 +31,13 @@ import type {
 } from "./types.ts";
 import type { WizardStep } from "./types.ts";
 import type { NostrProfileFormState } from "./views/channels.nostr-profile-form.ts";
-import { normalizeAgentId } from "../../../src/routing/session-key.js";
+import { normalizeAgentId, parseAgentSessionKey } from "../../../src/routing/session-key.js";
+import {
+  buildNdaModelsPatch,
+  NDA_MODEL_REF,
+  NDA_PROVIDER,
+} from "../../../src/onboarding/nda-preset.js";
+import { pickSharedApiKeyRef, sanitizeApiKeyCandidate } from "./nda-mode.ts";
 import {
   handleChannelConfigReload as handleChannelConfigReloadInternal,
   handleChannelConfigSave as handleChannelConfigSaveInternal,
@@ -49,7 +56,9 @@ import {
   handleSendChat as handleSendChatInternal,
   removeQueuedMessage as removeQueuedMessageInternal,
 } from "./app-chat.ts";
-import { DEFAULT_CRON_FORM, DEFAULT_LOG_LEVEL_FILTERS } from "./app-defaults.ts";
+import { DEFAULT_CRON_FORM, DEFAULT_CRON_WIZARD, DEFAULT_LOG_LEVEL_FILTERS } from "./app-defaults.ts";
+import { loadChatHistory } from "./controllers/chat.ts";
+import { loadAgents } from "./controllers/agents.ts";
 import { connectGateway as connectGatewayInternal } from "./app-gateway.ts";
 import {
   handleConnected,
@@ -88,13 +97,14 @@ import {
   startOnboardingWizard as startOnboardingWizardInternal,
 } from "./controllers/onboarding.ts";
 import { loadSettings, type UiSettings } from "./storage.ts";
-import { type ChatAttachment, type ChatQueueItem, type CronFormState } from "./ui-types.ts";
+import { type ChatAttachment, type ChatQueueItem, type CronFormState, type CronWizardState } from "./ui-types.ts";
+import type { TelegramConnectFlowState } from "./views/channels.types.ts";
 
 import "../../../src/onboarding/onboarding-wizard.js"; // Import the onboarding wizard component
 
 declare global {
   interface Window {
-    __OPENCLAW_CONTROL_UI_BASE_PATH__?: string;
+    __YAGENT_CONTROL_UI_BASE_PATH__?: string;
   }
 }
 
@@ -135,11 +145,71 @@ function resolveProductMode(): boolean {
     return false;
   }
   const pathname = window.location.pathname || "/";
-  // Default to product UI on root path only. Legacy tabs remain available at /chat, /channels, etc.
+  // Default to product UI on root path only. Legacy tabs remain available by URL (e.g. /chat, /channels).
   return pathname === "/" || pathname.endsWith("/index.html");
 }
 
 const SIMPLE_ONBOARDING_DONE_KEY = "openclaw.control.simple.onboarding.done.v1";
+const TELEGRAM_USERNAME_RE = /^@[a-zA-Z0-9_]{5,32}$/;
+const TELEGRAM_ID_RE = /^-?\d{5,20}$/;
+const PRODUCT_MAIN_AGENT_ID = "main";
+const PRODUCT_NDA_AGENT_ID = "nda";
+
+function sleep(ms: number) {
+  return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+}
+
+function normalizeTelegramAllowFromSingle(raw: unknown): string {
+  if (Array.isArray(raw)) {
+    return String(raw[0] ?? "").trim();
+  }
+  if (typeof raw === "string") {
+    return raw.trim();
+  }
+  return "";
+}
+
+function validateTelegramAllowFromValue(value: string): string | null {
+  if (!value) {
+    return "Укажите ваш Telegram логин (@username) или числовой Telegram ID.";
+  }
+  if (value.includes(",") || value.includes(" ")) {
+    return "Нужно одно значение: либо @username, либо числовой Telegram ID.";
+  }
+  if (TELEGRAM_USERNAME_RE.test(value) || TELEGRAM_ID_RE.test(value)) {
+    return null;
+  }
+  return "Неверный формат. Пример: @my_username или 123456789.";
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
+}
+
+function resolveProviderApiKey(config: Record<string, unknown> | null, provider: string): string {
+  const models = asRecord(config?.models);
+  const providers = asRecord(models?.providers);
+  const providerCfg = asRecord(providers?.[provider]);
+  const apiKey = providerCfg?.apiKey;
+  return sanitizeApiKeyCandidate(apiKey);
+}
+
+function resolvePrimaryModelProvider(config: Record<string, unknown> | null): string {
+  const agents = asRecord(config?.agents);
+  const defaults = asRecord(agents?.defaults);
+  const model = defaults?.model;
+  if (typeof model === "string") {
+    const provider = model.split("/", 1)[0]?.trim();
+    return provider || "openrouter";
+  }
+  const modelCfg = asRecord(model);
+  const primary = typeof modelCfg?.primary === "string" ? modelCfg.primary.trim() : "";
+  if (!primary) {
+    return "openrouter";
+  }
+  const provider = primary.split("/", 1)[0]?.trim();
+  return provider || "openrouter";
+}
 
 function loadSimpleOnboardingDone(): boolean {
   if (resolveOnboardingMode()) {
@@ -174,9 +244,13 @@ export class OpenClawApp extends LitElement {
   @state() productMode = resolveProductMode();
   @state() simpleOnboardingDone = loadSimpleOnboardingDone();
   @state() simpleDevToolsOpen = false;
-  @state() productPanel: "chat" | "projects" | "telegram" = "chat";
+  @state() productPanel: "chat" | "projects" | "telegram" | "skills" | "settings" = "chat";
   @state() productDevDrawerOpen = false;
   @state() productAgentId: string | null = null;
+  @state() productChatMode: "regular" | "nda" = "regular";
+  @state() productNdaBusy = false;
+  @state() productNdaError: string | null = null;
+  @state() productNdaTelegramCtaDismissed = false;
   @state() productCreateProjectOpen = false;
   @state() productCreateProjectName = "";
   @state() productCreateProjectDesc = "";
@@ -235,6 +309,7 @@ export class OpenClawApp extends LitElement {
   @state() chatQueue: ChatQueueItem[] = [];
   @state() chatAttachments: ChatAttachment[] = [];
   @state() chatManualRefreshInFlight = false;
+  @state() chatFirstGreetingCtaDismissedSessionKey: string | null = null;
   @state() onboardingWizardSessionId: string | null = null;
   @state() onboardingWizardStatus: "idle" | "running" | "done" | "cancelled" | "error" = "idle";
   @state() onboardingWizardStep: WizardStep | null = null;
@@ -298,6 +373,9 @@ export class OpenClawApp extends LitElement {
   @state() channelsSnapshot: ChannelsStatusSnapshot | null = null;
   @state() channelsError: string | null = null;
   @state() channelsLastSuccess: number | null = null;
+  @state() telegramConnectFlow: TelegramConnectFlowState = "idle";
+  @state() telegramConnectStatus: string | null = null;
+  @state() telegramConnectDetails: string | null = null;
   @state() whatsappLoginMessage: string | null = null;
   @state() whatsappLoginQrDataUrl: string | null = null;
   @state() whatsappLoginConnected: boolean | null = null;
@@ -397,6 +475,7 @@ export class OpenClawApp extends LitElement {
   @state() cronStatus: CronStatus | null = null;
   @state() cronError: string | null = null;
   @state() cronForm: CronFormState = { ...DEFAULT_CRON_FORM };
+  @state() cronWizard: CronWizardState = { ...DEFAULT_CRON_WIZARD };
   @state() cronRunsJobId: string | null = null;
   @state() cronRuns: CronRunLogEntry[] = [];
   @state() cronBusy = false;
@@ -463,8 +542,9 @@ export class OpenClawApp extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
+    installCodeCopyHandler();
     handleConnected(this as unknown as Parameters<typeof handleConnected>[0]);
-    window.addEventListener("keydown", this.handleKeyDown.bind(this)); // Add this line
+    window.addEventListener("keydown", this.handleKeyDown.bind(this));
   }
 
   protected firstUpdated() {
@@ -483,10 +563,15 @@ export class OpenClawApp extends LitElement {
       const connectedChanged = changed.has("connected");
       const agentsChanged = changed.has("agentsList");
       if ((connectedChanged || agentsChanged) && this.connected) {
+        const parsedSession = parseAgentSessionKey(this.sessionKey);
+        const sessionAgentId = parsedSession?.agentId
+          ? normalizeAgentId(parsedSession.agentId)
+          : null;
         if (!this.productAgentId) {
           this.productAgentId =
-            this.agentsList?.defaultId ?? this.agentsList?.agents?.[0]?.id ?? "main";
+            sessionAgentId ?? this.agentsList?.defaultId ?? this.agentsList?.agents?.[0]?.id ?? "main";
         }
+        this.productChatMode = this.resolveProductChatModeBySessionKey(this.sessionKey);
         if (!this.productSessionsResult) {
           void this.productLoadSessions();
         }
@@ -615,6 +700,134 @@ export class OpenClawApp extends LitElement {
     return normalizeAgentId(fallback);
   }
 
+  private resolveProductChatModeBySessionKey(sessionKey: string): "regular" | "nda" {
+    const parsed = parseAgentSessionKey(sessionKey);
+    const agentId = normalizeAgentId(parsed?.agentId ?? PRODUCT_MAIN_AGENT_ID);
+    return agentId === PRODUCT_NDA_AGENT_ID ? "nda" : "regular";
+  }
+
+  private resolveProductWorkspaceBase(config: Record<string, unknown> | null): string {
+    const agents = asRecord(config?.agents);
+    const defaults = asRecord(agents?.defaults);
+    const workspace = defaults?.workspace;
+    return typeof workspace === "string" && workspace.trim() ? workspace.trim() : "~/.yagent/workspace";
+  }
+
+  private resolveSharedApiKeyRef(config: Record<string, unknown> | null): string {
+    const primaryProvider = resolvePrimaryModelProvider(config);
+    const primaryApiKey = resolveProviderApiKey(config, primaryProvider);
+    const openrouterApiKey = resolveProviderApiKey(config, "openrouter");
+    const ndaProviderApiKey = resolveProviderApiKey(config, NDA_PROVIDER);
+    return pickSharedApiKeyRef([primaryApiKey, openrouterApiKey, ndaProviderApiKey]);
+  }
+
+  private async ensureNdaAgentExists(config: Record<string, unknown> | null) {
+    if (!this.client) {
+      throw new Error("Gateway клиент недоступен.");
+    }
+    const hasNdaAgent = (this.agentsList?.agents ?? []).some(
+      (entry) => normalizeAgentId(entry.id) === PRODUCT_NDA_AGENT_ID,
+    );
+    if (!hasNdaAgent) {
+      const workspaceBase = this.resolveProductWorkspaceBase(config);
+      const workspace = `${workspaceBase}/${PRODUCT_NDA_AGENT_ID}`;
+      try {
+        await this.client.request("agents.create", {
+          name: PRODUCT_NDA_AGENT_ID,
+          workspace,
+        });
+      } catch (err) {
+        const details = String(err).toLowerCase();
+        if (!details.includes("already exists")) {
+          throw err;
+        }
+      }
+      await loadAgents(this);
+    }
+
+    await this.client.request("agents.update", {
+      agentId: PRODUCT_NDA_AGENT_ID,
+      model: NDA_MODEL_REF,
+    });
+  }
+
+  private async ensureNdaProviderConfigured(config: Record<string, unknown> | null) {
+    if (!this.client) {
+      throw new Error("Gateway клиент недоступен.");
+    }
+    const sharedApiKeyRef = this.resolveSharedApiKeyRef(config);
+    if (!sharedApiKeyRef) {
+      throw new Error("Не найден API-ключ основной модели. Сначала завершите обычный onboarding.");
+    }
+
+    const patch = buildNdaModelsPatch(sharedApiKeyRef);
+
+    let baseHash = this.configSnapshot?.hash;
+    if (!baseHash) {
+      await loadConfigInternal(this);
+      baseHash = this.configSnapshot?.hash;
+    }
+    if (!baseHash) {
+      throw new Error("Не удалось прочитать hash конфига.");
+    }
+    await this.client.request("config.patch", {
+      raw: JSON.stringify(patch),
+      baseHash,
+      note: "product-ui nda setup",
+    }).catch((err) => {
+      const details = String(err).toLowerCase();
+      const restartInProgress =
+        details.includes("gateway closed") || details.includes("gateway not connected");
+      if (!restartInProgress) {
+        throw err;
+      }
+    });
+    await this.waitForGatewayReconnect(30000);
+    await loadConfigInternal(this);
+  }
+
+  async productSetChatMode(mode: "regular" | "nda") {
+    if (!this.client || !this.connected) {
+      this.productNdaError = "Нет соединения с gateway.";
+      return;
+    }
+    this.lastError = null;
+    const expectedAgent = mode === "nda" ? PRODUCT_NDA_AGENT_ID : PRODUCT_MAIN_AGENT_ID;
+    if (
+      mode === this.productChatMode &&
+      this.resolveProductActiveAgentId() === expectedAgent &&
+      !this.productNdaBusy
+    ) {
+      return;
+    }
+
+    this.productNdaError = null;
+
+    if (mode === "regular") {
+      this.productChatMode = "regular";
+      this.productNdaTelegramCtaDismissed = false;
+      this.productNdaError = null;
+      await this.productSelectAgent(PRODUCT_MAIN_AGENT_ID);
+      return;
+    }
+
+    this.productNdaBusy = true;
+    try {
+      await loadConfigInternal(this);
+      const currentConfig = (this.configSnapshot?.config as Record<string, unknown> | null) ?? null;
+      await this.ensureNdaProviderConfigured(currentConfig);
+      await this.ensureNdaAgentExists(currentConfig);
+      this.productChatMode = "nda";
+      this.productNdaTelegramCtaDismissed = false;
+      await this.productSelectAgent(PRODUCT_NDA_AGENT_ID);
+    } catch (err) {
+      this.productNdaError = String(err);
+      this.productChatMode = this.resolveProductChatModeBySessionKey(this.sessionKey);
+    } finally {
+      this.productNdaBusy = false;
+    }
+  }
+
   async productReloadConfig() {
     await loadConfigInternal(this);
   }
@@ -643,6 +856,7 @@ export class OpenClawApp extends LitElement {
   async productOpenSession(key: string) {
     this.productPanel = "chat";
     this.sessionKey = key;
+    this.productChatMode = this.resolveProductChatModeBySessionKey(key);
     this.chatMessage = "";
     this.chatAttachments = [];
     this.chatStream = null;
@@ -669,6 +883,7 @@ export class OpenClawApp extends LitElement {
   async productSelectAgent(agentId: string) {
     const nextAgentId = normalizeAgentId(agentId);
     this.productAgentId = nextAgentId;
+    this.productChatMode = nextAgentId === PRODUCT_NDA_AGENT_ID ? "nda" : "regular";
     const nextSessionKey = `agent:${nextAgentId}:main`;
     await this.productOpenSession(nextSessionKey);
     await this.productLoadSessions();
@@ -737,7 +952,12 @@ export class OpenClawApp extends LitElement {
     this.productGreeted.delete(key);
     await loadChatHistory(this);
     this.productHistoryLoaded.add(key);
-    void this.productGreet("new_chat");
+    if (this.chatMessages.length === 0 && this.simpleOnboardingDone) {
+      if (!this.productGreeted.has(key)) {
+        this.productGreeted.add(key);
+        void this.productGreet("new_chat");
+      }
+    }
   }
 
   async productNewChatInProject(projectId: string) {
@@ -774,7 +994,12 @@ export class OpenClawApp extends LitElement {
     this.productGreeted.delete(key);
     await loadChatHistory(this);
     this.productHistoryLoaded.add(key);
-    void this.productGreet("new_chat");
+    if (this.chatMessages.length === 0 && this.simpleOnboardingDone) {
+      if (!this.productGreeted.has(key)) {
+        this.productGreeted.add(key);
+        void this.productGreet("new_chat");
+      }
+    }
   }
 
   async productResetChat() {
@@ -802,7 +1027,12 @@ export class OpenClawApp extends LitElement {
     this.productGreeted.delete(key);
     await loadChatHistory(this);
     this.productHistoryLoaded.add(key);
-    void this.productGreet("reset");
+    if (this.chatMessages.length === 0 && this.simpleOnboardingDone) {
+      if (!this.productGreeted.has(key)) {
+        this.productGreeted.add(key);
+        void this.productGreet("reset");
+      }
+    }
   }
 
   async productGreet(reason: "new_chat" | "reset" | "first_open") {
@@ -839,12 +1069,12 @@ export class OpenClawApp extends LitElement {
     const agentId = normalizeAgentId(name);
     const workspaceBase =
       (this.configSnapshot?.config as { agents?: { defaults?: { workspace?: string } } } | null)
-        ?.agents?.defaults?.workspace ?? "~/.openclaw/workspace";
+        ?.agents?.defaults?.workspace ?? "~/.yagent/workspace";
     const workspace = `${workspaceBase}/${agentId}`;
     const desc = this.productCreateProjectDesc.trim();
     await this.client.request("agents.create", { name, workspace });
     const persona = [
-      "Ты помощник в OpenClaw. Всегда отвечай по-русски.",
+      "Ты AI-ассистент Yandex Agent. Всегда отвечай по-русски.",
       "Когда начинается новый чат или чат сброшен, поздоровайся в 1-3 предложениях и спроси, что сделать.",
       "Предлагай понятные шаги кнопками (не проси вводить команды).",
       "Если пользователь прислал файлы, скажи что ты получил и что можешь сделать: кратко перечисли варианты.",
@@ -996,16 +1226,21 @@ export class OpenClawApp extends LitElement {
   }
 
   async productConnectTelegram() {
+    this.productTelegramError = null;
+    this.productTelegramSuccess = null;
     if (!this.client || !this.connected) {
+      this.productTelegramError = "Нет соединения с gateway.";
       return;
     }
     this.productTelegramBusy = true;
-    this.productTelegramError = null;
-    this.productTelegramSuccess = null;
     try {
-      const baseHash = this.configSnapshot?.hash;
+      let baseHash = this.configSnapshot?.hash;
       if (!baseHash) {
-        this.productTelegramError = "Нет hash конфига. Открой dev drawer и сделай Обновить конфиг.";
+        await loadConfigInternal(this);
+        baseHash = this.configSnapshot?.hash;
+      }
+      if (!baseHash) {
+        this.productTelegramError = "Не удалось получить hash конфига. Попробуй еще раз.";
         return;
       }
       const token = this.productTelegramToken.trim();
@@ -1018,6 +1253,7 @@ export class OpenClawApp extends LitElement {
         this.productTelegramError = "Нужен твой Telegram user id (цифры).";
         return;
       }
+      const defaultAgentId = normalizeAgentId(this.agentsList?.defaultId ?? "main");
       const patch = {
         channels: {
           telegram: {
@@ -1029,7 +1265,7 @@ export class OpenClawApp extends LitElement {
         },
         bindings: [
           {
-            agentId: "main",
+            agentId: defaultAgentId,
             match: { channel: "telegram", accountId: "default" },
           },
         ],
@@ -1046,6 +1282,198 @@ export class OpenClawApp extends LitElement {
       this.productTelegramError = String(err);
     } finally {
       this.productTelegramBusy = false;
+    }
+  }
+
+  private setTelegramConnectFlow(
+    flow: TelegramConnectFlowState,
+    status: string | null,
+    details: string | null = null,
+  ) {
+    this.telegramConnectFlow = flow;
+    this.telegramConnectStatus = status;
+    this.telegramConnectDetails = details;
+  }
+
+  private async waitForGatewayDisconnect(timeoutMs: number): Promise<boolean> {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < timeoutMs) {
+      if (!this.connected || !this.client?.connected) {
+        return true;
+      }
+      await sleep(150);
+    }
+    return false;
+  }
+
+  private async waitForGatewayReconnect(timeoutMs: number) {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < timeoutMs) {
+      if (this.connected && this.client?.connected) {
+        return;
+      }
+      await sleep(150);
+    }
+    throw new Error("Gateway не восстановил соединение после перезапуска.");
+  }
+
+  private async probeTelegramStatusWithRetry(maxAttempts: number, pauseMs: number) {
+    if (!this.client) {
+      throw new Error("Клиент gateway недоступен.");
+    }
+
+    let lastDetails = "Канал Telegram пока не готов.";
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const snapshot = await this.client.request<ChannelsStatusSnapshot | null>("channels.status", {
+          probe: true,
+          timeoutMs: 9000,
+        });
+        if (snapshot) {
+          this.channelsSnapshot = snapshot;
+          this.channelsLastSuccess = Date.now();
+        }
+        const telegram = (snapshot?.channels?.telegram ?? null) as
+          | {
+            configured?: boolean;
+            running?: boolean;
+            lastError?: string | null;
+            probe?: { ok?: boolean; error?: string | null } | null;
+          }
+          | null;
+        const isConfigured = telegram?.configured === true;
+        const probeOk = telegram?.probe?.ok === true;
+        const running = telegram?.running === true;
+        if (isConfigured && (probeOk || running)) {
+          return;
+        }
+
+        lastDetails =
+          telegram?.probe?.error ??
+          telegram?.lastError ??
+          (isConfigured
+            ? "Telegram сконфигурирован, но канал еще запускается."
+            : "Telegram еще не сконфигурирован.");
+      } catch (err) {
+        lastDetails = String(err);
+      }
+      if (attempt < maxAttempts) {
+        await sleep(pauseMs);
+      }
+    }
+    throw new Error(lastDetails);
+  }
+
+  async handleTelegramConnect() {
+    this.channelsError = null;
+    this.setTelegramConnectFlow("validating", "Проверяем токен и доступ для вашего аккаунта…");
+
+    if (!this.client || !this.connected) {
+      this.setTelegramConnectFlow(
+        "error",
+        "Нет соединения с gateway. Подключитесь и повторите попытку.",
+        "gateway not connected",
+      );
+      return;
+    }
+
+    const telegramConfig =
+      (this.configForm?.channels as Record<string, unknown> | undefined)?.telegram as
+      | Record<string, unknown>
+      | undefined;
+    const tokenRaw = telegramConfig?.botToken;
+    const token = typeof tokenRaw === "string" ? tokenRaw.trim() : "";
+    if (!token) {
+      this.setTelegramConnectFlow("error", "Введите Telegram Bot Token.");
+      return;
+    }
+
+    const allowFromValue = normalizeTelegramAllowFromSingle(telegramConfig?.allowFrom);
+    const allowFromError = validateTelegramAllowFromValue(allowFromValue);
+    if (allowFromError) {
+      this.setTelegramConnectFlow("error", allowFromError);
+      return;
+    }
+
+    this.configSaving = true;
+    try {
+      let baseHash = this.configSnapshot?.hash;
+      if (!baseHash) {
+        await loadConfigInternal(this);
+        baseHash = this.configSnapshot?.hash;
+      }
+      if (!baseHash) {
+        this.setTelegramConnectFlow(
+          "error",
+          "Не удалось прочитать конфиг gateway. Обновите страницу и повторите.",
+        );
+        return;
+      }
+
+      this.setTelegramConnectFlow("patching", "Сохраняем настройки Telegram в конфиг…");
+      const defaultAgentId = normalizeAgentId(this.agentsList?.defaultId ?? "main");
+      const patch = {
+        plugins: {
+          entries: {
+            telegram: {
+              enabled: true,
+            },
+          },
+        },
+        channels: {
+          telegram: {
+            enabled: true,
+            botToken: token,
+            dmPolicy: "allowlist",
+            allowFrom: [allowFromValue],
+          },
+        },
+        bindings: [
+          {
+            agentId: defaultAgentId,
+            match: { channel: "telegram", accountId: "default" },
+          },
+        ],
+      };
+
+      await this.client.request("config.patch", {
+        raw: JSON.stringify(patch),
+        baseHash,
+        note: "channels-ui telegram connect",
+      }).catch((err) => {
+        const details = String(err);
+        const restartInProgress =
+          details.includes("gateway closed (1012)") ||
+          details.includes("gateway closed (1006)") ||
+          details.includes("gateway not connected");
+        if (!restartInProgress) {
+          throw err;
+        }
+      });
+
+      this.setTelegramConnectFlow("waiting_restart", "Применяем изменения и ожидаем перезапуск gateway…");
+      const sawDisconnect = await this.waitForGatewayDisconnect(9000);
+
+      this.setTelegramConnectFlow(
+        "waiting_reconnect",
+        sawDisconnect
+          ? "Gateway перезапускается. Ждем восстановления подключения…"
+          : "Проверяем доступность gateway после обновления…",
+      );
+      await this.waitForGatewayReconnect(sawDisconnect ? 30000 : 12000);
+
+      this.setTelegramConnectFlow("probing", "Проверяем, что Telegram-канал отвечает…");
+      await this.probeTelegramStatusWithRetry(8, 1200);
+      this.setTelegramConnectFlow("success", "Telegram подключен. Бот готов принимать сообщения.");
+    } catch (err) {
+      const details = String(err);
+      this.setTelegramConnectFlow(
+        "error",
+        "Не удалось подключить Telegram. Проверьте токен и логин, затем повторите.",
+        details,
+      );
+    } finally {
+      this.configSaving = false;
     }
   }
 
@@ -1205,7 +1633,26 @@ export class OpenClawApp extends LitElement {
   private _handleOnboardingComplete() {
     this.onboarding = false;
     this.setSimpleOnboardingDone(true);
-    // Potentially trigger a reload of other app state or navigate to main view
-    console.log("Onboarding process completed. Proceeding to main app.");
+
+    // After onboarding, we want to show the standard minimal dashboard
+    // Update URL: remove onboarding=1, clearLocalStorage and product=1
+    const url = new URL(window.location.href);
+    url.searchParams.delete("onboarding");
+    url.searchParams.delete("clearLocalStorage");
+    url.searchParams.delete("product");
+    window.history.replaceState({}, "", url.toString());
+
+    this.productMode = false;
+    this.simpleMode = false;
+
+    console.log("Onboarding process completed. Switching to standard minimal dashboard.");
+
+    setTimeout(() => {
+      console.log("Sending welcome message from app.ts...");
+      this.chatMessage = "Привет! Что ты умеешь?";
+      this.handleSendChat()
+        .then(() => console.log("Welcome message sent successfully."))
+        .catch((err) => console.error("Failed to send welcome message:", err));
+    }, 1000);
   }
 }
