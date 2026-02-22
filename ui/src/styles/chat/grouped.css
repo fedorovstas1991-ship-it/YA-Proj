@@ -1,15 +1,15 @@
 /* =============================================
-   GROUPED CHAT LAYOUT (Slack-style)
+   GROUPED CHAT LAYOUT — Claude-style
    ============================================= */
 
-/* Chat Group Layout - default (assistant/other on left) */
+/* Chat Group Layout */
 .chat-group {
   display: flex;
-  gap: 16px; /* Increased gap */
+  gap: 12px;
   align-items: flex-start;
-  margin-bottom: 20px; /* Increased margin */
-  margin-left: 8px; /* Adjusted margin */
-  margin-right: 20px; /* Adjusted margin */
+  margin-bottom: 24px;
+  margin-left: 8px;
+  margin-right: 8px;
 }
 
 /* User messages on right */
@@ -21,8 +21,8 @@
 .chat-group-messages {
   display: flex;
   flex-direction: column;
-  gap: 4px; /* Increased gap between messages */
-  max-width: min(900px, calc(100% - 72px)); /* Adjusted max-width due to larger avatar */
+  gap: 4px;
+  max-width: min(780px, calc(100% - 52px));
 }
 
 /* User messages align content right */
@@ -37,31 +37,31 @@
 /* Footer at bottom of message group (role + time) */
 .chat-group-footer {
   display: flex;
-  gap: 10px; /* Increased gap */
+  gap: 8px;
   align-items: baseline;
-  margin-top: 8px; /* Increased margin */
+  margin-top: 6px;
 }
 
 .chat-sender-name {
   font-weight: 500;
-  font-size: 13px; /* Slightly larger font */
+  font-size: 12px;
   color: var(--muted);
 }
 
 .chat-group-timestamp {
-  font-size: 12px; /* Slightly larger font */
+  font-size: 11px;
   color: var(--muted);
-  opacity: 0.8; /* Slightly less opaque */
+  opacity: 0.7;
 }
 
 /* Chat divider (e.g., compaction marker) */
 .chat-divider {
   display: flex;
   align-items: center;
-  gap: 12px; /* Increased gap */
-  margin: 24px 8px; /* Increased margin */
+  gap: 12px;
+  margin: 24px 8px;
   color: var(--muted);
-  font-size: 12px; /* Slightly larger font */
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   user-select: none;
@@ -71,29 +71,29 @@
   flex: 1 1 0;
   height: 1px;
   background: var(--border);
-  opacity: 0.7; /* Slightly less opaque */
+  opacity: 0.7;
 }
 
 .chat-divider__label {
-  padding: 4px 12px; /* Increased padding */
+  padding: 3px 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius-full);
-  background: var(--secondary); /* Use secondary background */
+  background: var(--secondary);
 }
 
-/* Avatar Styles */
+/* ── Avatar ── */
 .chat-avatar {
-  width: 48px; /* Larger avatar */
-  height: 48px;
-  border-radius: var(--radius-md); /* Larger radius */
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
   background: var(--panel-strong);
   display: grid;
   place-items: center;
   font-weight: 600;
-  font-size: 16px; /* Larger font */
+  font-size: 13px;
   flex-shrink: 0;
-  align-self: flex-end; /* Align with last message in group */
-  margin-bottom: 6px; /* Optical alignment */
+  align-self: flex-start;
+  margin-top: 2px;
 }
 
 .chat-avatar.user {
@@ -116,62 +116,75 @@
   color: var(--muted);
 }
 
-/* Image avatar support */
 img.chat-avatar {
   display: block;
   object-fit: cover;
   object-position: center;
 }
 
-/* Minimal Bubble Design - dynamic width based on content */
+/* ── Bubble — Claude style ── */
+
+/* Base bubble: no border, no background (assistant) */
 .chat-bubble {
   position: relative;
   display: inline-block;
-  border: 1px solid var(--border); /* Always show border */
-  background: var(--card);
-  border-radius: var(--radius-lg);
-  padding: 12px 18px; /* Increased padding */
-  box-shadow: var(--shadow-sm); /* Subtle shadow */
-  transition:
-    background 150ms ease-out,
-    border-color 150ms ease-out;
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  transition: none;
   max-width: 100%;
   word-wrap: break-word;
 }
 
-.chat-bubble.has-copy {
-  padding-right: 48px; /* Adjusted padding */
+/* User bubble: subtle grey background, rounded */
+.chat-group.user .chat-bubble {
+  background: var(--bg-accent);
+  border-radius: 12px;
+  padding: 10px 14px;
+  border: none;
+  box-shadow: none;
 }
 
+/* has-copy: leave room for the copy button (assistant messages) */
+.chat-bubble.has-copy {
+  padding-right: 40px;
+}
+
+/* User bubbles don't need extra padding-right for copy since button is on hover of assistant */
+.chat-group.user .chat-bubble.has-copy {
+  padding-right: 14px;
+}
+
+/* ── Copy button (whole-message copy, for assistant) ── */
 .chat-copy-btn {
   position: absolute;
-  top: 8px; /* Adjusted position */
-  right: 10px; /* Adjusted position */
+  top: 4px;
+  right: 4px;
   border: 1px solid var(--border);
-  background: var(--bg-elevated); /* Use bg-elevated */
+  background: var(--bg-elevated);
   color: var(--muted);
   border-radius: var(--radius-md);
-  padding: 6px 8px; /* Adjusted padding */
-  font-size: 15px; /* Larger font */
+  padding: 5px 7px;
+  font-size: 14px;
   line-height: 1;
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
-  transition:
-    opacity 120ms ease-out,
-    background 120ms ease-out;
+  transition: opacity 120ms ease-out, background 120ms ease-out;
 }
 
 .chat-copy-btn__icon {
   display: inline-flex;
-  width: 16px; /* Larger icon */
-  height: 16px;
+  width: 15px;
+  height: 15px;
   position: relative;
 }
 
 .chat-copy-btn__icon svg {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   stroke: currentColor;
   fill: none;
   stroke-width: 1.5px;
@@ -199,7 +212,8 @@ img.chat-avatar {
   opacity: 1;
 }
 
-.chat-bubble:hover .chat-copy-btn {
+.chat-group-messages:hover .chat-copy-btn,
+.chat-bubble:focus-within .chat-copy-btn {
   opacity: 1;
   pointer-events: auto;
 }
@@ -243,57 +257,33 @@ img.chat-avatar {
   }
 }
 
-/* Light mode: restore borders */
-:root[data-theme="light"] .chat-bubble {
-  border-color: var(--border);
-  box-shadow:
-    var(--shadow-sm),
-    inset 0 1px 0 var(--card-highlight); /* Use shadow variable */
-}
-
-.chat-bubble:hover {
-  background: var(--bg-hover);
-}
-
-/* User bubbles have different styling */
-.chat-group.user .chat-bubble {
-  background: var(--accent-subtle);
-  border-color: var(--accent-subtle); /* Use accent-subtle for border */
-}
-
-:root[data-theme="light"] .chat-group.user .chat-bubble {
-  border-color: var(--accent-subtle); /* Consistent with dark theme */
-  background: var(--accent-subtle);
-}
-
-.chat-group.user .chat-bubble:hover {
-  background: var(--accent-subtle); /* Keep consistent hover with subtle highlight */
-}
-
-/* Streaming animation */
+/* ── Streaming: left-border pulse instead of box border ── */
 .chat-bubble.streaming {
-  animation: pulsing-border 1.5s ease-out infinite;
+  border-left: 2px solid var(--accent);
+  padding-left: 10px;
+  animation: streaming-pulse 1.5s ease-out infinite;
 }
 
-@keyframes pulsing-border {
-  0%,
-  100% {
-    border-color: var(--border);
-  }
-  50% {
-    border-color: var(--accent);
-  }
+/* User streaming (unlikely, but safe) */
+.chat-group.user .chat-bubble.streaming {
+  border-left: none;
+  animation: none;
 }
 
-/* Fade-in animation for new messages */
+@keyframes streaming-pulse {
+  0%, 100% { border-left-color: var(--border); }
+  50%       { border-left-color: var(--accent); }
+}
+
+/* ── Fade-in for new messages ── */
 .chat-bubble.fade-in {
-  animation: fade-in 200ms var(--ease-out); /* Use general ease-out */
+  animation: fade-in 200ms var(--ease-out);
 }
 
 @keyframes fade-in {
   from {
     opacity: 0;
-    transform: translateY(6px); /* Slightly more pronounced animation */
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
