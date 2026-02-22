@@ -2,9 +2,57 @@ import { html, nothing, type TemplateResult } from "lit";
 import type { AppViewState } from "./app-view-state.ts";
 import { refreshChatAvatar } from "./app-chat.ts";
 import { loadChatHistory, type ChatState } from "./controllers/chat.ts";
+import { buildCronPromptTemplate } from "./controllers/cron-wizard.ts";
 import { icons } from "./icons.ts";
 import { normalizeBasePath, pathForTab } from "./navigation.ts";
 import { renderChat } from "./views/chat.ts";
+
+function extractMessageRole(message: unknown): string {
+  if (!message || typeof message !== "object") {
+    return "";
+  }
+  const role = (message as { role?: unknown }).role;
+  return typeof role === "string" ? role.trim().toLowerCase() : "";
+}
+
+function isTelegramReadyForCta(state: AppViewState): boolean {
+  const telegram =
+    (state.channelsSnapshot?.channels as
+      | { telegram?: { configured?: boolean; running?: boolean; probe?: { ok?: boolean } | null } }
+      | undefined)?.telegram;
+  const configured = telegram?.configured === true;
+  const running = telegram?.running === true;
+  const probeOk = telegram?.probe?.ok === true;
+  return configured && (running || probeOk);
+}
+
+function shouldShowFirstGreetingCta(state: AppViewState): boolean {
+  if (state.chatFirstGreetingCtaDismissedSessionKey === state.sessionKey) {
+    return false;
+  }
+  if (!state.connected || state.chatStream !== null || isTelegramReadyForCta(state)) {
+    return false;
+  }
+  const messages = Array.isArray(state.chatMessages) ? state.chatMessages : [];
+  if (messages.length === 0) {
+    return false;
+  }
+  const hasAssistantMessage = messages.some((msg) => extractMessageRole(msg) === "assistant");
+  return hasAssistantMessage;
+}
+
+function shouldShowNdaTelegramCta(state: AppViewState): boolean {
+  if (state.productChatMode !== "nda") {
+    return false;
+  }
+  if (state.productNdaTelegramCtaDismissed) {
+    return false;
+  }
+  if (isTelegramReadyForCta(state)) {
+    return false;
+  }
+  return true;
+}
 
 
 function renderSettingsPanel(state: AppViewState) {
@@ -12,42 +60,57 @@ function renderSettingsPanel(state: AppViewState) {
   const agent = state.agentsList?.agents?.find(a => a.id === agentId);
 
   return html`
-    <div class="product-sidebar__section">
-      <div class="product-sidebar__title">Настройки агента</div>
-      <div class="product-sidebar__item">
-        <label class="field">
+    <div class="product-panel">
+      <div class="product-panel__header">Настройки агента</div>
+      
+      <div class="product-panel__section">
+        <label class="product-field">
           <span>Модель</span>
           <input 
+            class="product-input"
             .value=${state.productEditingAgentModel || agent?.config?.model || ""} 
             @input=${(e: Event) => (state.productEditingAgentModel = (e.target as HTMLInputElement).value)}
-            placeholder="claude-3-5-sonnet-20241022" 
+            placeholder="moonshotai/kimi-k2.5" 
           />
         </label>
       </div>
-      <div class="product-sidebar__item">
-        <label class="field">
+
+      <div class="product-panel__section">
+        <label class="product-field">
           <span>Системный промпт</span>
           <textarea 
-            style="min-height: 120px;"
+            class="product-textarea"
             .value=${state.productEditingAgentPrompt || agent?.config?.systemPrompt || ""} 
             @input=${(e: Event) => (state.productEditingAgentPrompt = (e.target as HTMLTextAreaElement).value)}
             placeholder="Ты - полезный ассистент..."
           ></textarea>
-        </div>
+        </label>
       </div>
-      <div class="product-sidebar__item">
-        <label class="field">
-          <span>Anthropic API Key</span>
+
+      <div class="product-panel__section">
+        <label class="product-field">
+          <span>API ключ Eliza/OpenRouter</span>
           <input 
+            class="product-input"
             type="password"
             .value=${state.productEditingAgentApiKey || ""} 
             @input=${(e: Event) => (state.productEditingAgentApiKey = (e.target as HTMLInputElement).value)}
-            placeholder="sk-ant-..." 
+            placeholder="y1__xDov6eRpdT..." 
           />
         </label>
       </div>
-      <div class="row" style="margin-top: 12px;">
-        <button class="btn primary" style="width: 100%" @click=${() => void state.productSaveAgentSettings(agentId)}>
+
+      <div class="product-panel__section">
+        <div style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">
+          Статус подключения: 
+          <span style="color: ${state.connected ? "#15803d" : "#b91c1c"}; font-weight: 600;">
+            ${state.connected ? "Подключено" : "Отключено"}
+          </span>
+        </div>
+      </div>
+
+      <div class="product-panel__section">
+        <button class="product-btn primary" style="width: 100%" @click=${() => void state.productSaveAgentSettings(agentId)}>
           Сохранить настройки
         </button>
       </div>
@@ -82,7 +145,6 @@ function renderDevDrawer(state: AppViewState) {
         </button>
         <a class="btn" href=${buildHref("chat", state.basePath)}>Legacy: Chat</a>
         <a class="btn" href=${buildHref("overview", state.basePath)}>Legacy: Overview</a>
-        <a class="btn" href=${buildHref("channels", state.basePath)}>Legacy: Channels</a>
         <a class="btn" href=${buildHref("agents", state.basePath)}>Legacy: Agents</a>
         <a class="btn" href=${buildHref("skills", state.basePath)}>Legacy: Skills</a>
         <a class="btn" href=${buildHref("config", state.basePath)}>Legacy: Config</a>
@@ -181,101 +243,70 @@ function renderProjectsPanel(state: AppViewState) {
   const projectSessionKeys = new Set(projects.flatMap((p) => p.sessionKeys ?? []));
   const ungroupedSessions = sessions.filter((s) => !projectSessionKeys.has(s.key));
 
+  const renderChatItem = (s: { key: string; displayName?: string; label?: string; lastMessage?: { text?: string } }) => html`
+    <button
+      class="product-chat-item ${s.key === state.sessionKey ? "active" : ""}"
+      ?disabled=${!chatReady}
+      @click=${() => void state.productOpenSession(s.key)}
+    >
+      <div class="product-chat-item__name">${s.displayName ?? s.label ?? s.key}</div>
+      ${s.lastMessage?.text
+      ? html`<div class="product-chat-item__preview">${s.lastMessage.text}</div>`
+      : nothing
+    }
+      <button
+        class="product-chat-item__delete"
+        title="Удалить"
+        @click=${(e: Event) => {
+      e.stopPropagation();
+      state.productConfirmDeleteChat(s.key);
+    }}
+      >×</button>
+    </button>
+  `;
+
   return html`
-    <div class="product-projects-panel">
+    <div class="product-sidebar-panel">
+      <div class="product-sidebar-panel__header">
+        <span class="product-sidebar-panel__title">Чаты</span>
+      </div>
+
       ${projects.length > 0
-      ? html`
-            ${projects.map(
+      ? projects.map(
         (project) => html`
-                <div class="product-project-group">
-                  <button
-                    class="product-project-header"
-                    @click=${() => state.productToggleProjectCollapsed(project.id)}
-                  >
-                    <span class="product-project-icon">${state.productCollapsedProjects.has(project.id) ? "▶" : "▼"}</span>
-                    <span class="product-project-name">📁 ${project.name}</span>
-                    <button class="btn btn--sm" title="Новый чат в проекте" @click=${(e: Event) => {
+              <div class="product-chat-group">
+                <button
+                  class="product-chat-group__header"
+                  @click=${() => state.productToggleProjectCollapsed(project.id)}
+                >
+                  <span class="product-chat-group__icon">${state.productCollapsedProjects.has(project.id) ? "▸" : "▾"}</span>
+                  <span class="product-chat-group__name">${project.name}</span>
+                  <button class="product-chat-group__add" title="Новый чат" @click=${(e: Event) => {
             e.stopPropagation();
             void state.productNewChatInProject(project.id);
-          }}>+
-                    </button>
-
-                  </button>
-                  ${!state.productCollapsedProjects.has(project.id)
+          }}>+</button>
+                </button>
+                ${!state.productCollapsedProjects.has(project.id)
             ? html`
-                        <div class="product-project-chats">
-                          ${(project.sessionKeys ?? [])
+                      <div class="product-chat-group__items">
+                        ${(project.sessionKeys ?? [])
                 .map((key) => sessions.find((s) => s.key === key))
                 .filter((s): s is NonNullable<typeof s> => !!s)
-                .map(
-                  (s) => html`
-                                <button
-                                  class="product-item product-item--nested ${s?.key === state.sessionKey ? "active" : ""}"
-                                  ?disabled=${!chatReady}
-                                >
-                                  <div class="product-item__title" @click=${() => {
-                      if (s?.key) {
-                        void state.productOpenSession(s.key);
-                      }
-                    }}>└ ${s?.displayName ?? s?.label ?? s?.key}</div>
-                                  <div class="product-item__sub" @click=${() => {
-                      if (s?.key) {
-                        void state.productOpenSession(s.key);
-                      }
-                    }}>${s?.lastMessage?.text ?? ""}</div>
-                                  <button class="btn btn--sm danger" title="Удалить чат" @click=${(
-                      e: Event,
-                    ) => {
-                      e.stopPropagation();
-                      state.productConfirmDeleteChat(s.key!);
-                    }}>
-                                    ${icons.trash}
-                                  </button>
-                                </button>
-                              `,
-                )}
-                        </div>
-                      `
+                .map(renderChatItem)}
+                      </div>
+                    `
             : nothing
           }
-                </div>
-              `,
-      )}
-          `
+              </div>
+            `,
+      )
       : nothing
     }
 
       ${ungroupedSessions.length > 0
       ? html`
-            <div class="product-project-group">
-              <div class="product-project-header product-project-header--ungrouped">
-                <span class="product-project-name">Без проекта</span>
-              </div>
-              <div class="product-project-chats">
-                ${ungroupedSessions.map(
-        (s) => html`
-                    <button
-                      class="product-item product-item--nested ${s.key === state.sessionKey ? "active" : ""}"
-                      ?disabled=${!chatReady}
-                    >
-                      <div class="product-item__title" @click=${() => {
-            void state.productOpenSession(s.key);
-          }}>└ ${s.displayName ?? s.label ?? s.key}</div>
-                      <div class="product-item__sub" @click=${() => {
-            void state.productOpenSession(s.key);
-          }}>${s.lastMessage?.text ?? ""}</div>
-                      <button class="btn btn--sm danger" title="Удалить чат" @click=${(
-            e: Event,
-          ) => {
-            e.stopPropagation();
-            state.productConfirmDeleteChat(s.key);
-          }}>
-                        ${icons.trash}
-                      </button>
-                    </button>
-                  `,
-      )}
-              </div>
+            <div class="product-chat-group">
+              ${ungroupedSessions.map(renderChatItem)}
             </div>
           `
       : nothing
@@ -286,31 +317,36 @@ function renderProjectsPanel(state: AppViewState) {
 
 function renderTelegramPanel(state: AppViewState) {
   return html`
-    <section class="card">
-      <div class="card-title">Telegram</div>
-      <div class="card-sub">Подключение бота (доступ по allowlist).</div>
-      <label class="field">
+    <section class="product-panel">
+      <div class="product-panel__header">Telegram</div>
+      <div class="product-panel__sub">Подключение бота (доступ по allowlist).</div>
+      <label class="product-field">
         <span>Bot token</span>
         <input
+          class="product-input"
           type="password"
           .value=${state.productTelegramToken}
           @input=${(e: Event) => (state.productTelegramToken = (e.target as HTMLInputElement).value)}
           placeholder="123456:ABC..."
         />
       </label>
-      <label class="field">
+      <label class="product-field">
         <span>Твой user id</span>
         <input
+          class="product-input"
           .value=${state.productTelegramAllowFrom}
           @input=${(e: Event) => (state.productTelegramAllowFrom = (e.target as HTMLInputElement).value)}
           placeholder="Например: 123456789"
         />
+        <div class="product-field__help">
+          Чтобы бот отвечал только вам (безопасность данных). Получить ID: напишите @userinfobot и скопируйте число.
+        </div>
       </label>
-      ${state.productTelegramError ? html`<div class="callout danger">${state.productTelegramError}</div>` : nothing}
-      ${state.productTelegramSuccess ? html`<div class="callout ok">${state.productTelegramSuccess}</div>` : nothing}
-      <div class="row" style="margin-top:12px;">
+      ${state.productTelegramError ? html`<div class="product-callout danger">${state.productTelegramError}</div>` : nothing}
+      ${state.productTelegramSuccess ? html`<div class="product-callout ok">${state.productTelegramSuccess}</div>` : nothing}
+      <div class="product-panel__section">
         <button
-          class="btn primary"
+          class="product-btn primary"
           ?disabled=${state.productTelegramBusy}
           @click=${() => void state.productConnectTelegram()}
         >
@@ -323,9 +359,9 @@ function renderTelegramPanel(state: AppViewState) {
 
 function renderSkillsPanel(state: AppViewState) {
   return html`
-    <section class="card">
-      <div class="card-title">Управление скиллами</div>
-      <div class="card-sub">Список доступных скиллов и их конфигурация.</div>
+    <section class="product-panel">
+      <div class="product-panel__header">Управление скиллами</div>
+      <div class="product-panel__sub">Список доступных скиллов и их конфигурация.</div>
       <div class="product-skills-list">
         ${state.skillsReport?.skills && state.skillsReport.skills.length > 0
       ? state.skillsReport.skills.map(
@@ -334,36 +370,32 @@ function renderSkillsPanel(state: AppViewState) {
                   <div class="product-skill-item__header">
                     <span class="product-skill-item__name">${skill.skillKey}</span>
                     ${!skill.disabled
-            ? html`
-                            <span class="badge ok">Активен</span>
-                          `
-            : html`
-                            <span class="badge warn">Неактивен</span>
-                          `
+            ? html`<span class="product-badge active">Активен</span>`
+            : html`<span class="product-badge inactive">Неактивен</span>`
           }
                   </div>
-                  <div class="product-skill-item__description">${skill.description}</div>
-                  <div class="product-skill-item__actions">
-                    <button class="btn btn--sm" @click=${() => state.productEditSkill(skill.skillKey)}>
-                      ${icons.edit} Редактировать
+                  <div class="product-skill-item__desc">${skill.description}</div>
+                  <div class="product-skill-actions">
+                    <button class="product-btn secondary product-btn--sm" @click=${() => state.productEditSkill(skill.skillKey)}>
+                      ${icons.edit} Ред.
                     </button>
                     ${!skill.disabled
             ? html`
                           <button
-                            class="btn btn--sm danger"
+                            class="product-btn danger product-btn--sm"
                             @click=${() => state.productDeactivateSkill(skill.skillKey)}
                             ?disabled=${state.skillsBusyKey === skill.skillKey}
                           >
-                            ${state.skillsBusyKey === skill.skillKey ? "Отключаю..." : "Отключить"}
+                            ${state.skillsBusyKey === skill.skillKey ? "..." : "Откл."}
                           </button>
                         `
             : html`
                           <button
-                            class="btn btn--sm primary"
+                            class="product-btn primary product-btn--sm"
                             @click=${() => state.productActivateSkill(skill.skillKey)}
                             ?disabled=${state.skillsBusyKey === skill.skillKey}
                           >
-                            ${state.skillsBusyKey === skill.skillKey ? "Включаю..." : "Включить"}
+                            ${state.skillsBusyKey === skill.skillKey ? "..." : "Вкл."}
                           </button>
                         `
           }
@@ -371,13 +403,13 @@ function renderSkillsPanel(state: AppViewState) {
                 </div>
               `,
       )
-      : html`
-                <p>Нет доступных скиллов.</p>
-              `
+      : html`<p class="product-panel__sub">Нет доступных скиллов.</p>`
     }
       </div>
-      <button class="btn primary" @click=${() => state.productCreateSkill()}>Добавить новый скилл</button>
-      ${state.skillsError ? html`<div class="callout danger" style="margin-top:12px;">${state.skillsError}</div>` : nothing}
+      <div class="product-panel__section">
+        <button class="product-btn primary" @click=${() => state.productCreateSkill()}>Добавить новый скилл</button>
+      </div>
+      ${state.skillsError ? html`<div class="product-callout danger" style="margin-top:12px;">${state.skillsError}</div>` : nothing}
     </section>
   `;
 }
@@ -495,7 +527,10 @@ export function renderProductApp(state: AppViewState) {
       ? html`
           <section class="card">
             <div class="card-title">Настройка</div>
-            <div class="card-sub">Нужно только ввести Eliza API key (сохраняется локально на gateway).</div>
+            <div class="card-sub">
+              Нужен токен из https://ai.yandex-team.ru/quota.
+              Нажмите «Получить токен», затем вставьте его (формат <code>y1_...</code>).
+            </div>
             ${state.onboardingWizardStatus !== "running"
           ? html`
                     <div class="row">
@@ -545,6 +580,7 @@ export function renderProductApp(state: AppViewState) {
 
                         <!-- Step Content -->
                         <div class="wizard-step-content">
+                          <img src="/ya_logo_pixel.png" alt="YA" class="wizard-logo" />
                           ${state.onboardingWizardStep.title
               ? html`<h2 class="wizard-title">${state.onboardingWizardStep.title}</h2>`
               : nothing
@@ -773,86 +809,123 @@ export function renderProductApp(state: AppViewState) {
         }
           </section>
         `
-      : state.productPanel === "projects"
-        ? renderProjectsPanel(state)
-        : state.productPanel === "telegram"
-          ? renderTelegramPanel(state)
-          : state.productPanel === "skills"
-            ? renderSkillsPanel(state)
-            : html`
+      : state.productPanel === "telegram"
+        ? renderTelegramPanel(state)
+        : state.productPanel === "skills"
+          ? renderSkillsPanel(state)
+          : html`
             ${renderChat({
-              sessionKey: state.sessionKey,
-              onSessionKeyChange: () => undefined,
-              thinkingLevel: state.chatThinkingLevel,
-              showThinking: false,
-              loading: state.chatLoading,
-              sending: state.chatSending,
-              compactionStatus: state.compactionStatus,
-              assistantAvatarUrl: state.chatAvatarUrl,
-              messages: state.chatMessages,
-              toolMessages: state.chatToolMessages,
-              stream: state.chatStream,
-              streamStartedAt: state.chatStreamStartedAt,
-              draft: state.chatMessage,
-              queue: state.chatQueue,
-              connected: state.connected,
-              canSend: state.connected,
-              disabledReason: chatDisabledReason,
-              error: state.lastError,
-              sessions: state.sessionsResult,
-              focusMode: false,
-              onRefresh: () =>
-                Promise.all([
-                  loadChatHistory(state as unknown as ChatState),
-                  refreshChatAvatar(state as unknown as Parameters<typeof refreshChatAvatar>[0]),
-                ]),
-              onToggleFocusMode: () => undefined,
-              onChatScroll: (event) => state.handleChatScroll(event),
-              onDraftChange: (next) => (state.chatMessage = next),
-              attachments: state.chatAttachments,
-              onAttachmentsChange: (next) => (state.chatAttachments = next),
-              onSend: () => state.handleSendChat(),
-              canAbort: Boolean(state.chatRunId),
-              onAbort: () => void state.handleAbortChat(),
-              onQueueRemove: (id) => state.removeQueuedMessage(id),
-              onNewSession: () => void state.productNewChat(),
-              onResetSession: () => void state.productResetChat(),
-              allowNewSession: true,
-              newSessionLabel: "Новый чат",
-              resetLabel: "Сбросить чат",
-              stopLabel: "Стоп",
-              sendLabel: "Отправить",
-              attachmentsLabel: "Вложения",
-              messageLabel: "Сообщение",
-              showNewMessages: state.chatNewMessagesBelow && !state.chatManualRefreshInFlight,
-              onScrollToBottom: () => state.scrollToBottom(),
-              sidebarOpen: state.sidebarOpen,
-              sidebarContent: state.sidebarContent,
-              sidebarError: state.sidebarError,
-              splitRatio: state.splitRatio,
-              onOpenSidebar: (content: string) => state.handleOpenSidebar(content),
-              onCloseSidebar: () => state.handleCloseSidebar(),
-              onSplitRatioChange: (ratio: number) => state.handleSplitRatioChange(ratio),
-              assistantName: state.assistantName,
-              assistantAvatar: state.assistantAvatar,
-            })}
+            sessionKey: state.sessionKey,
+            onSessionKeyChange: () => undefined,
+            chatMode: state.productChatMode,
+            ndaModeBusy: state.productNdaBusy,
+            ndaModeError: state.productNdaError,
+            onChatModeChange: (mode) => void state.productSetChatMode(mode),
+            thinkingLevel: state.chatThinkingLevel,
+            showThinking: false,
+            loading: state.chatLoading,
+            sending: state.chatSending,
+            compactionStatus: state.compactionStatus,
+            assistantAvatarUrl: state.chatAvatarUrl,
+            messages: state.chatMessages,
+            toolMessages: state.chatToolMessages,
+            stream: state.chatStream,
+            streamStartedAt: state.chatStreamStartedAt,
+            draft: state.chatMessage,
+            queue: state.chatQueue,
+            connected: state.connected,
+            canSend: state.connected,
+            disabledReason: chatDisabledReason,
+            error: state.lastError,
+            sessions: state.sessionsResult,
+            focusMode: false,
+            onRefresh: () =>
+              Promise.all([
+                loadChatHistory(state as unknown as ChatState),
+                refreshChatAvatar(state as unknown as Parameters<typeof refreshChatAvatar>[0]),
+              ]),
+            onToggleFocusMode: () => undefined,
+            onChatScroll: (event) => state.handleChatScroll(event),
+            onDraftChange: (next) => (state.chatMessage = next),
+            attachments: state.chatAttachments,
+            onAttachmentsChange: (next) => (state.chatAttachments = next),
+            onSend: () => state.handleSendChat(),
+            canAbort: Boolean(state.chatRunId),
+            onAbort: () => void state.handleAbortChat(),
+            onQueueRemove: (id) => state.removeQueuedMessage(id),
+            onNewSession: () => void state.productNewChat(),
+            onResetSession: () => void state.productResetChat(),
+            showFirstGreetingCta: shouldShowFirstGreetingCta(state),
+            telegramConnected: isTelegramReadyForCta(state),
+            onOpenTelegramSetup: () => {
+              state.chatFirstGreetingCtaDismissedSessionKey = state.sessionKey;
+              state.productPanel = "telegram";
+            },
+            onInsertAutomationPrompt: () => {
+              state.chatFirstGreetingCtaDismissedSessionKey = state.sessionKey;
+              state.chatMessage = buildCronPromptTemplate(state.cronWizard);
+              state.productPanel = "chat";
+            },
+            onDismissFirstGreetingCta: () => {
+              state.chatFirstGreetingCtaDismissedSessionKey = state.sessionKey;
+            },
+            showNdaTelegramCta: shouldShowNdaTelegramCta(state),
+            onOpenNdaTelegramSetup: () => {
+              state.productNdaTelegramCtaDismissed = true;
+              state.productPanel = "telegram";
+            },
+            onDismissNdaTelegramCta: () => {
+              state.productNdaTelegramCtaDismissed = true;
+            },
+            allowNewSession: true,
+            newSessionLabel: "Новый чат",
+            resetLabel: "Сбросить чат",
+            stopLabel: "Стоп",
+            sendLabel: "Отправить",
+            attachmentsLabel: "Вложения",
+            messageLabel: "Сообщение",
+            showNewMessages: state.chatNewMessagesBelow && !state.chatManualRefreshInFlight,
+            onScrollToBottom: () => state.scrollToBottom(),
+            sidebarOpen: state.sidebarOpen,
+            sidebarContent: state.sidebarContent,
+            sidebarError: state.sidebarError,
+            splitRatio: state.splitRatio,
+            onOpenSidebar: (content: string) => state.handleOpenSidebar(content),
+            onCloseSidebar: () => state.handleCloseSidebar(),
+            onSplitRatioChange: (ratio: number) => state.handleSplitRatioChange(ratio),
+            assistantName: state.assistantName,
+            assistantAvatar: state.assistantAvatar,
+          })}
           `;
 
   return html`
     <div class="product-shell">
       <aside class="product-rail" role="navigation" aria-label="Главная навигация">
-        <button class="product-rail__btn" title="Новый чат" aria-label="Новый чат" ?disabled=${!chatReady} @click=${() => void state.productNewChat()}>
+        <div class="product-rail__logo">
+          <img src="/ya_logo_pixel.png" alt="YA" />
+        </div>
+        <div class="product-rail__divider"></div>
+        <button 
+          class="product-rail__btn product-rail__btn--new" 
+          title="Новый чат" 
+          aria-label="Новый чат" 
+          ?disabled=${!chatReady} 
+          @click=${() => void state.productNewChat()}
+        >
           +
         </button>
         <button
           class="product-rail__btn"
           data-active=${state.productPanel === "projects"}
-          title="Проекты"
-          aria-label="Панель проектов"
+          title="Чаты"
+          aria-label="Панель чатов"
           aria-pressed=${state.productPanel === "projects"}
           @click=${() => (state.productPanel = "projects")}
         >
-          ${icons.folder}
+          <svg viewBox="0 0 24 24">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>Чат</span>
         </button>
         <button
           class="product-rail__btn"
@@ -862,7 +935,7 @@ export function renderProductApp(state: AppViewState) {
           aria-pressed=${state.productPanel === "telegram"}
           @click=${() => (state.productPanel = "telegram")}
         >
-          ${icons.link}
+          <span class="product-rail__text-icon">TG</span>
         </button>
         <button
           class="product-rail__btn"
@@ -872,7 +945,13 @@ export function renderProductApp(state: AppViewState) {
           aria-pressed=${state.productPanel === "skills"}
           @click=${() => (state.productPanel = "skills")}
         >
-          ${icons.skills}
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>Скилл</span>
         </button>
         <div style="flex:1"></div>
         <button
@@ -883,7 +962,18 @@ export function renderProductApp(state: AppViewState) {
           aria-pressed=${state.productPanel === "settings"}
           @click=${() => (state.productPanel = "settings")}
         >
-          ${icons.settings}
+          <svg viewBox="0 0 24 24">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+          </svg>
+          <span>Опции</span>
         </button>
       </aside>
 

@@ -61,6 +61,7 @@ export type ChatProps = {
   showNewMessages?: boolean;
   onScrollToBottom?: () => void;
   showFirstGreetingCta?: boolean;
+  telegramConnected?: boolean;
   showNdaTelegramCta?: boolean;
   onOpenTelegramSetup?: () => void;
   onOpenNdaTelegramSetup?: () => void;
@@ -296,24 +297,22 @@ function renderAttachmentPreview(props: ChatProps) {
   `;
 }
 
-function renderFirstGreetingCta(props: ChatProps) {
-  if (!props.showFirstGreetingCta) {
+/** Compact one-liner CTA banner above compose. Hidden when Telegram is already connected. */
+function renderTelegramCtaBanner(props: ChatProps) {
+  // Bug fix: hide if Telegram already connected to this agent
+  if (!props.showFirstGreetingCta || props.telegramConnected) {
     return nothing;
   }
   return html`
-    <div class="chat-first-greeting-cta" role="note" aria-live="polite">
-      <div class="chat-first-greeting-cta__title">Быстрый старт</div>
-      <div class="chat-first-greeting-cta__text">
-        Можно сразу подключить Telegram или настроить напоминание через чат.
-      </div>
-      <div class="chat-first-greeting-cta__actions">
-        <button class="btn primary" type="button" @click=${props.onOpenTelegramSetup}>
-          Подключить Telegram
+    <div class="chat-cta-banner" role="note">
+      <span class="chat-cta-banner__text">
+        Подключи Telegram — получай уведомления прямо туда
+      </span>
+      <div class="chat-cta-banner__actions">
+        <button class="btn btn--sm primary" type="button" @click=${props.onOpenTelegramSetup}>
+          Подключить
         </button>
-        <button class="btn" type="button" @click=${props.onInsertAutomationPrompt}>
-          Сформулировать в чате
-        </button>
-        <button class="btn ghost" type="button" @click=${props.onDismissFirstGreetingCta}>
+        <button class="btn btn--sm ghost" type="button" @click=${props.onDismissFirstGreetingCta}>
           Позже
         </button>
       </div>
@@ -536,7 +535,7 @@ export function renderChat(props: ChatProps) {
     }
       </div>
 
-      ${showFirstGreetingCta ? renderFirstGreetingCta(props) : nothing}
+      ${renderTelegramCtaBanner(props)}
       ${showNdaTelegramCta ? renderNdaTelegramCta(props) : nothing}
 
       ${props.queue.length

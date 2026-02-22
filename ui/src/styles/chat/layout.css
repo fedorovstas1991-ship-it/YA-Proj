@@ -692,3 +692,29 @@
     min-width: 120px;
   }
 }
+/* ── Compact Telegram CTA banner ── */
+.chat-cta-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  margin: 0 0 6px;
+  background: color-mix(in srgb, var(--accent, #3b82f6) 8%, var(--bg-elevated));
+  border: 1px solid color-mix(in srgb, var(--accent, #3b82f6) 20%, var(--border));
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.chat-cta-banner__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-cta-banner__actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
