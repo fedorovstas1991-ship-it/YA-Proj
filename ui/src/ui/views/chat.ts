@@ -23,6 +23,10 @@ export type CompactionIndicatorStatus = {
 export type ChatProps = {
   sessionKey: string;
   onSessionKeyChange: (next: string) => void;
+  chatMode?: "regular" | "nda";
+  ndaModeBusy?: boolean;
+  ndaModeError?: string | null;
+  onChatModeChange?: (mode: "regular" | "nda") => void;
   thinkingLevel: string | null;
   showThinking: boolean;
   loading: boolean;
@@ -56,6 +60,13 @@ export type ChatProps = {
   // Scroll control
   showNewMessages?: boolean;
   onScrollToBottom?: () => void;
+  showFirstGreetingCta?: boolean;
+  showNdaTelegramCta?: boolean;
+  onOpenTelegramSetup?: () => void;
+  onOpenNdaTelegramSetup?: () => void;
+  onInsertAutomationPrompt?: () => void;
+  onDismissFirstGreetingCta?: () => void;
+  onDismissNdaTelegramCta?: () => void;
   // Event handlers
   onRefresh: () => void;
   onToggleFocusMode: () => void;
@@ -250,38 +261,116 @@ function renderAttachmentPreview(props: ChatProps) {
   return html`
     <div class="chat-attachments">
       ${attachments.map(
-        (att) => html`
+    (att) => html`
           <div class="chat-attachment">
-            ${
-              att.kind === "image" && att.dataUrl
-                ? html`
+            ${att.kind === "image" && att.dataUrl
+        ? html`
                     <img
                       src=${att.dataUrl}
                       alt="Предпросмотр вложения"
                       class="chat-attachment__img"
                     />
                   `
-                : html`
+        : html`
                     <div class="chat-attachment__file">
                       <div class="chat-attachment__file-name">${att.fileName}</div>
                       <div class="chat-attachment__file-meta">${att.mimeType}</div>
                     </div>
                   `
-            }
+      }
             <button
               class="chat-attachment__remove"
               type="button"
               aria-label="Удалить вложение"
               @click=${() => {
-                const next = (props.attachments ?? []).filter((a) => a.id !== att.id);
-                props.onAttachmentsChange?.(next);
-              }}
+        const next = (props.attachments ?? []).filter((a) => a.id !== att.id);
+        props.onAttachmentsChange?.(next);
+      }}
             >
               ${icons.x}
             </button>
           </div>
         `,
-      )}
+  )}
+    </div>
+  `;
+}
+
+function renderFirstGreetingCta(props: ChatProps) {
+  if (!props.showFirstGreetingCta) {
+    return nothing;
+  }
+  return html`
+    <div class="chat-first-greeting-cta" role="note" aria-live="polite">
+      <div class="chat-first-greeting-cta__title">Быстрый старт</div>
+      <div class="chat-first-greeting-cta__text">
+        Можно сразу подключить Telegram или настроить напоминание через чат.
+      </div>
+      <div class="chat-first-greeting-cta__actions">
+        <button class="btn primary" type="button" @click=${props.onOpenTelegramSetup}>
+          Подключить Telegram
+        </button>
+        <button class="btn" type="button" @click=${props.onInsertAutomationPrompt}>
+          Сформулировать в чате
+        </button>
+        <button class="btn ghost" type="button" @click=${props.onDismissFirstGreetingCta}>
+          Позже
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderChatModeSwitch(props: ChatProps) {
+  const mode = props.chatMode ?? "regular";
+  const busy = Boolean(props.ndaModeBusy);
+  const onChange = props.onChatModeChange;
+  if (!onChange) {
+    return nothing;
+  }
+
+  return html`
+    <div class="chat-mode-switch" role="group" aria-label="Режим чата">
+      <button
+        class="chat-mode-switch__btn ${mode === "regular" ? "is-active" : ""}"
+        type="button"
+        ?disabled=${busy}
+        @click=${() => onChange("regular")}
+      >
+        Обычный
+      </button>
+      <button
+        class="chat-mode-switch__btn ${mode === "nda" ? "is-active" : ""}"
+        type="button"
+        ?disabled=${busy}
+        @click=${() => onChange("nda")}
+      >
+        NDA
+      </button>
+      ${busy ? html`<span class="chat-mode-switch__status">Переключаем режим…</span>` : nothing}
+    </div>
+  `;
+}
+
+function renderNdaTelegramCta(props: ChatProps) {
+  if (!props.showNdaTelegramCta) {
+    return nothing;
+  }
+
+  return html`
+    <div class="chat-nda-telegram-cta" role="note" aria-live="polite">
+      <div class="chat-nda-telegram-cta__title">NDA-режим</div>
+      <div class="chat-nda-telegram-cta__text">
+        Хотите получать NDA-уведомления в Telegram? Можно подключить отдельного NDA-бота.
+      </div>
+      <div class="chat-nda-telegram-cta__actions">
+        <button class="btn primary" type="button" @click=${props.onOpenNdaTelegramSetup}>
+          Подключить NDA-бота
+        </button>
+        <button class="btn ghost" type="button" @click=${props.onDismissNdaTelegramCta}>
+          Позже
+        </button>
+      </div>
     </div>
   `;
 }
@@ -309,6 +398,8 @@ export function renderChat(props: ChatProps) {
 
   const splitRatio = props.splitRatio ?? 0.6;
   const sidebarOpen = Boolean(props.sidebarOpen && props.onCloseSidebar);
+  const showNdaTelegramCta = Boolean(props.showNdaTelegramCta);
+  const showFirstGreetingCta = Boolean(props.showFirstGreetingCta) && !showNdaTelegramCta;
   let filePickerEl: HTMLInputElement | null = null;
 
   const addFiles = (files: FileList | null) => {
@@ -341,52 +432,51 @@ export function renderChat(props: ChatProps) {
       aria-live="polite"
       @scroll=${props.onChatScroll}
     >
-      ${
-        props.loading
-          ? html`
+      ${props.loading
+      ? html`
               <div class="muted">Загружаю чат…</div>
             `
-          : nothing
-      }
+      : nothing
+    }
       ${repeat(
-        buildChatItems(props),
-        (item) => item.key,
-        (item) => {
-          if (item.kind === "divider") {
-            return html`
+      buildChatItems(props),
+      (item) => item.key,
+      (item) => {
+        if (item.kind === "divider") {
+          return html`
               <div class="chat-divider" role="separator" data-ts=${String(item.timestamp)}>
                 <span class="chat-divider__line"></span>
                 <span class="chat-divider__label">${item.label}</span>
                 <span class="chat-divider__line"></span>
               </div>
             `;
-          }
+        }
 
-          if (item.kind === "reading-indicator") {
-            return renderReadingIndicatorGroup(assistantIdentity);
-          }
+        if (item.kind === "reading-indicator") {
+          return renderReadingIndicatorGroup(assistantIdentity);
+        }
 
-          if (item.kind === "stream") {
-            return renderStreamingGroup(
-              item.text,
-              item.startedAt,
-              props.onOpenSidebar,
-              assistantIdentity,
-            );
-          }
+        if (item.kind === "stream") {
+          return renderStreamingGroup(
+            item.text,
+            item.startedAt,
+            props.onOpenSidebar,
+            assistantIdentity,
+          );
+        }
 
-          if (item.kind === "group") {
-            return renderMessageGroup(item, {
-              onOpenSidebar: props.onOpenSidebar,
-              showReasoning,
-              assistantName: props.assistantName,
-              assistantAvatar: assistantIdentity.avatar,
-            });
-          }
+        if (item.kind === "group") {
+          return renderMessageGroup(item, {
+            onOpenSidebar: props.onOpenSidebar,
+            showReasoning,
+            assistantName: props.assistantName,
+            assistantAvatar: assistantIdentity.avatar,
+          });
+        }
 
-          return nothing;
-        },
-      )}
+        return nothing;
+      },
+    )}
     </div>
   `;
 
@@ -395,10 +485,10 @@ export function renderChat(props: ChatProps) {
       ${props.disabledReason ? html`<div class="callout">${props.disabledReason}</div>` : nothing}
 
       ${props.error ? html`<div class="callout danger">${props.error}</div>` : nothing}
+      ${props.ndaModeError ? html`<div class="callout danger">${props.ndaModeError}</div>` : nothing}
 
-      ${
-        props.focusMode
-          ? html`
+      ${props.focusMode
+      ? html`
             <button
               class="chat-focus-exit"
               type="button"
@@ -409,8 +499,8 @@ export function renderChat(props: ChatProps) {
               ${icons.x}
             </button>
           `
-          : nothing
-      }
+      : nothing
+    }
 
       <div
         class="chat-split-container ${sidebarOpen ? "chat-split-container--open" : ""}"
@@ -422,45 +512,45 @@ export function renderChat(props: ChatProps) {
           ${thread}
         </div>
 
-        ${
-          sidebarOpen
-            ? html`
+        ${sidebarOpen
+      ? html`
               <resizable-divider
                 .splitRatio=${splitRatio}
                 @resize=${(e: CustomEvent) => props.onSplitRatioChange?.(e.detail.splitRatio)}
               ></resizable-divider>
               <div class="chat-sidebar">
                 ${renderMarkdownSidebar({
-                  content: props.sidebarContent ?? null,
-                  error: props.sidebarError ?? null,
-                  onClose: props.onCloseSidebar!,
-                  onViewRawText: () => {
-                    if (!props.sidebarContent || !props.onOpenSidebar) {
-                      return;
-                    }
-                    props.onOpenSidebar(`\`\`\`\n${props.sidebarContent}\n\`\`\``);
-                  },
-                })}
+        content: props.sidebarContent ?? null,
+        error: props.sidebarError ?? null,
+        onClose: props.onCloseSidebar!,
+        onViewRawText: () => {
+          if (!props.sidebarContent || !props.onOpenSidebar) {
+            return;
+          }
+          props.onOpenSidebar(`\`\`\`\n${props.sidebarContent}\n\`\`\``);
+        },
+      })}
               </div>
             `
-            : nothing
-        }
+      : nothing
+    }
       </div>
 
-      ${
-        props.queue.length
-          ? html`
+      ${showFirstGreetingCta ? renderFirstGreetingCta(props) : nothing}
+      ${showNdaTelegramCta ? renderNdaTelegramCta(props) : nothing}
+
+      ${props.queue.length
+      ? html`
             <div class="chat-queue" role="status" aria-live="polite">
               <div class="chat-queue__title">Очередь (${props.queue.length})</div>
               <div class="chat-queue__list">
                 ${props.queue.map(
-                  (item) => html`
+        (item) => html`
                     <div class="chat-queue__item">
                       <div class="chat-queue__text">
-                        ${
-                          item.text ||
-                          (item.attachments?.length ? `Вложение (${item.attachments.length})` : "")
-                        }
+                        ${item.text ||
+          (item.attachments?.length ? `Вложение (${item.attachments.length})` : "")
+          }
                       </div>
                       <button
                         class="btn chat-queue__remove"
@@ -472,18 +562,17 @@ export function renderChat(props: ChatProps) {
                       </button>
                     </div>
                   `,
-                )}
+      )}
               </div>
             </div>
           `
-          : nothing
-      }
+      : nothing
+    }
 
       ${renderCompactionIndicator(props.compactionStatus)}
 
-      ${
-        props.showNewMessages
-          ? html`
+      ${props.showNewMessages
+      ? html`
             <button
               class="btn chat-new-messages"
               type="button"
@@ -492,113 +581,125 @@ export function renderChat(props: ChatProps) {
               Новые сообщения ${icons.arrowDown}
             </button>
           `
-          : nothing
-      }
+      : nothing
+    }
 
       <div class="chat-compose">
         ${renderAttachmentPreview(props)}
-        <div class="chat-compose__row">
-          <label class="field chat-compose__field">
-            <span>${props.messageLabel ?? "Сообщение"}</span>
-            <textarea
-              ${ref((el) => el && adjustTextareaHeight(el as HTMLTextAreaElement))}
-              .value=${props.draft}
-              ?disabled=${!props.connected}
-              @keydown=${(e: KeyboardEvent) => {
-                if (e.key !== "Enter") {
-                  return;
-                }
-                if (e.isComposing || e.keyCode === 229) {
-                  return;
-                }
-                if (e.shiftKey) {
-                  return;
-                } // Allow Shift+Enter for line breaks
-                if (!props.connected) {
-                  return;
-                }
-                e.preventDefault();
-                if (canCompose) {
-                  props.onSend();
-                }
-              }}
-              @input=${(e: Event) => {
-                const target = e.target as HTMLTextAreaElement;
-                adjustTextareaHeight(target);
-                props.onDraftChange(target.value);
-              }}
-              @paste=${(e: ClipboardEvent) => handlePaste(e, props)}
-              placeholder=${composePlaceholder}
-            ></textarea>
-          </label>
-          <div class="chat-compose__actions">
-            <input
-              type="file"
-              multiple
-              style="display:none"
-              ${ref((el) => (filePickerEl = el as HTMLInputElement))}
-              @change=${(e: Event) => {
-                const input = e.target as HTMLInputElement;
-                addFiles(input.files);
-                input.value = "";
-              }}
-            />
-            <button
-              class="btn"
-              ?disabled=${!props.connected}
-              title=${props.attachmentsLabel ?? "Прикрепить файл"}
-              aria-label="Прикрепить файл"
-              @click=${() => filePickerEl?.click()}
-            >
-              ${icons.paperclip}
-            </button>
-            ${
-              canAbort
-                ? html`
-                  <button
-                    class="btn"
-                    ?disabled=${!props.connected}
-                    @click=${props.onAbort}
-                  >
-                    ${props.stopLabel ?? "Стоп"}
-                  </button>
-                `
-                : null
-            }
-            ${
-              (props.allowNewSession ?? true)
-                ? html`
-                  <button
-                    class="btn"
-                    ?disabled=${!props.connected || props.sending}
-                    @click=${props.onNewSession}
-                  >
-                    ${props.newSessionLabel ?? "Новый чат"}
-                  </button>
-                `
-                : null
-            }
-            ${
-              props.onResetSession
-                ? html`
-                  <button
-                    class="btn"
-                    ?disabled=${!props.connected || props.sending}
-                    @click=${props.onResetSession}
-                  >
-                    ${props.resetLabel ?? "Сбросить чат"}
-                  </button>
-                `
-                : null
-            }
-            <button
-              class="btn primary"
-              ?disabled=${!props.connected}
-              @click=${props.onSend}
-            >
-              ${isBusy ? "В очередь" : (props.sendLabel ?? "Отправить")}<kbd class="btn-kbd">↵</kbd>
-            </button>
-          </div>
+        <div class="chat-compose__wrapper">
+          <input
+            type="file"
+            multiple
+            style="display:none"
+            ${ref((el) => (filePickerEl = el as HTMLInputElement))}
+            @change=${(e: Event) => {
+      const input = e.target as HTMLInputElement;
+      addFiles(input.files);
+      input.value = "";
+    }}
+          />
+          ${props.onChatModeChange
+      ? html`
+              <button
+                class="chat-compose__nda-btn ${(props.chatMode ?? "regular") === "nda" ? "is-active" : ""}"
+                type="button"
+                title="${(props.chatMode ?? "regular") === "nda" ? "NDA режим — нажми для обычного" : "Обычный режим — нажми для NDA"}"
+                aria-label="Переключить NDA режим"
+                ?disabled=${Boolean(props.ndaModeBusy)}
+                @click=${() => props.onChatModeChange?.(
+        (props.chatMode ?? "regular") === "nda" ? "regular" : "nda"
+      )}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              </button>
+            `
+      : nothing}
+          <textarea
+            ${ref((el) => el && adjustTextareaHeight(el as HTMLTextAreaElement))}
+            class="chat-compose__input"
+            .value=${props.draft}
+            ?disabled=${!props.connected}
+            @keydown=${(e: KeyboardEvent) => {
+      if (e.key !== "Enter") {
+        return;
+      }
+      if (e.isComposing || e.keyCode === 229) {
+        return;
+      }
+      if (e.shiftKey) {
+        return;
+      }
+      if (!props.connected) {
+        return;
+      }
+      e.preventDefault();
+      if (canCompose) {
+        props.onSend();
+      }
+    }}
+            @input=${(e: Event) => {
+      const target = e.target as HTMLTextAreaElement;
+      adjustTextareaHeight(target);
+      props.onDraftChange(target.value);
+    }}
+            @paste=${(e: ClipboardEvent) => handlePaste(e, props)}
+            placeholder=${composePlaceholder}
+          ></textarea>
+          <button
+            class="chat-compose__icon-btn"
+            ?disabled=${!props.connected}
+            title=${props.attachmentsLabel ?? "Прикрепить файл"}
+            aria-label="Прикрепить файл"
+            @click=${() => filePickerEl?.click()}
+          >
+            ${icons.paperclip}
+          </button>
+          <button
+            class="chat-compose__icon-btn chat-compose__send-btn"
+            ?disabled=${!props.connected}
+            title=${isBusy ? "В очередь" : (props.sendLabel ?? "Отправить")}
+            @click=${props.onSend}
+          >
+            ${icons.arrowDown ?? html`<span>→</span>`}
+          </button>
+        </div>
+        <div class="chat-compose__toolbar">
+          ${canAbort
+      ? html`
+                <button
+                  class="chat-compose__tool-btn"
+                  ?disabled=${!props.connected}
+                  @click=${props.onAbort}
+                >
+                  ${props.stopLabel ?? "Стоп"}
+                </button>
+              `
+      : null
+    }
+          ${(props.allowNewSession ?? true)
+      ? html`
+                <button
+                  class="chat-compose__tool-btn"
+                  ?disabled=${!props.connected || props.sending}
+                  @click=${props.onNewSession}
+                >
+                  ${props.newSessionLabel ?? "Новый чат"}
+                </button>
+              `
+      : null
+    }
+          ${props.onResetSession
+      ? html`
+                <button
+                  class="chat-compose__tool-btn"
+                  ?disabled=${!props.connected || props.sending}
+                  @click=${props.onResetSession}
+                >
+                  ${props.resetLabel ?? "Сбросить чат"}
+                </button>
+              `
+      : null
+    }
         </div>
       </div>
     </section>
