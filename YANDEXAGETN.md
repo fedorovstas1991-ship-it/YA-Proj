@@ -35,21 +35,10 @@
 
 ### P0 (Chat-First Redesign — в работе)
 
-- [ ] **Claude-стиль сообщений** — CSS-only:
-  - Юзер: серый фон (`var(--bg-accent)`), rounded, без пузыря/рамки
-  - AI: чистый текст, без фона
-  - Файл: `ui/src/styles/chat/grouped.css`
-  - План: `docs/plans/2026-02-22-chat-redesign-design.md`
-
-- [ ] **Floating compose bar + NDA-иконка в compose** — убираем `border-top`, делаем floating card с тенью и `border-radius: 16px`. NDA-переключатель переезжает из шапки чата в иконку-щит слева в поле ввода.
-  - Файлы: `ui/src/styles/chat/layout.css`, `ui/src/ui/views/chat.ts`
-
-- [ ] **Кнопка «Копировать» на каждом блоке кода** — кастомный `marked` renderer добавляет header с lang + copy-кнопкой над `<pre>`. Клик копирует только код блока (не всё сообщение). 2-sec «Скопировано ✓» feedback.
-  - Файлы: `ui/src/ui/markdown.ts`, `ui/src/styles/components.css`
-
-- [ ] **Компактный Telegram CTA banner + баг-фикс** — заменить карточку `chat-first-greeting-cta` на тонкий баннер. Скрывать, если Telegram уже подключён к активному агенту (текущий баг: показывается даже после подключения).
-  - Файлы: `ui/src/ui/views/chat.ts`, `ui/src/styles/chat/layout.css`
-  - Новый prop `ChatProps.telegramConnected?: boolean` — передаётся из `app.ts`/`app-render.ts`
+- [x] **Claude-стиль сообщений** — CSS-only:
+- [x] **Floating compose bar + NDA-иконка в compose**
+- [x] **Кнопка «Копировать» на каждом блоке кода**
+- [x] **Компактный Telegram CTA banner + баг-фикс**
 
 ### P0 (old)
 - [x] Починить автоотправку первого сообщения в чате (сейчас нестабильно/не срабатывает).
