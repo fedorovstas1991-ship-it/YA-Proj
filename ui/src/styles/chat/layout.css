@@ -385,6 +385,35 @@
   cursor: not-allowed;
 }
 
+/* NDA mode pill — always visible, accent when active */
+.chat-compose__nda-pill {
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 20px !important;
+  padding: 4px 12px !important;
+  border: 1px solid var(--border) !important;
+  color: var(--muted);
+  background: transparent;
+  transition: all 0.15s;
+}
+
+.chat-compose__nda-pill:hover {
+  color: var(--text) !important;
+  background: var(--bg-hover) !important;
+  border-color: var(--border-strong) !important;
+}
+
+.chat-compose__nda-pill.is-active {
+  color: var(--accent) !important;
+  background: var(--accent-subtle) !important;
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent) !important;
+}
+
+.chat-compose__nda-pill.is-active:hover {
+  background: color-mix(in srgb, var(--accent-subtle) 80%, var(--bg)) !important;
+}
+
+
 .chat-first-greeting-cta {
   margin: 8px auto 12px;
   width: min(760px, 100%);
@@ -692,6 +721,7 @@
     min-width: 120px;
   }
 }
+
 /* ── Compact Telegram CTA banner ── */
 .chat-cta-banner {
   display: flex;

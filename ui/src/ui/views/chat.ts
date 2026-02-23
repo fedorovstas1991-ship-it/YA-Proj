@@ -597,22 +597,7 @@ export function renderChat(props: ChatProps) {
       input.value = "";
     }}
           />
-          ${props.onChatModeChange
-      ? html`
-              <button
-                class="chat-compose__nda-btn ${(props.chatMode ?? "regular") === "nda" ? "is-active" : ""}"
-                type="button"
-                title="${(props.chatMode ?? "regular") === "nda" ? "NDA режим — нажми для обычного" : "Обычный режим — нажми для NDA"}"
-                aria-label="Переключить NDA режим"
-                ?disabled=${Boolean(props.ndaModeBusy)}
-                @click=${() => props.onChatModeChange?.(
-        (props.chatMode ?? "regular") === "nda" ? "regular" : "nda"
-      )}
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-              </button>
-            `
-      : nothing}
+
           <textarea
             ${ref((el) => el && adjustTextareaHeight(el as HTMLTextAreaElement))}
             class="chat-compose__input"
@@ -663,6 +648,24 @@ export function renderChat(props: ChatProps) {
           </button>
         </div>
         <div class="chat-compose__toolbar">
+          ${props.onChatModeChange
+      ? html`
+              <button
+                class="chat-compose__tool-btn chat-compose__nda-pill ${(props.chatMode ?? "regular") === "nda" ? "is-active" : ""}"
+                type="button"
+                title="${(props.chatMode ?? "regular") === "nda" ? "NDA режим — нажми для обычного" : "Обычный режим — нажми для NDA"}"
+                aria-label="Переключить NDA режим"
+                ?disabled=${Boolean(props.ndaModeBusy)}
+                @click=${() => props.onChatModeChange?.(
+        (props.chatMode ?? "regular") === "nda" ? "regular" : "nda"
+      )}
+              >
+                ${(props.chatMode ?? "regular") === "nda"
+          ? html`🔒 NDA`
+          : html`🔓 Обычный`}
+              </button>
+              `
+      : nothing}
           ${canAbort
       ? html`
                 <button
