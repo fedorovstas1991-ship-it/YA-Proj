@@ -1299,6 +1299,74 @@ export class OpenClawApp extends LitElement {
     }
   }
 
+  async productConnectTelegramNda() {
+    this.productTelegramNdaError = null;
+    this.productTelegramNdaSuccess = null;
+    if (!this.client || !this.connected) {
+      this.productTelegramNdaError = "Нет соединения с gateway.";
+      return;
+    }
+    this.productTelegramNdaBusy = true;
+    try {
+      let baseHash = this.configSnapshot?.hash;
+      if (!baseHash) {
+        await loadConfigInternal(this);
+        baseHash = this.configSnapshot?.hash;
+      }
+      if (!baseHash) {
+        this.productTelegramNdaError = "Не удалось получить hash конфига. Попробуй еще раз.";
+        return;
+      }
+      const token = this.productTelegramNdaToken.trim();
+      const allowFrom = this.productTelegramNdaAllowFrom.trim();
+      if (!token) {
+        this.productTelegramNdaError = "Нужен Telegram bot token для NDA-бота.";
+        return;
+      }
+      if (!allowFrom) {
+        this.productTelegramNdaError = "Нужен твой Telegram user id (цифры).";
+        return;
+      }
+      const defaultAgentId = normalizeAgentId(this.agentsList?.defaultId ?? "main");
+      const patch = {
+        channels: {
+          telegram: {
+            accounts: {
+              nda: {
+                enabled: true,
+                botToken: token,
+                dmPolicy: "allowlist",
+                allowFrom: [allowFrom],
+              },
+            },
+          },
+        },
+        bindings: [
+          {
+            agentId: defaultAgentId,
+            match: { channel: "telegram", accountId: "default" },
+          },
+          {
+            agentId: PRODUCT_NDA_AGENT_ID,
+            match: { channel: "telegram", accountId: "nda" },
+          },
+        ],
+      };
+      await this.client.request("config.patch", {
+        raw: JSON.stringify(patch),
+        baseHash,
+        note: "product-ui telegram nda connect",
+      });
+      this.productTelegramNdaToken = "";
+      this.productTelegramNdaAllowFrom = "";
+      this.productTelegramNdaSuccess = "NDA-бот подключен. Gateway перезапускается.";
+    } catch (err) {
+      this.productTelegramNdaError = String(err);
+    } finally {
+      this.productTelegramNdaBusy = false;
+    }
+  }
+
   private setTelegramConnectFlow(
     flow: TelegramConnectFlowState,
     status: string | null,
