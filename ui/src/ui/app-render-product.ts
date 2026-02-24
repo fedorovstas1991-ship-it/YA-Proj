@@ -41,6 +41,14 @@ function shouldShowFirstGreetingCta(state: AppViewState): boolean {
   return hasAssistantMessage;
 }
 
+function isNdaTelegramConfigured(state: AppViewState): boolean {
+  const cfg = state.configSnapshot?.config as Record<string, unknown> | null | undefined;
+  const telegram = (cfg?.channels as Record<string, unknown> | undefined)?.telegram as Record<string, unknown> | undefined;
+  const accounts = telegram?.accounts as Record<string, unknown> | undefined;
+  const ndaAccount = accounts?.nda as Record<string, unknown> | undefined;
+  return Boolean(ndaAccount?.botToken);
+}
+
 function shouldShowNdaTelegramCta(state: AppViewState): boolean {
   if (state.productChatMode !== "nda") {
     return false;
@@ -48,7 +56,7 @@ function shouldShowNdaTelegramCta(state: AppViewState): boolean {
   if (state.productNdaTelegramCtaDismissed) {
     return false;
   }
-  if (isTelegramReadyForCta(state)) {
+  if (isNdaTelegramConfigured(state)) {
     return false;
   }
   return true;
