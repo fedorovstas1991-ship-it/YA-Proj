@@ -319,7 +319,8 @@ function renderTelegramPanel(state: AppViewState) {
   return html`
     <section class="product-panel">
       <div class="product-panel__header">Telegram</div>
-      <div class="product-panel__sub">Подключение бота (доступ по allowlist).</div>
+
+      <div class="product-panel__sub" style="margin-bottom: 16px;">Обычный режим (агент «Обычный»)</div>
       <label class="product-field">
         <span>Bot token</span>
         <input
@@ -339,7 +340,7 @@ function renderTelegramPanel(state: AppViewState) {
           placeholder="Например: 123456789"
         />
         <div class="product-field__help">
-          Чтобы бот отвечал только вам (безопасность данных). Получить ID: напишите @userinfobot и скопируйте число.
+          Чтобы бот отвечал только вам. Получить ID: напишите @userinfobot.
         </div>
       </label>
       ${state.productTelegramError ? html`<div class="product-callout danger">${state.productTelegramError}</div>` : nothing}
@@ -350,7 +351,42 @@ function renderTelegramPanel(state: AppViewState) {
           ?disabled=${state.productTelegramBusy}
           @click=${() => void state.productConnectTelegram()}
         >
-          ${state.productTelegramBusy ? "Подключаю..." : "Подключить Telegram"}
+          ${state.productTelegramBusy ? "Подключаю..." : "Подключить"}
+        </button>
+      </div>
+
+      <div style="margin: 20px 0 12px; border-top: 1px solid var(--border-color, #333); padding-top: 16px;">
+        <div class="product-panel__sub">🔒 NDA-режим (агент «NDA»)</div>
+        <div class="product-field__help" style="margin-bottom: 12px;">Отдельный бот — NDA-контент не смешивается с обычным.</div>
+      </div>
+      <label class="product-field">
+        <span>Bot token (NDA)</span>
+        <input
+          class="product-input"
+          type="password"
+          .value=${state.productTelegramNdaToken}
+          @input=${(e: Event) => (state.productTelegramNdaToken = (e.target as HTMLInputElement).value)}
+          placeholder="123456:ABC..."
+        />
+      </label>
+      <label class="product-field">
+        <span>Твой user id</span>
+        <input
+          class="product-input"
+          .value=${state.productTelegramNdaAllowFrom}
+          @input=${(e: Event) => (state.productTelegramNdaAllowFrom = (e.target as HTMLInputElement).value)}
+          placeholder="Например: 123456789"
+        />
+      </label>
+      ${state.productTelegramNdaError ? html`<div class="product-callout danger">${state.productTelegramNdaError}</div>` : nothing}
+      ${state.productTelegramNdaSuccess ? html`<div class="product-callout ok">${state.productTelegramNdaSuccess}</div>` : nothing}
+      <div class="product-panel__section">
+        <button
+          class="product-btn primary"
+          ?disabled=${state.productTelegramNdaBusy}
+          @click=${() => void state.productConnectTelegramNda()}
+        >
+          ${state.productTelegramNdaBusy ? "Подключаю..." : "Подключить NDA-бота"}
         </button>
       </div>
     </section>
