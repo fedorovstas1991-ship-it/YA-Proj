@@ -755,6 +755,15 @@ export class OpenClawApp extends LitElement {
     if (!this.client) {
       throw new Error("Gateway клиент недоступен.");
     }
+
+    // Skip patch if NDA provider already configured
+    const existingModels = asRecord(config?.models);
+    const existingProviders = asRecord(existingModels?.providers);
+    const existingNda = asRecord(existingProviders?.[NDA_PROVIDER]);
+    if (existingNda?.baseUrl && existingNda?.apiKey) {
+      return;
+    }
+
     const sharedApiKeyRef = this.resolveSharedApiKeyRef(config);
     if (!sharedApiKeyRef) {
       throw new Error("Не найден API-ключ основной модели. Сначала завершите обычный onboarding.");
@@ -1413,13 +1422,6 @@ export class OpenClawApp extends LitElement {
       this.setTelegramConnectFlow("patching", "Сохраняем настройки Telegram в конфиг…");
       const defaultAgentId = normalizeAgentId(this.agentsList?.defaultId ?? "main");
       const patch = {
-        plugins: {
-          entries: {
-            telegram: {
-              enabled: true,
-            },
-          },
-        },
         channels: {
           telegram: {
             enabled: true,
