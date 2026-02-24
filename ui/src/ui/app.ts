@@ -270,6 +270,11 @@ export class OpenClawApp extends LitElement {
   @state() productTelegramBusy = false;
   @state() productTelegramError: string | null = null;
   @state() productTelegramSuccess: string | null = null;
+  @state() productTelegramNdaToken = "";
+  @state() productTelegramNdaAllowFrom = "";
+  @state() productTelegramNdaBusy = false;
+  @state() productTelegramNdaError: string | null = null;
+  @state() productTelegramNdaSuccess: string | null = null;
   @state() productProjects: Array<{
     id: string;
     name: string;

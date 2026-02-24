@@ -1,11 +1,12 @@
 import { AppEvent, sendAppEvent } from "./app-events.ts";
 import { getSessionAgentId, getSessionDisplayName } from "./app-util.ts";
-import { ChatState, loadChatHistory, watchChatStream } from "./controllers/chat.ts";
+import { ChatState, handleChatEvent, loadChatHistory, watchChatStream } from "./controllers/chat.ts";
 import { watchGatewayLog } from "./controllers/logs.ts";
 import { GatewayBrowserClient, GatewayHelloOk } from "./gateway.ts";
 import { parseLocation, Tab, pathForTab } from "./navigation.ts";
 import { DEFAULT_UI_SETTINGS, updateUiSettings, UiSettings } from "./storage.ts";
-import { detectTheme, ThemeMode, transitionTheme } from "./theme.ts";
+import { DEFAULT_CRON_FORM, DEFAULT_CRON_WIZARD } from "./app-defaults.ts";
+import { detectTheme, resolveTheme, ThemeMode, transitionTheme } from "./theme.ts";
 import { type CompactionStatus } from "./app-tool-stream.ts";
 import { type SkillMessage } from "./controllers/skills.ts";
 import {
@@ -30,7 +31,7 @@ import {
   LogEntry,
 } from "./types.ts";
 import { PresenceEntry } from "./types.ts";
-import { ChatAttachment, ChatQueueItem, CronFormState } from "./ui-types.ts";
+import { ChatAttachment, ChatQueueItem, CronFormState, CronWizardState } from "./ui-types.ts";
 import { NostrProfileFormState } from "./views/channels.nostr-profile-form.ts";
 import {
   UsageTotals as CostUsageSummary,
@@ -40,6 +41,9 @@ import {
 } from "./views/usageTypes.ts";
 import { ExecApprovalsSnapshot, ExecApprovalsFile } from "./controllers/exec-approvals.ts";
 import { ExecApprovalRequest } from "./controllers/exec-approval.ts";
+import { loadConfigSchema } from "./controllers/config.ts";
+import type { TelegramConnectFlowState } from "./views/channels.types.ts";
+import { normalizeAgentId } from "../../../src/routing/session-key.js";
 
 export class AppViewState {
   settings: UiSettings = DEFAULT_UI_SETTINGS;
@@ -53,6 +57,10 @@ export class AppViewState {
   productPanel: "chat" | "projects" | "telegram" | "skills" | "settings" = "chat";
   productDevDrawerOpen = false;
   productAgentId: string | null = null;
+  productChatMode: "regular" | "nda" = "regular";
+  productNdaBusy: boolean = false;
+  productNdaError: string | null = null;
+  productNdaTelegramCtaDismissed: boolean = false;
   productCreateProjectOpen = false;
   productCreateProjectName = "";
   productCreateProjectDesc = "";
@@ -70,6 +78,11 @@ export class AppViewState {
   productTelegramBusy = false;
   productTelegramError: string | null = null;
   productTelegramSuccess: string | null = null;
+  productTelegramNdaToken = "";
+  productTelegramNdaAllowFrom = "";
+  productTelegramNdaBusy = false;
+  productTelegramNdaError: string | null = null;
+  productTelegramNdaSuccess: string | null = null;
   productProjects: Array<{ id: string; name: string; expanded?: boolean; sessionKeys?: string[] }> = [];
   productProjectsLoading = false;
   productProjectsError: string | null = null;
@@ -82,7 +95,7 @@ export class AppViewState {
   hello: GatewayHelloOk | null = null;
   lastError: string | null = null;
   eventLog: AppEvent[] = [];
-  assistantName = "OpenClaw";
+  assistantName = "Yandex Agent";
   assistantAvatar: string | null = null;
   assistantAgentId: string | null = null;
   productEditingAgentModel: string = "";
@@ -103,6 +116,7 @@ export class AppViewState {
   chatThinkingLevel: string | null = null;
   chatQueue: ChatQueueItem[] = [];
   chatManualRefreshInFlight: boolean = false;
+  chatFirstGreetingCtaDismissedSessionKey: string | null = null;
   onboardingWizardSessionId: string | null = null;
   onboardingWizardStatus: "idle" | "running" | "done" | "cancelled" | "error" = "idle";
   onboardingWizardStep: WizardStep | null = null;
@@ -161,6 +175,9 @@ export class AppViewState {
   channelsSnapshot: ChannelsStatusSnapshot | null = null;
   channelsError: string | null = null;
   channelsLastSuccess: number | null = null;
+  telegramConnectFlow: TelegramConnectFlowState = "idle";
+  telegramConnectStatus: string | null = null;
+  telegramConnectDetails: string | null = null;
   whatsappLoginMessage: string | null = null;
   whatsappLoginQrDataUrl: string | null = null;
   whatsappLoginConnected: boolean | null = null;
@@ -235,7 +252,8 @@ export class AppViewState {
   cronJobs: CronJob[] = [];
   cronStatus: CronStatus | null = null;
   cronError: string | null = null;
-  cronForm: CronFormState = {} as CronFormState;
+  cronForm: CronFormState = { ...DEFAULT_CRON_FORM };
+  cronWizard: CronWizardState = { ...DEFAULT_CRON_WIZARD };
   cronRunsJobId: string | null = null;
   cronRuns: CronRunLogEntry[] = [];
   cronBusy: boolean = false;
@@ -292,7 +310,7 @@ export class AppViewState {
   productEditingAgentKnowledgeBaseSource: string = "";
 
 
-  // Dev Drawer activation
+  showAdvancedNav = false;
   private logoClickCount: number = 0;
   private lastLogoClickTime: number = 0;
 
@@ -324,6 +342,26 @@ export class AppViewState {
     const storedOnboardingDone = localStorage.getItem("simpleOnboardingDone");
     this.simpleOnboardingDone = storedOnboardingDone === "true";
 
+    void this.initialize();
+  }
+
+  handleSecretClick() {
+    const now = Date.now();
+    if (now - this.lastLogoClickTime < 500) {
+      this.logoClickCount++;
+    } else {
+      this.logoClickCount = 1;
+    }
+    this.lastLogoClickTime = now;
+
+    if (this.logoClickCount >= 3) {
+      this.showAdvancedNav = !this.showAdvancedNav;
+      this.logoClickCount = 0;
+      console.log("Secret menu toggled. showAdvancedNav:", this.showAdvancedNav);
+    }
+  }
+
+  private async initialize() {
     // Initialize skill creation state
     this.productCreateSkillOpen = false;
     this.productCreateSkillId = "";
@@ -488,25 +526,26 @@ export class AppViewState {
 
 
   connect = () => {
-    this.client = new GatewayBrowserClient(this.settings.gatewayUrl, this.settings.token);
+    this.client = new GatewayBrowserClient({ url: this.settings.gatewayUrl, token: this.settings.token });
     this.connected = true;
     this.lastError = null;
     this.client.onHello = (hello) => {
       this.hello = hello;
       const snapshot = hello.snapshot as any;
-      this.assistantName = snapshot?.assistantName ?? "OpenClaw";
+      this.assistantName = snapshot?.assistantName ?? "Yandex Agent";
       this.assistantAvatar = snapshot?.assistantAvatarUrl ?? null;
       if (snapshot?.welcomeMessage) {
         sendAppEvent({
           type: "info",
-          message: snapshot.welcomeMessage,
+          message: snapshot.welcomeMessage.replace(/OpenClaw/gi, "Yandex Agent"),
         });
       }
       this.loadOverview();
       this.loadAgents();
-      this.productLoadProjects(); // Ensure projects are loaded on connect
+      this.productLoadProjects();
       this.productLoadSessions();
-      this.productLoadSkills(); // Load skills on connect
+      this.productLoadSkills();
+      void loadConfigSchema(this as any);
     };
     this.client.onConnectionError = (error) => {
       this.connected = false;
@@ -529,9 +568,9 @@ export class AppViewState {
     };
 
     // Chat stream updates
-    watchChatStream(this, this.client);
+    watchChatStream(this as any, (payload) => handleChatEvent(this as any, payload));
     // Gateway log updates
-    watchGatewayLog(this, this.client);
+    watchGatewayLog(this as any, this.client);
   };
 
   setTab = (tab: Tab) => {
@@ -541,18 +580,25 @@ export class AppViewState {
 
   setTheme = (theme: ThemeMode, context?: { transition: boolean }) => {
     this.theme = theme;
-    this.themeResolved = detectTheme(theme);
+    this.themeResolved = resolveTheme(theme);
     if (context?.transition) {
-      transitionTheme(document.documentElement);
+      transitionTheme({
+        nextTheme: theme,
+        currentTheme: this.theme,
+        applyTheme: () => {
+          document.documentElement.dataset.theme = this.themeResolved;
+        },
+      });
+    } else {
+      document.documentElement.dataset.theme = this.themeResolved;
     }
-    document.documentElement.dataset.theme = this.themeResolved;
     this.settings = { ...this.settings, theme };
-    updateUiSettings(this.settings);
+    updateUiSettings(this as any, this.settings);
   };
 
   applySettings = (next: UiSettings) => {
     this.settings = next;
-    updateUiSettings(this.settings);
+    updateUiSettings(this as any, this.settings);
     // If we're changing connection settings, try to reconnect
     if (this.client?.url !== next.gatewayUrl || this.client?.token !== next.token) {
       this.client?.disconnect(); // Disconnect to force a reconnect with new settings
@@ -681,12 +727,19 @@ export class AppViewState {
 
   productSelectAgent = async (agentId: string) => {
     this.productAgentId = agentId;
+    this.productChatMode = normalizeAgentId(agentId) === "nda" ? "nda" : "regular";
     await this.loadAssistantIdentity();
     await this.productLoadSessions(); // Reload sessions for the newly selected agent
     sendAppEvent({
       type: "info",
       message: `Выбран агент: ${agentId}`,
     });
+  };
+
+  productSetChatMode = async (mode: "regular" | "nda") => {
+    this.productChatMode = mode;
+    this.productNdaError = null;
+    await this.productSelectAgent(mode === "nda" ? "nda" : "main");
   };
 
   productToggleProjectCollapsed = (projectId: string) => {
@@ -776,7 +829,7 @@ export class AppViewState {
     this.productSessionsLoading = true;
     this.productSessionsError = null;
     try {
-      const sessions = await this.client.sessions.list();
+      const sessions = await this.client.sessions.list({});
       this.productSessionsResult = sessions;
 
       // Assign sessions to projects based on agentId
@@ -817,6 +870,7 @@ export class AppViewState {
       this.chatQueue = [];
       this.chatManualRefreshInFlight = false;
       await this.productLoadSessions(); // Refresh session list to include new chat
+      this.productPanel = "projects"; // Show chats panel so new chat is visible
       sendAppEvent({
         type: "success",
         message: `Новый чат создан.`,
@@ -837,6 +891,7 @@ export class AppViewState {
 
   productOpenSession = async (sessionKey: string) => {
     this.sessionKey = sessionKey;
+    this.productChatMode = sessionKey.startsWith("agent:nda:") ? "nda" : "regular";
     this.chatMessage = "";
     this.chatAttachments = [];
     this.chatMessages = [];
@@ -858,7 +913,7 @@ export class AppViewState {
     const session = this.productSessionsResult?.sessions.find((s) => s.key === sessionKey);
     if (session) {
       this.productConfirmDeleteChatSessionKey = sessionKey;
-      this.productConfirmDeleteChatDisplayName = getSessionDisplayName(session);
+      this.productConfirmDeleteChatDisplayName = getSessionDisplayName(session.key);
       this.productConfirmDeleteChatOpen = true;
     }
   };
@@ -964,9 +1019,19 @@ export class AppViewState {
         resetConfig: this.onboardingWizardResetConfig,
       });
       this.onboardingWizardSessionId = response.sessionId;
-      this.onboardingWizardStep = response.step;
-      this.onboardingWizardCurrentStep = response.step.stepNum ?? 0;
-      this.onboardingWizardTotalSteps = response.step.totalSteps ?? 0;
+      this.onboardingWizardStep = response.step ?? null;
+      if (response.step) {
+        this.onboardingWizardCurrentStep = response.step.stepNum ?? 0;
+        this.onboardingWizardTotalSteps = response.step.totalSteps ?? 0;
+      }
+
+      console.log("startOnboardingWizard response:", JSON.stringify(response));
+
+      if (response.done || response.status === "done") {
+        this.onboardingWizardStatus = "done";
+        this.setOnboardingWizardDone();
+        sendAppEvent({ type: "success", message: "Онбординг завершен!" });
+      }
     } catch (e) {
       this.onboardingWizardError = String(e);
       this.onboardingWizardStatus = "error";
@@ -1000,13 +1065,18 @@ export class AppViewState {
         this.onboardingWizardSessionId,
         submitAnswer,
       );
-      this.onboardingWizardStep = response.step;
-      this.onboardingWizardCurrentStep = response.step.stepNum ?? 0;
-      this.onboardingWizardTotalSteps = response.step.totalSteps ?? 0;
+      this.onboardingWizardStep = response.step ?? null;
+      if (response.step) {
+        this.onboardingWizardCurrentStep = response.step.stepNum ?? 0;
+        this.onboardingWizardTotalSteps = response.step.totalSteps ?? 0;
+      }
       this.onboardingWizardTextAnswer = "";
       this.onboardingWizardMultiAnswers = [];
 
-      if (response.status === "completed") {
+      console.log("advanceOnboardingWizard response:", JSON.stringify(response));
+
+      if (response.done || response.status === "done") {
+        console.log("advanceOnboardingWizard: Status is done. Calling setOnboardingWizardDone.");
         this.onboardingWizardStatus = "done";
         this.setOnboardingWizardDone();
         sendAppEvent({ type: "success", message: "Онбординг завершен!" });
@@ -1039,12 +1109,23 @@ export class AppViewState {
   };
 
   setOnboardingWizardDone = () => {
+    console.log("setOnboardingWizardDone: Onboarding completed. Setting up main UI.");
     this.simpleOnboardingDone = true;
     localStorage.setItem("simpleOnboardingDone", "true");
     this.onboarding = false; // Hide onboarding UI
     this.onboardingWizardStatus = "done";
     this.loadOverview(); // Refresh any relevant data after onboarding
     this.connect(); // Ensure we are connected with new settings
+
+    // Auto-send welcome message
+    console.log("setOnboardingWizardDone: Scheduling welcome message...");
+    setTimeout(() => {
+      console.log("setOnboardingWizardDone: Sending welcome message now.");
+      this.chatMessage = "Привет! Что ты умеешь?";
+      this.handleSendChat()
+        .then(() => console.log("setOnboardingWizardDone: Welcome message sent."))
+        .catch(err => console.error("setOnboardingWizardDone: Failed to send welcome message:", err));
+    }, 1000);
   };
 
   setSimpleOnboardingDone = (next: boolean) => {
