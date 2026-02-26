@@ -1,0 +1,23 @@
+name: Fix Request
+description: Задача на исправление уже известной проблемы
+labels: [fix]
+body:
+  - type: input
+    id: related_bug
+    attributes:
+      label: Связанный bug issue
+      placeholder: "#123"
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope фикса
+      placeholder: Что именно исправляем
+    validations:
+      required: true
+  - type: textarea
+    id: done_when
+    attributes:
+      label: Критерий готовности
+      placeholder: По каким условиям считаем фикс завершённым
+    validations:
+      required: true

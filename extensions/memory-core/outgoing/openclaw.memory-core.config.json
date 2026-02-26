@@ -1,0 +1,53 @@
+{
+  "plugins": {
+    "entries": {
+      "memory-core": {
+        "config": {
+          "timezone": "Europe/Moscow",
+          "language": "ru",
+          "memoryDir": "memory",
+          "memoryFile": "MEMORY.md",
+          "recent": {
+            "maxDays": 90
+          },
+          "promote": {
+            "intervalHours": 6,
+            "aggressiveness": "broad",
+            "mode": "ollama",
+            "messageThreshold": 50,
+            "onCompaction": true
+          },
+          "clarify": {
+            "minMessages": 20
+          },
+          "ollama": {
+            "baseUrl": "http://127.0.0.1:11434",
+            "model": "qwen2.5:7b-instruct",
+            "timeoutMs": 60000
+          }
+        }
+      }
+    }
+  },
+  "memory": {
+    "backend": "qmd",
+    "qmd": {
+      "includeDefaultMemory": false,
+      "paths": [
+        {
+          "path": "~/.YA-yagent/memory/recent",
+          "name": "memory-recent",
+          "pattern": "**/*.md"
+        },
+        {
+          "path": "~/.YA-yagent",
+          "name": "memory-root",
+          "pattern": "MEMORY.md"
+        }
+      ],
+      "update": {
+        "interval": "5m"
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+name: Product Feedback
+description: Идея, улучшение UX, пожелание по продукту
+labels: [feedback]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Что сейчас не устраивает
+      placeholder: Коротко опишите текущую боль
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Предложение
+      placeholder: Как вы видите улучшение
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Ожидаемый эффект
+      placeholder: Что это даст пользователю/команде

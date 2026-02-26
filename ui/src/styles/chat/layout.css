@@ -1,0 +1,750 @@
+/* =============================================
+   CHAT CARD LAYOUT - Flex container with sticky compose
+   ============================================= */
+
+/* Main chat card - flex column layout, transparent background */
+.chat {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  height: 100%;
+  min-height: 0;
+  /* Allow flex shrinking */
+  overflow: hidden;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Chat header - fixed at top, transparent */
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  /* Increased gap */
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  padding-bottom: 16px;
+  /* Increased padding */
+  margin-bottom: 16px;
+  /* Increased margin */
+  background: transparent;
+}
+
+.chat-header__left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  /* Increased gap */
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.chat-header__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* Increased gap */
+}
+
+.chat-session {
+  min-width: 200px;
+  /* Slightly wider session width */
+}
+
+/* Chat thread - scrollable middle section, transparent */
+.chat-thread {
+  flex: 1 1 0;
+  /* Grow, shrink, and use 0 base for proper scrolling */
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px;
+  /* Increased padding */
+  min-height: 0;
+  /* Allow shrinking for flex scroll behavior */
+  border-radius: var(--radius-lg);
+  /* Larger radius for consistency */
+  background: transparent;
+}
+
+/* Focus mode exit button */
+.chat-focus-exit {
+  position: absolute;
+  top: 16px;
+  /* Adjusted position */
+  right: 16px;
+  /* Adjusted position */
+  z-index: 100;
+  width: 36px;
+  /* Slightly larger button */
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 150ms ease-out,
+    color 150ms ease-out,
+    border-color 150ms ease-out;
+  box-shadow: var(--shadow-sm);
+  /* Using predefined shadow variable */
+}
+
+.chat-focus-exit:hover {
+  background: var(--panel-strong);
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.chat-focus-exit svg {
+  width: 18px;
+  /* Slightly larger icon */
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* New messages indicator - floating pill above compose */
+.chat-new-messages {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  /* Increased gap */
+  padding: 8px 16px;
+  /* Increased padding */
+  margin: 12px auto;
+  /* Increased margin */
+  font-size: 14px;
+  /* Slightly larger font size */
+  font-family: var(--font-body);
+  color: var(--text);
+  background: var(--panel-strong);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  white-space: nowrap;
+  z-index: 10;
+  transition:
+    background 150ms ease-out,
+    border-color 150ms ease-out;
+}
+
+.chat-new-messages:hover {
+  background: var(--panel);
+  border-color: var(--accent);
+}
+
+.chat-new-messages svg {
+  width: 18px;
+  /* Slightly larger icon */
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.5px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+/* Chat compose — floating card, no hard border */
+.chat-compose {
+  position: sticky;
+  bottom: 0;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+  padding: 10px 20px 20px;
+  background: transparent;
+  border-top: none;
+  z-index: 10;
+}
+
+/* Attachments */
+.chat-attachments {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  /* Increased gap */
+  padding: 10px;
+  /* Increased padding */
+  background: var(--bg-accent);
+  border-radius: var(--radius-md);
+  /* Larger radius */
+  border: 1px solid var(--border);
+  width: fit-content;
+  max-width: 100%;
+  align-self: flex-start;
+  /* Don't stretch in flex column parent */
+}
+
+.chat-attachment {
+  position: relative;
+  width: 120px;
+  height: 80px;
+  border-radius: var(--radius-sm);
+  /* Adjusted radius */
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+
+.chat-attachment__remove {
+  position: absolute;
+  top: 6px;
+  /* Adjusted position */
+  right: 6px;
+  /* Adjusted position */
+  width: 24px;
+  /* Slightly larger button */
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-size: 14px;
+  /* Larger font */
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+
+/* Message images (sent images displayed in chat) */
+.chat-message-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  /* Increased gap */
+  margin-bottom: 10px;
+  /* Increased margin */
+}
+
+.chat-message-image {
+  max-width: 350px;
+  /* Increased max-width */
+  max-height: 250px;
+  /* Increased max-height */
+  border-radius: var(--radius-md);
+  /* Larger radius */
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 150ms ease-out;
+}
+
+.chat-message-image:hover {
+  transform: scale(1.02);
+}
+
+/* User message images align right */
+.chat-group.user .chat-message-images {
+  justify-content: flex-end;
+}
+
+/* ===== Chat Compose — mockup-matching wrapper ===== */
+
+/* The wrapper: floating card with shadow */
+.chat-compose__wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 10px 14px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  max-width: 760px;
+  margin: 0 auto;
+  width: 100%;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.chat-compose__wrapper:focus-within {
+  border-color: var(--border-strong);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Textarea inside wrapper — completely flat, no border */
+.chat-compose__input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  color: #1a1a1a;
+  outline: none;
+  resize: none;
+  max-height: 200px;
+  min-height: 24px;
+  height: 24px;
+  font-family: inherit;
+  line-height: 1.5;
+  padding: 2px 0;
+}
+
+.chat-compose__input::placeholder {
+  color: #bbb;
+}
+
+.chat-compose__input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Icon buttons inside wrapper (paperclip, send) */
+.chat-compose__icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.chat-compose__icon-btn:hover {
+  background: #e5e5e5;
+  color: #1a1a1a;
+}
+
+.chat-compose__icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.chat-compose__icon-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Dark send button */
+.chat-compose__send-btn {
+  background: #1a1a1a;
+  color: white;
+}
+
+.chat-compose__send-btn:hover {
+  background: #333;
+}
+
+/* Toolbar below — ghost text buttons */
+.chat-compose__toolbar {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  max-width: 760px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.chat-compose__tool-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #999;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.chat-compose__tool-btn:hover {
+  color: #1a1a1a;
+  background: #f5f5f5;
+}
+
+.chat-compose__tool-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* NDA mode pill — always visible, accent when active */
+.chat-compose__nda-pill {
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 20px !important;
+  padding: 4px 12px !important;
+  border: 1px solid var(--border) !important;
+  color: var(--muted);
+  background: transparent;
+  transition: all 0.15s;
+}
+
+.chat-compose__nda-pill:hover {
+  color: var(--text) !important;
+  background: var(--bg-hover) !important;
+  border-color: var(--border-strong) !important;
+}
+
+.chat-compose__nda-pill.is-active {
+  color: var(--accent) !important;
+  background: var(--accent-subtle) !important;
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent) !important;
+}
+
+.chat-compose__nda-pill.is-active:hover {
+  background: color-mix(in srgb, var(--accent-subtle) 80%, var(--bg)) !important;
+}
+
+
+.chat-first-greeting-cta {
+  margin: 8px auto 12px;
+  width: min(760px, 100%);
+  border: 1px solid color-mix(in srgb, var(--brand) 24%, var(--border));
+  background: color-mix(in srgb, var(--bg-elevated) 88%, var(--brand-subtle));
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.chat-first-greeting-cta__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.chat-first-greeting-cta__text {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.chat-first-greeting-cta__actions {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chat-mode-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 10px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--panel) 80%, var(--bg));
+}
+
+.chat-mode-switch__btn {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.chat-mode-switch__btn:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--panel-strong) 85%, var(--bg));
+}
+
+.chat-mode-switch__btn.is-active {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.chat-mode-switch__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.chat-mode-switch__status {
+  margin-left: 2px;
+  margin-right: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.chat-nda-telegram-cta {
+  margin: 8px auto 12px;
+  width: min(760px, 100%);
+  border: 1px solid color-mix(in srgb, var(--brand) 24%, var(--border));
+  background: color-mix(in srgb, var(--bg-elevated) 88%, var(--brand-subtle));
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.chat-nda-telegram-cta__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.chat-nda-telegram-cta__text {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.chat-nda-telegram-cta__actions {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+:root[data-theme="light"] .chat-compose {
+  background: transparent;
+  border-top: none;
+}
+
+/* NDA icon toggle button inside compose wrapper */
+.chat-compose__nda-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.chat-compose__nda-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.chat-compose__nda-btn.is-active {
+  color: var(--accent);
+}
+
+.chat-compose__nda-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.chat-compose__nda-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Legacy compose classes — keep for backward compat */
+.chat-compose__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex: 1;
+}
+
+.chat-compose__field {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+.chat-compose__field>span {
+  display: none;
+}
+
+.chat-compose__field textarea:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Chat controls - moved to content-header area, left aligned */
+.chat-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  /* Increased gap */
+  flex-wrap: wrap;
+}
+
+.chat-controls__session {
+  min-width: 180px;
+  max-width: 420px;
+}
+
+.chat-controls__thinking {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Increased gap */
+  font-size: 14px;
+  /* Slightly larger font size */
+  padding: 6px 12px;
+  /* Increased padding */
+  background: var(--bg-accent);
+  border-radius: var(--radius-md);
+  /* Larger radius */
+  border: 1px solid var(--border);
+}
+
+/* Icon button style */
+.btn--icon {
+  padding: 10px !important;
+  /* Increased padding */
+  min-width: 40px;
+  /* Larger button */
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  /* Changed background */
+  border-radius: var(--radius-md);
+  /* Added radius */
+  box-shadow: var(--shadow-sm);
+  /* Added subtle shadow */
+}
+
+/* Controls separator */
+.chat-controls__separator {
+  color: var(--border);
+  /* Use border color */
+  font-size: 20px;
+  /* Larger font size */
+  margin: 0 10px;
+  /* Increased margin */
+  font-weight: 300;
+}
+
+.btn--icon:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+
+/* Light theme icon button overrides */
+:root[data-theme="light"] .btn--icon {
+  background: var(--bg-elevated);
+  border-color: var(--border);
+  box-shadow: var(--shadow-sm);
+  color: var(--muted);
+}
+
+:root[data-theme="light"] .btn--icon:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.btn--icon svg {
+  display: block;
+  width: 20px;
+  /* Larger icon */
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.5px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chat-controls__session select {
+  padding: 8px 12px;
+  /* Increased padding */
+  font-size: 14px;
+  /* Slightly larger font size */
+  max-width: 420px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-controls__thinking {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+/* Thinking indicator override */
+.chat-controls__thinking {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(16, 24, 40, 0.15);
+}
+
+@media (max-width: 640px) {
+  .chat-session {
+    min-width: 140px;
+  }
+
+  .chat-compose {
+    grid-template-columns: 1fr;
+  }
+
+  .chat-controls {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .chat-controls__session {
+    min-width: 120px;
+  }
+}
+
+/* ── Compact Telegram CTA banner ── */
+.chat-cta-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  margin: 0 0 6px;
+  background: color-mix(in srgb, var(--accent, #3b82f6) 8%, var(--bg-elevated));
+  border: 1px solid color-mix(in srgb, var(--accent, #3b82f6) 20%, var(--border));
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.chat-cta-banner__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-cta-banner__actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}

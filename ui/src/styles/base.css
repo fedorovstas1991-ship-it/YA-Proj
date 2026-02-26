@@ -1,0 +1,485 @@
+@import '../ui/anthropic-theme.css';
+
+:root {
+  /* Background */
+  --bg: var(--anthropic-light-bg);
+  --bg-accent: var(--anthropic-bg-accent);
+  --bg-elevated: #ffffff;
+  /* Keep white for elevated light mode elements */
+  --bg-hover: #f0f0f0;
+  /* Default light hover */
+  --bg-muted: #e5e7eb;
+
+  /* Card / Surface */
+  --card: #ffffff;
+  --card-foreground: var(--anthropic-text);
+  --card-highlight: rgba(0, 0, 0, 0.05);
+  --popover: #ffffff;
+  --popover-foreground: var(--card-foreground);
+
+  /* Panel */
+  --panel: var(--anthropic-light-bg);
+  --panel-strong: var(--anthropic-bg-accent);
+  --panel-hover: #e5e7eb;
+  --chrome: rgba(255, 255, 255, 0.9);
+  --chrome-strong: rgba(255, 255, 255, 0.95);
+
+  /* Text */
+  --text: var(--anthropic-text);
+  --text-strong: var(--anthropic-text);
+  --chat-text: var(--text);
+  --muted: var(--anthropic-muted-text);
+  --muted-strong: #4b5563;
+  --muted-foreground: var(--muted);
+
+  /* Border */
+  --border: var(--anthropic-border);
+  --border-strong: #9ca3af;
+  --border-hover: #6b7280;
+  --input: var(--anthropic-input-bg);
+  --ring: var(--brand, #e30000);
+
+  /* Accent — dark primary (mockup) */
+  --accent: #1a1a1a;
+  --accent-rgb: 26, 26, 26;
+  --accent-hover: #333333;
+  --accent-muted: #555555;
+  --accent-subtle: rgba(26, 26, 26, 0.06);
+  --accent-foreground: #ffffff;
+  --accent-glow: rgba(26, 26, 26, 0.1);
+  --primary: var(--accent);
+  --primary-foreground: #ffffff;
+
+  /* Brand — red Y accent */
+  --brand: #e30000;
+  --brand-rgb: 227, 0, 0;
+  --brand-subtle: rgba(227, 0, 0, 0.08);
+  --brand-glow: rgba(227, 0, 0, 0.15);
+
+  /* Secondary */
+  --secondary: var(--bg-accent);
+  --secondary-foreground: var(--text);
+  --accent-2: #10b981;
+  --accent-2-muted: rgba(16, 185, 129, 0.7);
+  --accent-2-subtle: rgba(16, 185, 129, 0.1);
+
+  /* Semantic */
+  --ok: #10b981;
+  --ok-muted: rgba(16, 185, 129, 0.75);
+  --ok-subtle: rgba(16, 185, 129, 0.1);
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --warn: #f59e0b;
+  --warn-muted: rgba(245, 158, 11, 0.75);
+  --warn-subtle: rgba(245, 158, 11, 0.1);
+  --danger: #ef4444;
+  --danger-muted: rgba(239, 68, 68, 0.75);
+  --danger-subtle: rgba(239, 68, 68, 0.1);
+  --info: #3b82f6;
+  --info-muted: rgba(59, 130, 246, 0.75);
+  --info-subtle: rgba(59, 130, 246, 0.1);
+
+  /* Focus */
+  --focus: rgba(227, 0, 0, 0.15);
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--brand);
+  --focus-glow: 0 0 0 2px var(--bg), 0 0 0 4px var(--brand), 0 0 20px var(--brand-glow);
+
+  /* Grid */
+  --grid-line: rgba(0, 0, 0, 0.08);
+
+  /* Typography */
+  --mono:
+    "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Font Sizing */
+  --font-size-sm: 0.875rem;
+  /* 14px */
+  --font-size-md: 1rem;
+  /* 16px */
+  --font-size-lg: 1.125rem;
+  /* 18px */
+  --font-size-xl: 1.25rem;
+  /* 20px */
+
+  /* UI Density (New) */
+  --spacing-unit: 8px;
+  --padding-sm: calc(var(--spacing-unit) * 1);
+  --padding-md: calc(var(--spacing-unit) * 1.5);
+  --padding-lg: calc(var(--spacing-unit) * 2);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-glow: 0 0 0 0 transparent;
+  /* Clean look, no glow by default */
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+  --radius: var(--anthropic-border-radius);
+
+  /* Transitions - Snappy but smooth */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 120ms;
+  --duration-normal: 200ms;
+  --duration-slow: 350ms;
+
+  color-scheme: light;
+}
+
+/* Dark theme - Based on existing, but with new accent and adjusted values */
+:root[data-theme="dark"] {
+  /* Background - Warmer dark with depth */
+  --bg: var(--anthropic-dark-bg);
+  --bg-accent: var(--anthropic-dark-theme-bg-accent);
+  --bg-elevated: var(--anthropic-dark-theme-card-bg);
+  --bg-hover: #333333;
+  /* Default dark hover */
+  --bg-muted: #222222;
+  /* Default dark muted */
+
+  /* Card / Surface - More contrast between levels */
+  --card: var(--anthropic-dark-theme-card-bg);
+  --card-foreground: var(--anthropic-dark-theme-text);
+  --card-highlight: rgba(255, 255, 255, 0.08);
+  --popover: var(--anthropic-dark-theme-card-bg);
+  --popover-foreground: var(--anthropic-dark-theme-text);
+
+  /* Panel */
+  --panel: var(--anthropic-dark-bg);
+  --panel-strong: var(--anthropic-dark-theme-bg-accent);
+  --panel-hover: #333333;
+  /* Default dark panel hover */
+  --chrome: rgba(18, 18, 18, 0.95);
+  --chrome-strong: rgba(18, 18, 18, 0.98);
+
+  /* Text - Slightly warmer */
+  --text: var(--anthropic-dark-theme-text);
+  --text-strong: var(--anthropic-dark-theme-text);
+  --chat-text: var(--text);
+  --muted: var(--anthropic-dark-theme-muted-text);
+  --muted-strong: #757575;
+  /* Dark muted strong */
+  --muted-foreground: #b0b0b0;
+  /* Dark muted foreground */
+
+  /* Border - Subtle but defined */
+  --border: var(--anthropic-dark-theme-border);
+  --border-strong: #5a5a5a;
+  /* Dark border strong */
+  --border-hover: #757575;
+  /* Dark border hover */
+  --input: var(--anthropic-dark-theme-input-bg);
+  --ring: var(--anthropic-accent);
+
+  /* Accent - Anthropic terracotta for dark theme too */
+  --accent: var(--anthropic-accent);
+  --accent-rgb: 217, 119, 87;
+  --accent-hover: #c2684f;
+  --accent-muted: var(--anthropic-accent);
+  --accent-subtle: rgba(var(--accent-rgb), 0.15);
+  --accent-foreground: #fafafa;
+  --accent-glow: rgba(var(--accent-rgb), 0.25);
+  --primary: var(--accent);
+  --primary-foreground: #ffffff;
+
+  /* Secondary - Teal accent for variety */
+  --secondary: var(--anthropic-dark-theme-card-bg);
+  --secondary-foreground: var(--anthropic-dark-theme-text);
+  --accent-2: #14b8a6;
+  /* Default dark accent 2 */
+  --accent-2-muted: rgba(20, 184, 166, 0.7);
+  /* Default dark accent 2 muted */
+  --accent-2-subtle: rgba(20, 184, 166, 0.15);
+  /* Default dark accent 2 subtle */
+
+  /* Semantic - More saturated */
+  --ok: #22c55e;
+  /* Default dark ok */
+  --ok-muted: rgba(34, 197, 94, 0.75);
+  /* Default dark ok muted */
+  --ok-subtle: rgba(34, 197, 94, 0.12);
+  /* Default dark ok subtle */
+  --destructive: #ef4444;
+  /* Default dark destructive */
+  --destructive-foreground: #fafafa;
+  /* Default dark destructive foreground */
+  --warn: #f59e0b;
+  /* Default dark warn */
+  --warn-muted: rgba(245, 158, 11, 0.75);
+  /* Default dark warn muted */
+  --warn-subtle: rgba(245, 158, 11, 0.12);
+  /* Default dark warn subtle */
+  --danger: #ef4444;
+  /* Default dark danger */
+  --danger-muted: rgba(239, 68, 68, 0.75);
+  /* Default dark danger muted */
+  --danger-subtle: rgba(239, 68, 68, 0.12);
+  /* Default dark danger subtle */
+  --info: #3b82f6;
+  /* Default dark info */
+  --info-muted: rgba(59, 130, 246, 0.75);
+  /* Default dark info muted */
+  --info-subtle: rgba(59, 130, 246, 0.12);
+  /* Default dark info subtle */
+
+  /* Focus - With glow */
+  --focus: rgba(217, 119, 87, 0.3);
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--ring);
+  --focus-glow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ring), 0 0 20px var(--accent-glow);
+
+  /* Grid */
+  --grid-line: rgba(255, 255, 255, 0.06);
+
+  /* Shadows - Richer with subtle color */
+  --shadow-sm: var(--anthropic-shadow-sm);
+  --shadow-md: var(--anthropic-shadow-md);
+  --shadow-lg: var(--anthropic-shadow-lg);
+  --shadow-xl: 0 24px 50px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  --shadow-glow: 0 0 30px var(--accent-glow);
+
+  /* Radii - Slightly larger for friendlier feel */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+  --radius: var(--anthropic-border-radius);
+
+  /* Transitions - Snappy but smooth */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 120ms;
+  --duration-normal: 200ms;
+  --duration-slow: 350ms;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font: 400 15px/1.6 "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: -0.02em;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Theme transition */
+@keyframes theme-circle-transition {
+  0% {
+    clip-path: circle(0% at var(--theme-switch-x, 50%) var(--theme-switch-y, 50%));
+  }
+
+  100% {
+    clip-path: circle(150% at var(--theme-switch-x, 50%) var(--theme-switch-y, 50%));
+  }
+}
+
+html.theme-transition {
+  view-transition-name: theme;
+}
+
+html.theme-transition::view-transition-old(theme) {
+  mix-blend-mode: normal;
+  animation: none;
+  z-index: 1;
+}
+
+html.theme-transition::view-transition-new(theme) {
+  mix-blend-mode: normal;
+  z-index: 2;
+  animation: theme-circle-transition 0.4s var(--ease-out) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  html.theme-transition::view-transition-old(theme),
+  html.theme-transition::view-transition-new(theme) {
+    animation: none !important;
+  }
+}
+
+openclaw-app {
+  display: block;
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: var(--accent-subtle);
+  color: var(--text-strong);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+/* Animations - Polished with spring feel */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes dashboard-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulse-subtle {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes glow-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(255, 92, 92, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 20px var(--accent-glow);
+  }
+}
+
+/* Stagger animation delays for grouped elements */
+.stagger-1 {
+  animation-delay: 0ms;
+}
+
+.stagger-2 {
+  animation-delay: 50ms;
+}
+
+.stagger-3 {
+  animation-delay: 100ms;
+}
+
+.stagger-4 {
+  animation-delay: 150ms;
+}
+
+.stagger-5 {
+  animation-delay: 200ms;
+}
+
+.stagger-6 {
+  animation-delay: 250ms;
+}
+
+/* Focus visible styles */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* ===========================================
+   END OF BASE.CSS
+   =========================================== */

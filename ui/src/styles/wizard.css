@@ -1,0 +1,409 @@
+/* ===================================
+   Onboarding Wizard – Mockup-matching
+   =================================== */
+
+:root {
+  --wizard-primary: #1a1a1a;
+  --wizard-primary-hover: #333;
+  --wizard-primary-light: rgba(26, 26, 26, 0.1);
+  --wizard-secondary: #f3f4f6;
+  --wizard-border: #e5e5e5;
+  --wizard-text: #1a1a1a;
+  --wizard-text-light: #666;
+  --wizard-success: #10b981;
+  --wizard-info: #3b82f6;
+  --wizard-warning: #f59e0b;
+  --wizard-danger: #ef4444;
+  --wizard-brand: var(--brand, #e30000);
+}
+
+/* Full-screen white container – exactly as mockup */
+.wizard-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100%;
+  padding: 20px;
+  background: #ffffff;
+}
+
+/* Clean card – no heavy shadows like the old design */
+.wizard-card {
+  width: 100%;
+  max-width: 440px;
+  text-align: center;
+  padding: 48px 40px;
+  background: white;
+  border-radius: 0;
+  overflow: hidden;
+  animation: step-enter 0.4s ease-out;
+}
+
+/* No more gradient bar at top, replaced with clean red line */
+.wizard-card::before {
+  content: "";
+  display: block;
+  height: 2px;
+  background: var(--wizard-brand);
+  margin: -48px -40px 32px;
+  opacity: 0.4;
+}
+
+@keyframes step-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Progress – dots like the mockup, NOT bars */
+.wizard-progress {
+  padding: 0;
+  border-bottom: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.wizard-step-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--wizard-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Replace progress BAR with DOTS */
+.wizard-progress-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  height: auto;
+}
+
+/* Each segment becomes a dot */
+.wizard-segment {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: #e5e5e5;
+  transition: background 200ms ease, box-shadow 200ms ease;
+}
+
+.wizard-segment[data-state="completed"] {
+  background: var(--wizard-primary);
+}
+
+.wizard-segment[data-state="current"] {
+  background: var(--wizard-brand);
+  box-shadow: 0 0 0 3px rgba(227, 0, 0, 0.15);
+}
+
+.wizard-segment[data-state="upcoming"] {
+  background: #e5e5e5;
+}
+
+/* Step Content */
+.wizard-step-content {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: step-enter 0.4s ease-out;
+  min-height: 200px;
+}
+
+/* Logo – 80px like mockup */
+.wizard-logo {
+  height: 80px;
+  width: auto;
+  image-rendering: pixelated;
+  margin-bottom: 8px;
+}
+
+.wizard-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--wizard-text);
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.wizard-description {
+  margin: 0;
+  font-size: 15px;
+  color: var(--wizard-text-light);
+  line-height: 1.6;
+}
+
+/* Inputs – match mockup exactly */
+.wizard-input {
+  width: 100%;
+  height: 48px;
+  padding: 12px 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #fafafa;
+  color: var(--wizard-text);
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.wizard-input::placeholder {
+  color: #999;
+}
+
+.wizard-input:focus {
+  border-color: var(--wizard-brand);
+  box-shadow: 0 0 0 3px rgba(227, 0, 0, 0.08);
+  background: white;
+}
+
+/* Buttons – match mockup (.btn-primary dark, .btn-ghost transparent) */
+.wizard-button {
+  padding: 12px 32px;
+  border-radius: 8px;
+  border: none;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+}
+
+.wizard-button.primary {
+  background: var(--wizard-primary);
+  color: white;
+}
+
+.wizard-button.primary:hover:not(:disabled) {
+  background: var(--wizard-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(26, 26, 26, 0.2);
+}
+
+.wizard-button.secondary {
+  background: transparent;
+  color: var(--wizard-text-light);
+  border: none;
+}
+
+.wizard-button.secondary:hover:not(:disabled) {
+  color: var(--wizard-text);
+  background: #f5f5f5;
+}
+
+.wizard-confirm-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+/* Select options */
+.wizard-select-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  width: 100%;
+  text-align: left;
+}
+
+.wizard-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border: 1px solid var(--wizard-border);
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 150ms ease;
+  font-size: 14px;
+  color: var(--wizard-text);
+  position: relative;
+}
+
+.wizard-option:hover {
+  border-color: var(--wizard-brand);
+  background: rgba(227, 0, 0, 0.03);
+}
+
+.wizard-option.selected {
+  border-color: var(--wizard-brand);
+  background: rgba(227, 0, 0, 0.04);
+  font-weight: 600;
+}
+
+.wizard-option-checkmark {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #e5e5e5;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 200ms ease;
+  flex-shrink: 0;
+}
+
+.wizard-option.selected .wizard-option-checkmark {
+  opacity: 1;
+  background: var(--wizard-brand);
+  border-color: var(--wizard-brand);
+}
+
+.wizard-option.selected .wizard-option-checkmark::after {
+  content: "✓";
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Multiselect */
+.wizard-multiselect-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+}
+
+.wizard-multiselect-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--wizard-border);
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 150ms ease;
+  text-align: left;
+}
+
+.wizard-multiselect-item:hover {
+  border-color: var(--wizard-brand);
+  background: rgba(227, 0, 0, 0.02);
+}
+
+.wizard-multiselect-item.selected {
+  border-color: var(--wizard-brand);
+  background: rgba(227, 0, 0, 0.04);
+}
+
+.wizard-checkbox {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  border: 2px solid #e5e5e5;
+  border-radius: 4px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 150ms ease;
+  margin-top: 1px;
+}
+
+.wizard-multiselect-item.selected .wizard-checkbox {
+  border-color: var(--wizard-brand);
+  background: var(--wizard-brand);
+}
+
+.wizard-multiselect-item.selected .wizard-checkbox::after {
+  content: "✓";
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.wizard-multiselect-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.wizard-multiselect-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--wizard-text);
+}
+
+.wizard-multiselect-hint {
+  font-size: 12px;
+  color: var(--wizard-text-light);
+  margin-top: 2px;
+}
+
+/* Note / Action */
+.wizard-note,
+.wizard-action {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--wizard-border);
+  border-radius: 8px;
+  background: #fafafa;
+  text-align: left;
+  width: 100%;
+}
+
+.wizard-note-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.wizard-note-content {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--wizard-text);
+}
+
+/* Spinner */
+.wizard-progress-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+}
+
+.wizard-progress-spinner .spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e5e5e5;
+  border-top-color: var(--wizard-brand);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.spinner-text {
+  font-size: 13px;
+  color: var(--wizard-text-light);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

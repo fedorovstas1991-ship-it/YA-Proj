@@ -1,0 +1,46 @@
+{
+  "id": "memory-core",
+  "kind": "memory",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "timezone": { "type": "string" },
+      "language": { "type": "string", "enum": ["ru", "en"] },
+      "memoryDir": { "type": "string" },
+      "memoryFile": { "type": "string" },
+      "recent": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "maxDays": { "type": "number" }
+        }
+      },
+      "promote": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "intervalHours": { "type": "number" },
+          "aggressiveness": { "type": "string", "enum": ["broad", "narrow"] },
+          "mode": { "type": "string", "enum": ["ollama", "rules"] }
+        }
+      },
+      "clarify": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "minMessages": { "type": "number" }
+        }
+      },
+      "ollama": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "baseUrl": { "type": "string" },
+          "model": { "type": "string" },
+          "timeoutMs": { "type": "number" }
+        }
+      }
+    }
+  }
+}
