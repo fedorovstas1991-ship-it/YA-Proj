@@ -1,6 +1,6 @@
 # YAgent: текущий статус и бэклог
 
-Обновлено: 2026-02-24 (починен Telegram-плагин, включена память, NDA dual-bot)
+Обновлено: 2026-02-26 (фикс wildcard allowlist для bundled skills, починен Telegram-плагин, включена память, NDA dual-bot)
 
 ## Текущие фичи (реализовано)
 - Product UI и основная навигация русифицированы (кроме `Docs`).
@@ -31,6 +31,10 @@
   - `skills.allowBundled = ["*"]` — разрешены все bundled скиллы;
   - `mcpServers` — `one-search` (DuckDuckGo, autostart через npx);
   - `plugins.slots.memory = "memory-core"` — автоматическая память через Ollama.
+- **Фикс blocked allowlist для встроенных skills (2026-02-26):**
+  - **Причина:** wildcard `skills.allowBundled=["*"]` не учитывался в проверке allowlist, поэтому UI показывал `заблокирован allowlist` для bundled skills.
+  - **Фикс:** в `isBundledSkillAllowed` добавлена поддержка `*` как allow-all для `openclaw-bundled`.
+  - **Проверка:** добавлен регрессионный тест `treats wildcard bundled allowlist as allow-all`.
 - **Память включена (2026-02-24):**
   - `plugins.slots.memory = "memory-core"` + `enabled: true` в `plugins.entries`.
   - `memory.backend = "qmd"` — QMD читает из workspace каждого агента автоматически (без хардкоженных путей).
