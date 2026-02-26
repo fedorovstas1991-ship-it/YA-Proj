@@ -2,6 +2,8 @@
 
 Рабочий репозиторий проекта YandexAgetn (dev-ready).
 
+Весь рабочий workflow проекта сохранен в [YANDEXAGETN.md](./YANDEXAGETN.md).
+
 ## Быстрый старт
 
 ```bash
