@@ -33,11 +33,12 @@ import type { WizardStep } from "./types.ts";
 import type { NostrProfileFormState } from "./views/channels.nostr-profile-form.ts";
 import { normalizeAgentId, parseAgentSessionKey } from "../../../src/routing/session-key.js";
 import {
-  buildNdaModelsPatch,
-  NDA_MODEL_REF,
-  NDA_PROVIDER,
-} from "../../../src/onboarding/nda-preset.js";
-import { pickSharedApiKeyRef, sanitizeApiKeyCandidate } from "./nda-mode.ts";
+  buildNdaToolPolicy,
+  buildNdaOllamaProviderConfig,
+  isNdaToolPolicyReady,
+  isNdaOllamaProviderReady,
+  resolveNdaRuntimeModelRef,
+} from "./nda-mode.ts";
 import {
   handleChannelConfigReload as handleChannelConfigReloadInternal,
   handleChannelConfigSave as handleChannelConfigSaveInternal,
@@ -184,31 +185,6 @@ function validateTelegramAllowFromValue(value: string): string | null {
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
-}
-
-function resolveProviderApiKey(config: Record<string, unknown> | null, provider: string): string {
-  const models = asRecord(config?.models);
-  const providers = asRecord(models?.providers);
-  const providerCfg = asRecord(providers?.[provider]);
-  const apiKey = providerCfg?.apiKey;
-  return sanitizeApiKeyCandidate(apiKey);
-}
-
-function resolvePrimaryModelProvider(config: Record<string, unknown> | null): string {
-  const agents = asRecord(config?.agents);
-  const defaults = asRecord(agents?.defaults);
-  const model = defaults?.model;
-  if (typeof model === "string") {
-    const provider = model.split("/", 1)[0]?.trim();
-    return provider || "openrouter";
-  }
-  const modelCfg = asRecord(model);
-  const primary = typeof modelCfg?.primary === "string" ? modelCfg.primary.trim() : "";
-  if (!primary) {
-    return "openrouter";
-  }
-  const provider = primary.split("/", 1)[0]?.trim();
-  return provider || "openrouter";
 }
 
 function loadSimpleOnboardingDone(): boolean {
@@ -718,12 +694,24 @@ export class OpenClawApp extends LitElement {
     return typeof workspace === "string" && workspace.trim() ? workspace.trim() : "~/.yagent/workspace";
   }
 
-  private resolveSharedApiKeyRef(config: Record<string, unknown> | null): string {
-    const primaryProvider = resolvePrimaryModelProvider(config);
-    const primaryApiKey = resolveProviderApiKey(config, primaryProvider);
-    const openrouterApiKey = resolveProviderApiKey(config, "openrouter");
-    const ndaProviderApiKey = resolveProviderApiKey(config, NDA_PROVIDER);
-    return pickSharedApiKeyRef([primaryApiKey, openrouterApiKey, ndaProviderApiKey]);
+  private resolveConfiguredNdaModel(config: Record<string, unknown> | null): string {
+    const agents = asRecord(config?.agents);
+    const list = Array.isArray(agents?.list) ? agents.list : [];
+    for (const entry of list) {
+      const record = asRecord(entry);
+      if (!record) {
+        continue;
+      }
+      const rawId = typeof record.id === "string" ? record.id : "";
+      if (normalizeAgentId(rawId) !== PRODUCT_NDA_AGENT_ID) {
+        continue;
+      }
+      return typeof record.model === "string" ? record.model : "";
+    }
+    const liveAgent = (this.agentsList?.agents ?? []).find(
+      (entry) => normalizeAgentId(entry.id) === PRODUCT_NDA_AGENT_ID,
+    );
+    return typeof liveAgent?.config?.model === "string" ? liveAgent.config.model : "";
   }
 
   private async ensureNdaAgentExists(config: Record<string, unknown> | null) {
@@ -750,31 +738,32 @@ export class OpenClawApp extends LitElement {
       await loadAgents(this);
     }
 
+    const configuredNdaModel = this.resolveConfiguredNdaModel(config);
+    const targetModel = resolveNdaRuntimeModelRef(configuredNdaModel);
     await this.client.request("agents.update", {
       agentId: PRODUCT_NDA_AGENT_ID,
-      model: NDA_MODEL_REF,
+      model: targetModel,
     });
   }
 
-  private async ensureNdaProviderConfigured(config: Record<string, unknown> | null) {
+  private async ensureNdaOllamaProviderConfigured(config: Record<string, unknown> | null) {
     if (!this.client) {
       throw new Error("Gateway клиент недоступен.");
     }
-
-    // Skip patch if NDA provider already configured
-    const existingModels = asRecord(config?.models);
-    const existingProviders = asRecord(existingModels?.providers);
-    const existingNda = asRecord(existingProviders?.[NDA_PROVIDER]);
-    if (existingNda?.baseUrl && existingNda?.apiKey) {
+    const models = asRecord(config?.models);
+    const providers = asRecord(models?.providers);
+    const existingOllama = asRecord(providers?.ollama);
+    if (isNdaOllamaProviderReady(existingOllama)) {
       return;
     }
 
-    const sharedApiKeyRef = this.resolveSharedApiKeyRef(config);
-    if (!sharedApiKeyRef) {
-      throw new Error("Не найден API-ключ основной модели. Сначала завершите обычный onboarding.");
-    }
-
-    const patch = buildNdaModelsPatch(sharedApiKeyRef);
+    const patch = {
+      models: {
+        providers: {
+          ollama: buildNdaOllamaProviderConfig(existingOllama),
+        },
+      },
+    };
 
     let baseHash = this.configSnapshot?.hash;
     if (!baseHash) {
@@ -787,7 +776,73 @@ export class OpenClawApp extends LitElement {
     await this.client.request("config.patch", {
       raw: JSON.stringify(patch),
       baseHash,
-      note: "product-ui nda setup",
+      note: "product-ui nda local ollama setup",
+    }).catch((err) => {
+      const details = String(err).toLowerCase();
+      const restartInProgress =
+        details.includes("gateway closed") || details.includes("gateway not connected");
+      if (!restartInProgress) {
+        throw err;
+      }
+    });
+    await this.waitForGatewayReconnect(30000);
+    await loadConfigInternal(this);
+  }
+
+  private async ensureNdaToolPolicyConfigured(config: Record<string, unknown> | null) {
+    if (!this.client) {
+      throw new Error("Gateway клиент недоступен.");
+    }
+    const agents = asRecord(config?.agents);
+    const list = Array.isArray(agents?.list) ? agents.list : [];
+    if (list.length === 0) {
+      return;
+    }
+
+    let changed = false;
+    const nextList = list.map((entry) => {
+      const record = asRecord(entry);
+      if (!record) {
+        return entry;
+      }
+      const rawId = typeof record.id === "string" ? record.id : "";
+      if (normalizeAgentId(rawId) !== PRODUCT_NDA_AGENT_ID) {
+        return entry;
+      }
+      const tools = asRecord(record.tools);
+      if (isNdaToolPolicyReady(tools)) {
+        return entry;
+      }
+      changed = true;
+      return {
+        ...record,
+        tools: buildNdaToolPolicy(tools),
+      };
+    });
+
+    if (!changed) {
+      return;
+    }
+
+    let baseHash = this.configSnapshot?.hash;
+    if (!baseHash) {
+      await loadConfigInternal(this);
+      baseHash = this.configSnapshot?.hash;
+    }
+    if (!baseHash) {
+      throw new Error("Не удалось прочитать hash конфига.");
+    }
+
+    const patch = {
+      agents: {
+        list: nextList,
+      },
+    };
+
+    await this.client.request("config.patch", {
+      raw: JSON.stringify(patch),
+      baseHash,
+      note: "product-ui nda tools policy",
     }).catch((err) => {
       const details = String(err).toLowerCase();
       const restartInProgress =
@@ -829,8 +884,13 @@ export class OpenClawApp extends LitElement {
     try {
       await loadConfigInternal(this);
       const currentConfig = (this.configSnapshot?.config as Record<string, unknown> | null) ?? null;
-      await this.ensureNdaProviderConfigured(currentConfig);
-      await this.ensureNdaAgentExists(currentConfig);
+      await this.ensureNdaOllamaProviderConfigured(currentConfig);
+      const refreshedConfig =
+        (this.configSnapshot?.config as Record<string, unknown> | null) ?? currentConfig;
+      await this.ensureNdaAgentExists(refreshedConfig);
+      await loadConfigInternal(this);
+      const withNdaAgentConfig = (this.configSnapshot?.config as Record<string, unknown> | null) ?? null;
+      await this.ensureNdaToolPolicyConfigured(withNdaAgentConfig);
       this.productChatMode = "nda";
       this.productNdaTelegramCtaDismissed = false;
       await this.productSelectAgent(PRODUCT_NDA_AGENT_ID);
@@ -1538,7 +1598,7 @@ export class OpenClawApp extends LitElement {
       await this.waitForGatewayReconnect(sawDisconnect ? 30000 : 12000);
 
       this.setTelegramConnectFlow("probing", "Проверяем, что Telegram-канал отвечает…");
-      await this.probeTelegramStatusWithRetry(8, 1200);
+      await this.probeTelegramStatusWithRetry(25, 1200);
       this.setTelegramConnectFlow("success", "Telegram подключен. Бот готов принимать сообщения.");
     } catch (err) {
       const details = String(err);
