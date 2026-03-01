@@ -92,6 +92,9 @@ export function isBundledSkillAllowed(entry: SkillEntry, allowlist?: string[]): 
   if (!isBundledSkill(entry)) {
     return true;
   }
+  if (allowlist.includes("*")) {
+    return true;
+  }
   const key = resolveSkillKey(entry.skill, entry);
   return allowlist.includes(key) || allowlist.includes(entry.skill.name);
 }

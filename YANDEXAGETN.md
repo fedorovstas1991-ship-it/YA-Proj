@@ -1,6 +1,6 @@
 # YAgent: текущий статус и бэклог
 
-Обновлено: 2026-02-26 (фикс истории чата при clearLocalStorage, фикс exit 1 при настроенном Telegram, таймаут health-check, фикс Connection error из-за Node runtime)
+Обновлено: 2026-02-26 (фикс истории чата при clearLocalStorage, фикс exit 1 при настроенном Telegram, таймаут health-check, фикс Connection error из-за Node runtime, фикс wildcard allowlist для bundled skills)
 
 ## Текущие фичи (реализовано)
 - Product UI и основная навигация русифицированы (кроме `Docs`).
@@ -33,6 +33,10 @@
   - **Всегда делает полный reset профиля** перед запуском (конфиг/сессии/workspace для профиля очищаются).
   - При первом запуске создаёт `openclaw.json` с: агентами `main`/`nda`, `skills.allowBundled=["*"]`, `one-search` MCP, `plugins.slots.memory="memory-core"`, `telegram.enabled=true`, `memory-core.enabled=true`, `includeDefaultMemory=true`.
   - Конкурирующий глобальный LaunchAgent `ai.openclaw.gateway` отключён (`launchctl unload ~/Library/LaunchAgents/ai.openclaw.gateway.plist`) — он захватывал порт 18789 раньше yagent.
+- **Фикс blocked allowlist для встроенных skills (2026-02-26):**
+  - **Причина:** wildcard `skills.allowBundled=["*"]` не учитывался в проверке allowlist, поэтому UI показывал `заблокирован allowlist` для bundled skills.
+  - **Фикс:** в `isBundledSkillAllowed` добавлена поддержка `*` как allow-all для `openclaw-bundled`.
+  - **Проверка:** добавлен регрессионный тест `treats wildcard bundled allowlist as allow-all`.
 - **Память включена (2026-02-24, исправлена 2026-02-25):**
   - `plugins.slots.memory = "memory-core"` + `enabled: true` в `plugins.entries`.
   - `memory.backend = "qmd"`, `includeDefaultMemory: true` — QMD автоматически находит MEMORY.md и `memory/` в workspace каждого агента. Хардкоженные пути больше не нужны.
